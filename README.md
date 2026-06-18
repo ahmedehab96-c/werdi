@@ -5,6 +5,8 @@ progress tracking, achievements, and audio recitation. Arabic‑first (RTL) with
 English support, light/dark themes, and a responsive layout for mobile, tablet,
 desktop, and web.
 
+Repository: [https://github.com/ahmedehab96-c/werdi](https://github.com/ahmedehab96-c/werdi)
+
 ## Architecture
 
 The project follows a scalable, feature‑based Clean Architecture with a clear
@@ -88,6 +90,26 @@ configured via `l10n.yaml` and runs automatically on build (`generate: true`).
 flutter analyze   # static analysis (flutter_lints)
 flutter test      # unit/widget tests
 ```
+
+## CI/CD (GitHub Actions)
+
+The repository includes an automated workflow at `.github/workflows/flutter_ci.yml`.
+
+- On every `pull_request`: run `flutter pub get`, `flutter gen-l10n`, `flutter analyze`, and `flutter test`.
+- On every push to `main`: run the same checks, then build:
+  - Release APK
+  - Release AAB
+- Build outputs are uploaded as downloadable GitHub artifacts:
+  - `werdi-release-apk`
+  - `werdi-release-aab`
+
+### Download APK/AAB from GitHub
+
+1. Open the **Actions** tab in the repository.
+2. Select the latest successful `Flutter CI` run on `main`.
+3. Scroll to **Artifacts** and download:
+   - `werdi-release-apk` for direct Android install.
+   - `werdi-release-aab` for Google Play upload.
 
 ### Release & publishing
 
