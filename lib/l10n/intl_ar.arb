@@ -1,0 +1,488 @@
+{
+  "@@locale": "ar",
+
+  "appName": "وردي",
+
+  "comingSoon": "قريبًا",
+  "retry": "إعادة المحاولة",
+  "save": "حفظ",
+  "cancel": "إلغاء",
+  "back": "رجوع",
+  "done": "تم",
+  "loading": "جارٍ التحميل...",
+  "error": "حدث خطأ",
+  "noData": "لا توجد بيانات",
+
+  "authWelcomeTitle": "مرحبًا بك في وردي",
+  "authWelcomeSubtitle": "سجّل دخولك أو أنشئ حسابًا لبدء رحلة الحفظ",
+  "loginTab": "تسجيل الدخول",
+  "registerTab": "إنشاء حساب",
+  "continueAsGuest": "المتابعة كضيف",
+  "emailLabel": "البريد الإلكتروني",
+  "passwordLabel": "كلمة المرور",
+  "nameLabel": "الاسم",
+  "forgotPassword": "نسيت كلمة المرور؟",
+  "sendResetLink": "إرسال رابط الاستعادة",
+  "forgotPasswordTitle": "استعادة كلمة المرور",
+  "forgotPasswordSubtitle": "أدخل بريدك الإلكتروني وسنرسل لك رابط الاستعادة",
+  "loginButton": "تسجيل الدخول",
+  "registerButton": "إنشاء حساب",
+  "loginError": "البريد أو كلمة المرور غير صحيحة",
+  "registerError": "تعذّر إنشاء الحساب، يرجى المحاولة مرة أخرى",
+
+  "homeGreeting": "السلام عليكم، {name}",
+  "@homeGreeting": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "homeSubtitle": "اليوم فرصة جديدة لتثبيت الحفظ بإتقان",
+  "quickActionsTitle": "إجراءات سريعة",
+  "memorizeNow": "احفظ الآن",
+  "memorizeSubtitle": "خطة اليوم",
+  "reviewAction": "مراجعة",
+  "reviewSubtitle": "المقرر السابق",
+  "testYourself": "اختبر نفسك",
+  "testSubtitle": "جلسة تسميع",
+  "openQuran": "افتح المصحف",
+  "openQuranSubtitle": "السور والأجزاء",
+  "dailyGoal": "هدف اليوم",
+  "ayahsRemaining": "{count} آيات متبقية",
+  "@ayahsRemaining": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "ayahsCompleted": "{count} آيات مكتملة",
+  "@ayahsCompleted": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "overallProgress": "التقدم الإجمالي",
+  "currentSurah": "السورة الحالية",
+  "continueMemorization": "أكمل الحفظ",
+  "reviewReminder": "تذكير المراجعة",
+  "reviewDue": "{count} مراجعات مستحقة",
+  "@reviewDue": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "overdueReviews": "{count} متأخرة",
+  "@overdueReviews": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "startReview": "ابدأ المراجعة",
+  "weeklyInsights": "إحصاءات الأسبوع",
+  "memorizedAyahs": "{count} آية محفوظة",
+  "@memorizedAyahs": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "reviewedAyahs": "{count} آية مراجعة",
+  "@reviewedAyahs": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "sessions": "{count} جلسة",
+  "@sessions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "streakDays": "{count} يوم متواصل",
+  "@streakDays": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "yourAchievements": "إنجازاتك",
+  "viewAll": "عرض الكل",
+  "recommendedPlan": "الخطوة الموصى بها",
+  "progressOverview": "نظرة على التقدم",
+  "total": "الإجمالي",
+  "thisWeek": "هذا الأسبوع",
+  "continueJourney": "تابع رحلتك",
+  "resumeFromLastPosition": "استكمال من آخر موضع",
+  "dailyMotivation": "بطاقة التحفيز اليومية",
+  "motivationFooter": "استمر، كل صفحة تحفظها تقرّبك من هدفك الكبير.",
+  "streakTitle": "سلسلة الإنجاز",
+  "achievementsPreview": "معاينة الإنجازات",
+  "memorizeLabel": "حفظ",
+  "sessionsLabel": "جلسات",
+  "suggestedPlanToday": "خطة مقترحة لليوم",
+  "continueMemorizing": "تابع الحفظ",
+  "preparingDashboard": "جارٍ تجهيز لوحة اليوم...",
+  "dailyGoalDescription": "حفظ {count} آيات من {surah}",
+  "@dailyGoalDescription": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "surah": { "type": "String" }
+    }
+  },
+  "ayahsFraction": "{completed} / {target} آيات",
+  "@ayahsFraction": {
+    "placeholders": {
+      "completed": { "type": "int" },
+      "target": { "type": "int" }
+    }
+  },
+  "ayahUnit": "{count} آية",
+  "@ayahUnit": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "lastReview": "آخر مراجعة: {context}",
+  "@lastReview": {
+    "placeholders": { "context": { "type": "String" } }
+  },
+  "reviewDueToday": "لديك {count} ورد مراجعة اليوم للحفاظ على الإتقان",
+  "@reviewDueToday": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "overdueShort": "متأخر {count}",
+  "@overdueShort": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "streakConsecutiveDays": "{count} يوم متتالي",
+  "@streakConsecutiveDays": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "milestoneProgress": "{current} / {next} آية نحو الإنجاز القادم",
+  "@milestoneProgress": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "next": { "type": "int" }
+    }
+  },
+
+  "quranTitle": "القرآن الكريم",
+  "surahTab": "السور",
+  "juzTab": "الأجزاء",
+  "searchQuranHint": "ابحث باسم السورة أو رقمها أو الجزء",
+  "lastRead": "آخر قراءة",
+  "bookmarksCount": "{count} إشارة",
+  "backToSearch": "نتائج البحث",
+  "enterFocusMode": "وضع القراءة",
+  "exitFocusMode": "إنهاء وضع القراءة",
+  "focusFontSize": "حجم الخط",
+  "focusLineSpacing": "تباعد الأسطر",
+  "sepiaMode": "وضع سيبيا",
+  "resetReadingSettings": "إعادة ضبط إعدادات القراءة",
+  "applyReadingSettingsToAllSurahs": "تطبيق الإعدادات على كل السور",
+  "appliedReadingSettingsToAllSurahs": "تم تطبيق إعدادات القراءة على جميع السور",
+  "@bookmarksCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "bookmarks": "الإشارات",
+  "noBookmarks": "لا توجد إشارات بعد",
+  "noBookmarksSubtitle": "اضغط على أي آية لإضافتها كإشارة",
+  "ayah": "آية",
+  "ayahs": "آيات",
+  "verses": "آيات",
+  "juz": "جزء",
+  "surah": "سورة",
+  "meccan": "مكية",
+  "medinan": "مدنية",
+  "loadingQuran": "جارٍ تحميل السور والأجزاء...",
+  "searchSurahOrJuzHint": "ابحث عن سورة أو جزء...",
+  "noMatchingResults": "لا توجد نتائج مطابقة",
+  "noMatchingResultsSubtitle": "جرّب تغيير كلمات البحث أو الفلتر.",
+  "noMatchingJuzSubtitle": "لا توجد أجزاء توافق الفلتر الحالي.",
+  "viewAllBookmarks": "عرض شاشة الإشارات المرجعية الكاملة",
+  "viewAllBookmarksSubtitle": "الآيات المحفوظة، السور، وآخر مواضع الحفظ",
+  "searchQuranTitle": "البحث في القرآن",
+  "recentSearches": "عمليات البحث الأخيرة",
+  "noSearchHistory": "لا يوجد سجل بحث بعد",
+  "noSearchHistorySubtitle": "ابدأ البحث عن سورة أو جزء وسيظهر هنا لاحقًا.",
+  "surahResults": "نتائج السور",
+  "ayahResults": "نتائج الآيات",
+  "noResultsSubtitle": "جرّب كلمة مختلفة أو رقم سورة.",
+  "noAyahResults": "لا توجد نتائج آيات",
+  "noAyahResultsSubtitle": "جرّب كلمة أدق أو جزءًا من الآية.",
+  "juzResults": "نتائج الأجزاء",
+  "noJuzResults": "لا نتائج أجزاء",
+  "noJuzResultsSubtitle": "نتائج الأجزاء ستظهر عند تطابق الاستعلام.",
+  "searchApiReady": "جاهز للبحث عبر API",
+  "searchApiReadySubtitle": "واجهة البحث مبنية بحيث يمكن توصيلها مباشرة مع Backend لاحقًا.",
+  "juzNumber": "الجزء {number}",
+  "@juzNumber": {
+    "placeholders": { "number": { "type": "int" } }
+  },
+  "open": "فتح",
+  "statusMemorized": "محفوظ",
+  "statusInProgress": "قيد الحفظ",
+  "statusReview": "مراجعة",
+  "filterAll": "الكل",
+  "filterReview": "للمراجعة",
+  "surahNamed": "سورة {name}",
+  "@surahNamed": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "startMemorizing": "ابدأ الحفظ",
+  "memorizationSegments": "مقاطع الحفظ",
+  "progressPercent": "التقدم: {percent}%",
+  "@progressPercent": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "rangeAyahs": "آية {from} – {to}",
+  "@rangeAyahs": {
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" }
+    }
+  },
+  "surahAyahs": "آيات السورة",
+  "versesLoadError": "تعذر تحميل الآيات",
+  "versesLoadErrorSubtitle": "حاول فتح السورة مرة أخرى.",
+  "chooseReciterBelow": "اختر قارئًا من قسم الأصوات أدناه.",
+  "cannotPlayAyah": "تعذر تشغيل هذه الآية",
+  "reciterVoices": "أصوات القرّاء",
+  "recitersSource": "قائمة مرتبة من mp3quran.net",
+  "recitersLoadError": "تعذر تحميل قائمة القرّاء.",
+  "chooseReciter": "اختر قارئًا",
+  "reciterCountTapToSearch": "{count} قارئ • اضغط للبحث",
+  "@reciterCountTapToSearch": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "ayahNumbered": "الآية {number}",
+  "@ayahNumbered": {
+    "placeholders": { "number": { "type": "int" } }
+  },
+  "ayahNumberLabel": "رقم الآية",
+  "checking": "جارٍ الفحص...",
+  "checkReciterAvailability": "فحص توفر القارئ",
+  "notChecked": "غير مفحوص",
+  "available": "متاح ✓",
+  "unavailable": "غير متاح ✗",
+  "stopAudio": "إيقاف الصوت",
+  "playSelectedAyah": "تشغيل الآية المحددة",
+  "waitOrChooseReciter": "انتظر تحميل القرّاء أو اختر قارئًا.",
+  "cannotPlayAudio": "تعذر تشغيل الصوت حاليًا",
+  "searchReciterHint": "بحث باسم القارئ…",
+  "ayahByAyah": "آية بآية",
+  "fullSurahFile": "ملف السورة",
+  "tafsirLinks": "روابط التفسير",
+  "tafsirWithTranslation": "تفسير الآية مع ترجمة",
+  "classicTafsirLibrary": "مكتبة تفاسير كلاسيكية",
+  "tafsirAndTranslation": "التفسير والترجمة",
+  "tafsir": "تفسير",
+  "translation": "ترجمة",
+  "tafsirSourceLabel": "مصدر التفسير",
+  "fromN": "من {n}",
+  "@fromN": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "toN": "إلى {n}",
+  "@toN": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "rangeStart": "بداية",
+  "rangeEnd": "نهاية",
+  "noTafsir": "لا يوجد تفسير",
+  "noTafsirSubtitle": "اختر النطاق ثم اضغط تحديث.",
+  "noTranslation": "لا توجد ترجمة",
+  "noTranslationSubtitle": "اضغط تحديث لجلب الترجمة.",
+  "translationLine": "آية {number}: {text}",
+  "@translationLine": {
+    "placeholders": {
+      "number": { "type": "int" },
+      "text": { "type": "String" }
+    }
+  },
+  "translationLanguage": "لغة الترجمة",
+  "refreshTafsir": "تحديث التفسير",
+  "refreshTranslation": "تحديث الترجمة",
+  "savedSurahs": "السور المحفوظة",
+  "savedAyahs": "الآيات المحفوظة",
+  "lastPositions": "آخر مواضع الحفظ",
+  "savedToBookmarks": "تم حفظها في الإشارات المرجعية",
+  "surahNumber": "سورة رقم {id}",
+  "@surahNumber": {
+    "placeholders": { "id": { "type": "int" } }
+  },
+  "fromAyahToAyah": "من آية {from} إلى {to}",
+  "@fromAyahToAyah": {
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" }
+    }
+  },
+
+  "memorizationTitle": "الحفظ",
+  "memorizationSetup": "إعداد الجلسة",
+  "chooseSurah": "اختر السورة",
+  "ayahRange": "نطاق الآيات",
+  "fromAyah": "من آية",
+  "toAyah": "إلى آية",
+  "ayahCount": "عدد الآيات: {count}",
+  "@ayahCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "startSession": "ابدأ جلسة الحفظ",
+  "audioControls": "التحكم الصوتي",
+  "playbackSpeed": "السرعة",
+  "repeatAyah": "تكرار الآية",
+  "markMemorized": "حفظت",
+  "memorizedDone": "تم الحفظ ✓",
+  "markDifficult": "تمييز كصعبة",
+  "markedDifficult": "صعبة ⚑",
+  "showText": "إظهار النص",
+  "hideText": "إخفاء النص",
+  "tapToReveal": "اضغط لإظهار الآية",
+  "preparingSession": "جارٍ التجهيز...",
+  "loadingAyahs": "جارٍ تحميل الآيات...",
+
+  "reviewTitle": "المراجعة",
+  "noReviewItems": "لا توجد عناصر للمراجعة",
+  "noReviewItemsSubtitle": "ابدأ بحفظ آيات لتظهر هنا في قائمة المراجعة.",
+  "reviewed": "تمت المراجعة",
+  "markReviewed": "مراجعة",
+  "repeat": "إعادة",
+  "difficult": "صعبة",
+  "difficultQuestion": "صعبة؟",
+  "showAyahs": "عرض الآيات",
+  "hideAyahs": "إخفاء الآيات",
+  "highPriority": "أولوية عالية",
+  "mediumPriority": "أولوية متوسطة",
+  "lowPriority": "أولوية منخفضة",
+
+  "tasmee3Title": "التسميع",
+  "tasmee3Setup": "إعداد جلسة التسميع",
+  "tasmee3Description": "اختر السورة والنطاق، ثم اختبر حفظك آية بآية",
+  "speechRecitePrompt": "ردّد الآية بصوتك، وسيتم تلوين الخطأ بالأحمر",
+  "startVoiceRecitation": "ابدأ التسميع الصوتي",
+  "stopListening": "إيقاف الاستماع",
+  "microphonePermissionRequired": "يلزم السماح بالمايكروفون للتسميع الصوتي",
+  "speechError": "تعذر التعرف على الصوت، حاول مرة أخرى",
+  "speechNotAvailable": "ميزة التعرف الصوتي غير متاحة على هذا الجهاز/المحاكي",
+  "playAudioTest": "تشغيل تجربة الصوت",
+  "stopAudioTest": "إيقاف تجربة الصوت",
+  "audioTestFailed": "تعذر تشغيل تجربة الصوت، تأكد من اتصال الإنترنت والصوت",
+  "autoGradingHint": "بعد انتهاء التسميع سيتم تقييمك تلقائيًا والانتقال للآية التالية",
+  "autoGradingActive": "يتم التقييم تلقائيًا بناءً على التسميع الصوتي",
+  "voiceAccuracy": "دقة المطابقة: {percent}%",
+  "@voiceAccuracy": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "startTest": "ابدأ الاختبار",
+  "testProgress": "التقدم",
+  "revealAyah": "كشف الآية",
+  "hiddenAyah": "الآية مخفية — هل تحفظها؟",
+  "iKnowIt": "أحفظها",
+  "iHesitated": "تعثّرت",
+  "iForgot": "نسيتها",
+  "testSummary": "ملخص الجلسة",
+  "testScore": "النتيجة",
+  "ayahsToReview": "آيات تحتاج مراجعة",
+  "retakeTest": "إعادة الاختبار",
+  "backToSetup": "إعداد جديد",
+  "sessionHistory": "سجل الجلسات",
+  "noHistory": "لا يوجد سجل بعد",
+  "noHistorySubtitle": "ستظهر هنا نتائج جلسات التسميع السابقة",
+  "excellent": "ممتاز",
+  "good": "جيد",
+  "needsWork": "يحتاج مراجعة",
+  "sessionDetails": "تفاصيل الجلسة",
+  "knownAyahs": "آيات محفوظة",
+  "hesitantAyahs": "تعثّر فيها",
+  "unknownAyahs": "لم يحفظها",
+  "scoreLabel": "النتيجة: {score}%",
+  "@scoreLabel": {
+    "placeholders": { "score": { "type": "int" } }
+  },
+
+  "achievementsTitle": "الإنجازات",
+  "loadingAchievements": "جارٍ تحميل الإنجازات...",
+  "earnedBadges": "الشارات المكتسبة",
+  "upcomingGoals": "الأهداف القادمة",
+  "noAchievements": "لا توجد إنجازات بعد",
+  "noAchievementsSubtitle": "ابدأ الحفظ والمراجعة لتحصل على أول شارة.",
+  "overallProgressLabel": "التقدم العام",
+  "badgesProgress": "{earned} / {total} شارة",
+  "@badgesProgress": {
+    "placeholders": {
+      "earned": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "allBadgesEarned": "أحرزت جميع الشارات! 🎉",
+  "remainingBadges": "متبقي {count} شارة للاكتمال",
+  "@remainingBadges": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "profileTitle": "الملف الشخصي",
+  "memorizedAyahsCount": "آية محفوظة",
+  "reviewSessionsCount": "جلسة مراجعة",
+  "streakLabel": "أيام متواصلة",
+  "yourBadges": "شاراتك",
+  "noBadges": "لا توجد شارات بعد",
+  "signOut": "تسجيل الخروج",
+  "signOutConfirm": "هل تريد تسجيل الخروج؟",
+  "signOutConfirmYes": "نعم، خروج",
+
+  "settingsTitle": "الإعدادات",
+  "searchFocusModeTitle": "وضع القراءة من نتائج البحث",
+  "searchFocusModeSubtitle": "افتح الآيات من البحث في وضع القراءة المركّز تلقائيًا",
+  "unifiedReadingPrefsTitle": "إعدادات قراءة موحدة",
+  "unifiedReadingPrefsSubtitle": "استخدم نفس إعدادات القراءة لكل السور بدل الإعداد المنفصل لكل سورة",
+  "darkMode": "الوضع الليلي",
+  "darkModeSubtitle": "تبديل بين الثيم الفاتح والداكن",
+  "language": "اللغة",
+  "languageSubtitle": "العربية",
+  "fontSize": "حجم الخط",
+  "fontSizeSubtitle": "تكبير/تصغير الخط داخل التطبيق",
+  "reminders": "التذكيرات",
+  "remindersSubtitle": "تذكير يومي بالحفظ الساعة 8:00 صباحًا",
+  "remindersDescription": "عند التفعيل يُرسَل إشعار يومي الساعة 8:00 صباحًا لتذكيرك بمتابعة حفظك.",
+  "notificationsTitle": "الإشعارات",
+  "notificationsSubtitle": "إدارة تنبيهات التطبيق وتذكيرات الحفظ",
+  "notificationsDescription": "يمكنك تفعيل/إيقاف الإشعارات وتحديد وقت التذكير اليومي.",
+  "notificationsTimeTitle": "وقت التذكير اليومي",
+  "notificationsTimeSubtitle": "الوقت الحالي: {time}",
+  "@notificationsTimeSubtitle": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "notificationsTimeHint": "سيتم إرسال التذكير يوميًا عند {hour}:{minute}",
+  "@notificationsTimeHint": {
+    "placeholders": {
+      "hour": { "type": "String" },
+      "minute": { "type": "String" }
+    }
+  },
+
+  "fullNameLabel": "الاسم الكامل",
+  "confirmPasswordLabel": "تأكيد كلمة المرور",
+  "resetLinkSent": "تم إرسال رابط استعادة كلمة المرور",
+  "orContinueWithEmail": "أو المتابعة عبر البريد الإلكتروني",
+
+  "skip": "تخطي",
+  "startNow": "ابدأ الآن",
+  "next": "التالي",
+  "onboardingTitle1": "رحلة حفظ ذكية ومنظمة",
+  "onboardingSubtitle1": "خطة يومية مرنة تناسب وقتك وتبني استمرارية قوية.",
+  "onboardingTitle2": "مراجعة متدرجة بدون ضغط",
+  "onboardingSubtitle2": "نظام مراجعة يساعدك على تثبيت الحفظ على المدى الطويل.",
+  "onboardingTitle3": "جلسات تسميع محفزة",
+  "onboardingSubtitle3": "تتبع الأداء وتقدمك مع تفاعل بصري يرفع الحماس.",
+  "onboardingTitle4": "كل إنجاز محسوب",
+  "onboardingSubtitle4": "لوحة تقدم راقية تعكس رحلتك خطوة بخطوة.",
+
+  "guest": "زائر",
+  "signInForFullFeatures": "تسجيل الدخول للحصول على كامل الميزات",
+  "currentGoals": "الأهداف الحالية",
+  "goalDone": "تم! 🎉",
+  "memorizeGoal": "حفظ {count} آية",
+  "@memorizeGoal": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "reviewSessionsGoal": "إتمام {count} جلسة مراجعة",
+  "@reviewSessionsGoal": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "remainingSessions": "متبقي {count} جلسة",
+  "@remainingSessions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "ayahProgress": "الآية {current} / {total}",
+  "@ayahProgress": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "ayahBreakdown": "تفصيل الآيات",
+  "bubbleKnown": "أحفظها",
+  "bubbleHesitant": "تعثرت",
+  "bubbleUnknown": "نسيتها"
+}

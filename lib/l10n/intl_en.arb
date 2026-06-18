@@ -1,0 +1,488 @@
+{
+  "@@locale": "en",
+
+  "appName": "Werdi",
+
+  "comingSoon": "Coming soon",
+  "retry": "Retry",
+  "save": "Save",
+  "cancel": "Cancel",
+  "back": "Back",
+  "done": "Done",
+  "loading": "Loading...",
+  "error": "An error occurred",
+  "noData": "No data available",
+
+  "authWelcomeTitle": "Welcome to Werdi",
+  "authWelcomeSubtitle": "Sign in or create an account to start your memorization journey",
+  "loginTab": "Login",
+  "registerTab": "Register",
+  "continueAsGuest": "Continue as guest",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "nameLabel": "Name",
+  "forgotPassword": "Forgot password?",
+  "sendResetLink": "Send reset link",
+  "forgotPasswordTitle": "Reset Password",
+  "forgotPasswordSubtitle": "Enter your email and we'll send you a reset link",
+  "loginButton": "Login",
+  "registerButton": "Register",
+  "loginError": "Incorrect email or password",
+  "registerError": "Could not create account, please try again",
+
+  "homeGreeting": "Assalamu Alaikum, {name}",
+  "@homeGreeting": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "homeSubtitle": "Today is a new chance to strengthen your memorization",
+  "quickActionsTitle": "Quick actions",
+  "memorizeNow": "Memorize now",
+  "memorizeSubtitle": "Today's plan",
+  "reviewAction": "Review",
+  "reviewSubtitle": "Previous lesson",
+  "testYourself": "Test yourself",
+  "testSubtitle": "Listening session",
+  "openQuran": "Open Quran",
+  "openQuranSubtitle": "Surahs & Juz",
+  "dailyGoal": "Daily goal",
+  "ayahsRemaining": "{count} ayahs remaining",
+  "@ayahsRemaining": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "ayahsCompleted": "{count} ayahs completed",
+  "@ayahsCompleted": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "overallProgress": "Overall progress",
+  "currentSurah": "Current surah",
+  "continueMemorization": "Continue memorizing",
+  "reviewReminder": "Review reminder",
+  "reviewDue": "{count} reviews due",
+  "@reviewDue": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "overdueReviews": "{count} overdue",
+  "@overdueReviews": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "startReview": "Start review",
+  "weeklyInsights": "Weekly insights",
+  "memorizedAyahs": "{count} ayahs memorized",
+  "@memorizedAyahs": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "reviewedAyahs": "{count} ayahs reviewed",
+  "@reviewedAyahs": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "sessions": "{count} sessions",
+  "@sessions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "streakDays": "{count} day streak",
+  "@streakDays": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "yourAchievements": "Your achievements",
+  "viewAll": "View all",
+  "recommendedPlan": "Recommended next step",
+  "progressOverview": "Progress overview",
+  "total": "Total",
+  "thisWeek": "This week",
+  "continueJourney": "Continue your journey",
+  "resumeFromLastPosition": "Resume from last position",
+  "dailyMotivation": "Daily motivation",
+  "motivationFooter": "Keep going — every page you memorize brings you closer to your goal.",
+  "streakTitle": "Streak",
+  "achievementsPreview": "Achievements preview",
+  "memorizeLabel": "Memorize",
+  "sessionsLabel": "Sessions",
+  "suggestedPlanToday": "Suggested plan for today",
+  "continueMemorizing": "Continue memorizing",
+  "preparingDashboard": "Preparing today's dashboard...",
+  "dailyGoalDescription": "Memorize {count} ayahs from {surah}",
+  "@dailyGoalDescription": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "surah": { "type": "String" }
+    }
+  },
+  "ayahsFraction": "{completed} / {target} ayahs",
+  "@ayahsFraction": {
+    "placeholders": {
+      "completed": { "type": "int" },
+      "target": { "type": "int" }
+    }
+  },
+  "ayahUnit": "{count} ayahs",
+  "@ayahUnit": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "lastReview": "Last review: {context}",
+  "@lastReview": {
+    "placeholders": { "context": { "type": "String" } }
+  },
+  "reviewDueToday": "You have {count} reviews due today to keep your mastery",
+  "@reviewDueToday": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "overdueShort": "Overdue {count}",
+  "@overdueShort": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "streakConsecutiveDays": "{count} consecutive days",
+  "@streakConsecutiveDays": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "milestoneProgress": "{current} / {next} ayahs to next milestone",
+  "@milestoneProgress": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "next": { "type": "int" }
+    }
+  },
+
+  "quranTitle": "Quran",
+  "surahTab": "Surahs",
+  "juzTab": "Juz",
+  "searchQuranHint": "Search by surah name, number, or juz",
+  "lastRead": "Last read",
+  "bookmarksCount": "{count} bookmarks",
+  "backToSearch": "Search results",
+  "enterFocusMode": "Reading mode",
+  "exitFocusMode": "Exit reading mode",
+  "focusFontSize": "Font size",
+  "focusLineSpacing": "Line spacing",
+  "sepiaMode": "Sepia mode",
+  "resetReadingSettings": "Reset reading settings",
+  "applyReadingSettingsToAllSurahs": "Apply settings to all surahs",
+  "appliedReadingSettingsToAllSurahs": "Reading settings applied to all surahs",
+  "@bookmarksCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "bookmarks": "Bookmarks",
+  "noBookmarks": "No bookmarks yet",
+  "noBookmarksSubtitle": "Tap any ayah to add it as a bookmark",
+  "ayah": "Ayah",
+  "ayahs": "Ayahs",
+  "verses": "Verses",
+  "juz": "Juz",
+  "surah": "Surah",
+  "meccan": "Meccan",
+  "medinan": "Medinan",
+  "loadingQuran": "Loading surahs and juz...",
+  "searchSurahOrJuzHint": "Search for a surah or juz...",
+  "noMatchingResults": "No matching results",
+  "noMatchingResultsSubtitle": "Try changing your search terms or filter.",
+  "noMatchingJuzSubtitle": "No juz match the current filter.",
+  "viewAllBookmarks": "View all bookmarks",
+  "viewAllBookmarksSubtitle": "Saved ayahs, surahs, and last positions",
+  "searchQuranTitle": "Search the Quran",
+  "recentSearches": "Recent searches",
+  "noSearchHistory": "No search history yet",
+  "noSearchHistorySubtitle": "Start searching for a surah or juz and it will appear here.",
+  "surahResults": "Surah results",
+  "ayahResults": "Ayah results",
+  "noResultsSubtitle": "Try a different word or surah number.",
+  "noAyahResults": "No ayah results",
+  "noAyahResultsSubtitle": "Try a more specific keyword or ayah fragment.",
+  "juzResults": "Juz results",
+  "noJuzResults": "No juz results",
+  "noJuzResultsSubtitle": "Juz results appear when the query matches.",
+  "searchApiReady": "Ready for API search",
+  "searchApiReadySubtitle": "The search UI is built to connect to a backend later.",
+  "juzNumber": "Juz {number}",
+  "@juzNumber": {
+    "placeholders": { "number": { "type": "int" } }
+  },
+  "open": "Open",
+  "statusMemorized": "Memorized",
+  "statusInProgress": "In progress",
+  "statusReview": "Review",
+  "filterAll": "All",
+  "filterReview": "For review",
+  "surahNamed": "Surah {name}",
+  "@surahNamed": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "startMemorizing": "Start memorizing",
+  "memorizationSegments": "Memorization segments",
+  "progressPercent": "Progress: {percent}%",
+  "@progressPercent": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "rangeAyahs": "Ayah {from} – {to}",
+  "@rangeAyahs": {
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" }
+    }
+  },
+  "surahAyahs": "Surah ayahs",
+  "versesLoadError": "Could not load ayahs",
+  "versesLoadErrorSubtitle": "Try opening the surah again.",
+  "chooseReciterBelow": "Choose a reciter from the audio section below.",
+  "cannotPlayAyah": "Could not play this ayah",
+  "reciterVoices": "Reciter voices",
+  "recitersSource": "Curated list from mp3quran.net",
+  "recitersLoadError": "Could not load the reciters list.",
+  "chooseReciter": "Choose a reciter",
+  "reciterCountTapToSearch": "{count} reciters • tap to search",
+  "@reciterCountTapToSearch": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "ayahNumbered": "Ayah {number}",
+  "@ayahNumbered": {
+    "placeholders": { "number": { "type": "int" } }
+  },
+  "ayahNumberLabel": "Ayah number",
+  "checking": "Checking...",
+  "checkReciterAvailability": "Check reciter availability",
+  "notChecked": "Not checked",
+  "available": "Available ✓",
+  "unavailable": "Unavailable ✗",
+  "stopAudio": "Stop audio",
+  "playSelectedAyah": "Play selected ayah",
+  "waitOrChooseReciter": "Wait for reciters to load or choose a reciter.",
+  "cannotPlayAudio": "Could not play audio right now",
+  "searchReciterHint": "Search by reciter name…",
+  "ayahByAyah": "Ayah by ayah",
+  "fullSurahFile": "Full surah file",
+  "tafsirLinks": "Tafsir links",
+  "tafsirWithTranslation": "Ayah tafsir with translation",
+  "classicTafsirLibrary": "Classic tafsir library",
+  "tafsirAndTranslation": "Tafsir & translation",
+  "tafsir": "Tafsir",
+  "translation": "Translation",
+  "tafsirSourceLabel": "Tafsir source",
+  "fromN": "From {n}",
+  "@fromN": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "toN": "To {n}",
+  "@toN": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "rangeStart": "Start",
+  "rangeEnd": "End",
+  "noTafsir": "No tafsir",
+  "noTafsirSubtitle": "Choose a range then tap refresh.",
+  "noTranslation": "No translation",
+  "noTranslationSubtitle": "Tap refresh to fetch the translation.",
+  "translationLine": "Ayah {number}: {text}",
+  "@translationLine": {
+    "placeholders": {
+      "number": { "type": "int" },
+      "text": { "type": "String" }
+    }
+  },
+  "translationLanguage": "Translation language",
+  "refreshTafsir": "Refresh tafsir",
+  "refreshTranslation": "Refresh translation",
+  "savedSurahs": "Saved surahs",
+  "savedAyahs": "Saved ayahs",
+  "lastPositions": "Last memorization positions",
+  "savedToBookmarks": "Saved to bookmarks",
+  "surahNumber": "Surah no. {id}",
+  "@surahNumber": {
+    "placeholders": { "id": { "type": "int" } }
+  },
+  "fromAyahToAyah": "From ayah {from} to {to}",
+  "@fromAyahToAyah": {
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" }
+    }
+  },
+
+  "memorizationTitle": "Memorization",
+  "memorizationSetup": "Session setup",
+  "chooseSurah": "Choose surah",
+  "ayahRange": "Ayah range",
+  "fromAyah": "From ayah",
+  "toAyah": "To ayah",
+  "ayahCount": "Ayah count: {count}",
+  "@ayahCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "startSession": "Start memorization session",
+  "audioControls": "Audio controls",
+  "playbackSpeed": "Speed",
+  "repeatAyah": "Repeat ayah",
+  "markMemorized": "Memorized",
+  "memorizedDone": "Memorized ✓",
+  "markDifficult": "Mark as difficult",
+  "markedDifficult": "Difficult ⚑",
+  "showText": "Show text",
+  "hideText": "Hide text",
+  "tapToReveal": "Tap to reveal ayah",
+  "preparingSession": "Preparing...",
+  "loadingAyahs": "Loading ayahs...",
+
+  "reviewTitle": "Review",
+  "noReviewItems": "No items to review",
+  "noReviewItemsSubtitle": "Start memorizing ayahs to see them here in your review queue.",
+  "reviewed": "Reviewed",
+  "markReviewed": "Review",
+  "repeat": "Repeat",
+  "difficult": "Difficult",
+  "difficultQuestion": "Difficult?",
+  "showAyahs": "Show ayahs",
+  "hideAyahs": "Hide ayahs",
+  "highPriority": "High priority",
+  "mediumPriority": "Medium priority",
+  "lowPriority": "Low priority",
+
+  "tasmee3Title": "Self-test",
+  "tasmee3Setup": "Test session setup",
+  "tasmee3Description": "Choose a surah and range, then test your memorization ayah by ayah",
+  "speechRecitePrompt": "Recite the ayah by voice, mistakes will be highlighted in red",
+  "startVoiceRecitation": "Start voice recitation",
+  "stopListening": "Stop listening",
+  "microphonePermissionRequired": "Microphone permission is required for voice recitation",
+  "speechError": "Could not recognize speech, please try again",
+  "speechNotAvailable": "Speech recognition is not available on this device/simulator",
+  "playAudioTest": "Play audio test",
+  "stopAudioTest": "Stop audio test",
+  "audioTestFailed": "Could not play test audio, check internet and volume",
+  "autoGradingHint": "After recitation ends, your ayah is graded automatically and the next ayah starts",
+  "autoGradingActive": "Auto grading is active based on your voice recitation",
+  "voiceAccuracy": "Matching accuracy: {percent}%",
+  "@voiceAccuracy": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "startTest": "Start test",
+  "testProgress": "Progress",
+  "revealAyah": "Reveal ayah",
+  "hiddenAyah": "Ayah hidden — do you know it?",
+  "iKnowIt": "I know it",
+  "iHesitated": "I hesitated",
+  "iForgot": "I forgot",
+  "testSummary": "Session summary",
+  "testScore": "Score",
+  "ayahsToReview": "Ayahs to review",
+  "retakeTest": "Retake test",
+  "backToSetup": "New setup",
+  "sessionHistory": "Session history",
+  "noHistory": "No history yet",
+  "noHistorySubtitle": "Previous test session results will appear here",
+  "excellent": "Excellent",
+  "good": "Good",
+  "needsWork": "Needs work",
+  "sessionDetails": "Session details",
+  "knownAyahs": "Known ayahs",
+  "hesitantAyahs": "Hesitated",
+  "unknownAyahs": "Forgotten",
+  "scoreLabel": "Score: {score}%",
+  "@scoreLabel": {
+    "placeholders": { "score": { "type": "int" } }
+  },
+
+  "achievementsTitle": "Achievements",
+  "loadingAchievements": "Loading achievements...",
+  "earnedBadges": "Earned badges",
+  "upcomingGoals": "Upcoming goals",
+  "noAchievements": "No achievements yet",
+  "noAchievementsSubtitle": "Start memorizing and reviewing to earn your first badge.",
+  "overallProgressLabel": "Overall progress",
+  "badgesProgress": "{earned} / {total} badges",
+  "@badgesProgress": {
+    "placeholders": {
+      "earned": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "allBadgesEarned": "All badges earned! 🎉",
+  "remainingBadges": "{count} badges remaining",
+  "@remainingBadges": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "profileTitle": "Profile",
+  "memorizedAyahsCount": "ayahs memorized",
+  "reviewSessionsCount": "review sessions",
+  "streakLabel": "day streak",
+  "yourBadges": "Your badges",
+  "noBadges": "No badges yet",
+  "signOut": "Sign out",
+  "signOutConfirm": "Are you sure you want to sign out?",
+  "signOutConfirmYes": "Yes, sign out",
+
+  "settingsTitle": "Settings",
+  "searchFocusModeTitle": "Reading mode from search",
+  "searchFocusModeSubtitle": "Open ayah search results directly in focused reading mode",
+  "unifiedReadingPrefsTitle": "Unified reading settings",
+  "unifiedReadingPrefsSubtitle": "Use one reading profile for all surahs instead of per-surah settings",
+  "darkMode": "Dark mode",
+  "darkModeSubtitle": "Switch between light and dark theme",
+  "language": "Language",
+  "languageSubtitle": "English",
+  "fontSize": "Font size",
+  "fontSizeSubtitle": "Adjust app font scaling",
+  "reminders": "Reminders",
+  "remindersSubtitle": "Daily memorization reminder at 8:00 AM",
+  "remindersDescription": "When enabled, a daily notification is sent at 8:00 AM to remind you of your memorization.",
+  "notificationsTitle": "Notifications",
+  "notificationsSubtitle": "Manage app alerts and daily reminders",
+  "notificationsDescription": "You can enable/disable notifications and choose your daily reminder time.",
+  "notificationsTimeTitle": "Daily reminder time",
+  "notificationsTimeSubtitle": "Current time: {time}",
+  "@notificationsTimeSubtitle": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "notificationsTimeHint": "A reminder will be sent daily at {hour}:{minute}",
+  "@notificationsTimeHint": {
+    "placeholders": {
+      "hour": { "type": "String" },
+      "minute": { "type": "String" }
+    }
+  },
+
+  "fullNameLabel": "Full name",
+  "confirmPasswordLabel": "Confirm password",
+  "resetLinkSent": "Password reset link sent",
+  "orContinueWithEmail": "Or continue with email",
+
+  "skip": "Skip",
+  "startNow": "Start now",
+  "next": "Next",
+  "onboardingTitle1": "A smart, organized memorization journey",
+  "onboardingSubtitle1": "A flexible daily plan that fits your time and builds strong consistency.",
+  "onboardingTitle2": "Gradual review without pressure",
+  "onboardingSubtitle2": "A review system that helps you retain memorization for the long term.",
+  "onboardingTitle3": "Motivating recitation sessions",
+  "onboardingSubtitle3": "Track your performance and progress with visual feedback that boosts motivation.",
+  "onboardingTitle4": "Every achievement counts",
+  "onboardingSubtitle4": "An elegant progress dashboard that reflects your journey step by step.",
+
+  "guest": "Guest",
+  "signInForFullFeatures": "Sign in to unlock all features",
+  "currentGoals": "Current goals",
+  "goalDone": "Done! 🎉",
+  "memorizeGoal": "Memorize {count} ayahs",
+  "@memorizeGoal": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "reviewSessionsGoal": "Complete {count} review sessions",
+  "@reviewSessionsGoal": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "remainingSessions": "{count} sessions remaining",
+  "@remainingSessions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "ayahProgress": "Ayah {current} / {total}",
+  "@ayahProgress": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "ayahBreakdown": "Ayah breakdown",
+  "bubbleKnown": "Memorized",
+  "bubbleHesitant": "Stumbled",
+  "bubbleUnknown": "Forgot"
+}
