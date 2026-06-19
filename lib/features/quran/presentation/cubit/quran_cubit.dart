@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
 import 'package:werdi/core/services/app_preferences.dart';
-import 'package:werdi/features/quran/data/repositories/laravel_bookmark_repository.dart';
+import 'package:werdi/features/quran/domain/repositories/bookmark_repository.dart';
 import 'package:werdi/features/quran/domain/models/quran_filter.dart';
 import 'package:werdi/features/quran/data/services/mp3quran_reciters_api.dart';
 import 'package:werdi/features/quran/domain/models/quran_audio_reciter.dart';
@@ -16,7 +16,7 @@ class QuranCubit extends Cubit<QuranState> {
     required QuranTafsirRepository tafsirRepository,
     required AppPreferences preferences,
     required Mp3QuranRecitersApi mp3QuranRecitersApi,
-    required LaravelBookmarkRepository bookmarkRepository,
+    required BookmarkRepository bookmarkRepository,
   }) : _repository = repository,
        _tafsirRepository = tafsirRepository,
        _preferences = preferences,
@@ -28,7 +28,7 @@ class QuranCubit extends Cubit<QuranState> {
   final QuranTafsirRepository _tafsirRepository;
   final AppPreferences _preferences;
   final Mp3QuranRecitersApi _mp3QuranRecitersApi;
-  final LaravelBookmarkRepository _bookmarkRepository;
+  final BookmarkRepository _bookmarkRepository;
   static const _tafsirSourceKey = 'quran_selected_tafsir_source';
   static const _translationLanguageKey = 'quran_selected_translation_language';
   static const _reciterKey = 'quran_selected_reciter';

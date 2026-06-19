@@ -1,35 +1,43 @@
 import 'dart:convert';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:werdi/core/database/app_database.dart';
-import 'package:werdi/core/network/laravel_api_client.dart';
+import 'package:werdi/core/network/supabase_service.dart';
 import 'package:werdi/core/services/app_preferences.dart';
 import 'package:werdi/core/services/offline_sync_service.dart';
+import 'package:werdi/features/quran/domain/repositories/bookmark_repository.dart';
 import 'package:werdi/features/quran/presentation/cubit/quran_state.dart';
 
-class LaravelBookmarkRepository {
-  const LaravelBookmarkRepository({
-    required LaravelApiClient client,
+class SupabaseBookmarkRepository implements BookmarkRepository {
+  const SupabaseBookmarkRepository({
     AppPreferences? preferences,
     OfflineSyncService? syncService,
     AppDatabase? database,
-  })  : _client = client,
-        _preferences = preferences ?? const SharedPrefsService(),
+  })  : _preferences = preferences ?? const SharedPrefsService(),
         _syncService = syncService,
         _database = database;
 
-  final LaravelApiClient _client;
   final AppPreferences _preferences;
   final OfflineSyncService? _syncService;
   final AppDatabase? _database;
   static const _cacheKey = 'bookmarks_cache_v1';
   static const _legacyMigratedKey = 'bookmarks_cache_v1_migrated_to_drift';
 
-  Future<({Set<int> surahIds, List<AyahBookmark> ayahs})>
-      getBookmarks() async {
+  SupabaseClient get _client => SupabaseService.client;
+
+  @override
+  Future<({Set<int> surahIds, List<AyahBookmark> ayahs})> getBookmarks() async {
+    if (!_canSyncRemote) {
+      final cached = await _fromCache();
+      return cached ?? (surahIds: <int>{}, ayahs: const <AyahBookmark>[]);
+    }
+
     try {
-      final response = await _client.dio.get<Map<String, dynamic>>('/bookmarks');
-      final data = response.data ?? <String, dynamic>{};
-      final parsed = _parse(data);
+      final rows = await _client
+          .from('bookmarks')
+          .select('type, surah_number, ayah_number, preview_text')
+          .eq('user_id', SupabaseService.currentUserId!);
+      final parsed = _parseRows(rows);
       await _cache(parsed.surahIds, parsed.ayahs);
       return parsed;
     } catch (_) {
@@ -38,6 +46,7 @@ class LaravelBookmarkRepository {
     }
   }
 
+  @override
   Future<bool> toggleSurah(int surahNumber) async {
     final current = await getBookmarks();
     final surahs = Set<int>.from(current.surahIds);
@@ -48,12 +57,25 @@ class LaravelBookmarkRepository {
       surahs.remove(surahNumber);
     }
     await _cache(surahs, current.ayahs);
+
+    if (!_canSyncRemote) return nowBookmarked;
+
     try {
-      final response = await _client.dio.post<Map<String, dynamic>>(
-        '/bookmarks/surah',
-        data: {'surah_number': surahNumber},
-      );
-      return (response.data?['bookmarked'] as bool?) ?? nowBookmarked;
+      if (nowBookmarked) {
+        await _client.from('bookmarks').insert({
+          'user_id': SupabaseService.currentUserId,
+          'type': 'surah',
+          'surah_number': surahNumber,
+        });
+      } else {
+        await _client
+            .from('bookmarks')
+            .delete()
+            .eq('user_id', SupabaseService.currentUserId!)
+            .eq('type', 'surah')
+            .eq('surah_number', surahNumber);
+      }
+      return nowBookmarked;
     } catch (_) {
       await _syncService?.enqueue(
         type: 'bookmark.toggle_surah',
@@ -63,6 +85,7 @@ class LaravelBookmarkRepository {
     }
   }
 
+  @override
   Future<bool> toggleAyah({
     required int surahNumber,
     required int ayahNumber,
@@ -87,16 +110,28 @@ class LaravelBookmarkRepository {
       ayahs.removeAt(existingIndex);
     }
     await _cache(current.surahIds, ayahs);
+
+    if (!_canSyncRemote) return nowBookmarked;
+
     try {
-      final response = await _client.dio.post<Map<String, dynamic>>(
-        '/bookmarks/ayah',
-        data: {
+      if (nowBookmarked) {
+        await _client.from('bookmarks').insert({
+          'user_id': SupabaseService.currentUserId,
+          'type': 'ayah',
           'surah_number': surahNumber,
           'ayah_number': ayahNumber,
           'preview_text': previewText,
-        },
-      );
-      return (response.data?['bookmarked'] as bool?) ?? nowBookmarked;
+        });
+      } else {
+        await _client
+            .from('bookmarks')
+            .delete()
+            .eq('user_id', SupabaseService.currentUserId!)
+            .eq('type', 'ayah')
+            .eq('surah_number', surahNumber)
+            .eq('ayah_number', ayahNumber);
+      }
+      return nowBookmarked;
     } catch (_) {
       await _syncService?.enqueue(
         type: 'bookmark.toggle_ayah',
@@ -110,23 +145,30 @@ class LaravelBookmarkRepository {
     }
   }
 
-  ({Set<int> surahIds, List<AyahBookmark> ayahs}) _parse(
-    Map<String, dynamic> data,
-  ) {
-    final surahIds = (data['surah_ids'] as List? ?? [])
-        .map((e) => (e as num).toInt())
-        .toSet();
-    final ayahs = (data['ayahs'] as List? ?? [])
-        .whereType<Map>()
-        .map(
-          (e) => AyahBookmark(
-            surahNumber: (e['surah_number'] as num? ?? 0).toInt(),
-            surahNameArabic: e['surah_name_arabic'] as String? ?? '',
-            ayahNumber: (e['ayah_number'] as num? ?? 0).toInt(),
-            previewText: e['preview_text'] as String? ?? '',
-          ),
-        )
-        .toList();
+  bool get _canSyncRemote =>
+      SupabaseService.isConfigured && SupabaseService.hasSession;
+
+  ({Set<int> surahIds, List<AyahBookmark> ayahs}) _parseRows(List<dynamic> rows) {
+    final surahIds = <int>{};
+    final ayahs = <AyahBookmark>[];
+    for (final row in rows) {
+      if (row is! Map) continue;
+      final map = row.map((key, value) => MapEntry('$key', value));
+      final type = '${map['type'] ?? ''}';
+      final surahNumber = (map['surah_number'] as num? ?? 0).toInt();
+      if (type == 'surah') {
+        surahIds.add(surahNumber);
+        continue;
+      }
+      ayahs.add(
+        AyahBookmark(
+          surahNumber: surahNumber,
+          surahNameArabic: '',
+          ayahNumber: (map['ayah_number'] as num? ?? 0).toInt(),
+          previewText: map['preview_text'] as String? ?? '',
+        ),
+      );
+    }
     return (surahIds: surahIds, ayahs: ayahs);
   }
 
@@ -183,10 +225,30 @@ class LaravelBookmarkRepository {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map<String, dynamic>) return null;
-      return _parse(decoded);
+      return _parseLegacyJson(decoded);
     } catch (_) {
       return null;
     }
+  }
+
+  ({Set<int> surahIds, List<AyahBookmark> ayahs}) _parseLegacyJson(
+    Map<String, dynamic> data,
+  ) {
+    final surahIds = (data['surah_ids'] as List? ?? [])
+        .map((e) => (e as num).toInt())
+        .toSet();
+    final ayahs = (data['ayahs'] as List? ?? [])
+        .whereType<Map>()
+        .map(
+          (e) => AyahBookmark(
+            surahNumber: (e['surah_number'] as num? ?? 0).toInt(),
+            surahNameArabic: e['surah_name_arabic'] as String? ?? '',
+            ayahNumber: (e['ayah_number'] as num? ?? 0).toInt(),
+            previewText: e['preview_text'] as String? ?? '',
+          ),
+        )
+        .toList();
+    return (surahIds: surahIds, ayahs: ayahs);
   }
 
   Future<void> _migrateLegacyCacheIfNeeded() async {
@@ -203,7 +265,7 @@ class LaravelBookmarkRepository {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is Map<String, dynamic>) {
-        final parsed = _parse(decoded);
+        final parsed = _parseLegacyJson(decoded);
         await _database.replaceBookmarksCache(
           surahIds: parsed.surahIds,
           ayahs: parsed.ayahs

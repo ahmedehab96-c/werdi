@@ -1,21 +1,19 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:werdi/core/database/app_database.dart';
-import 'package:werdi/core/network/laravel_api_client.dart';
+import 'package:werdi/core/network/supabase_service.dart';
 import 'package:werdi/core/services/app_preferences.dart';
 import 'package:werdi/core/services/offline_sync_service.dart';
 import 'package:werdi/shared/repositories/user_progress_repository.dart';
 
-class LaravelUserProgressRepository implements UserProgressRepository {
-  LaravelUserProgressRepository({
-    required LaravelApiClient client,
+class SupabaseUserProgressRepository implements UserProgressRepository {
+  SupabaseUserProgressRepository({
     AppPreferences? preferences,
     OfflineSyncService? syncService,
     AppDatabase? database,
-  })  : _client = client,
-        _preferences = preferences ?? const SharedPrefsService(),
+  })  : _preferences = preferences ?? const SharedPrefsService(),
         _syncService = syncService,
         _database = database;
 
-  final LaravelApiClient _client;
   final AppPreferences _preferences;
   final OfflineSyncService? _syncService;
   final AppDatabase? _database;
@@ -23,18 +21,28 @@ class LaravelUserProgressRepository implements UserProgressRepository {
   static const _reviewKey = 'progress_reviewed_items_count';
   static const _streakKey = 'progress_streak_days';
 
+  SupabaseClient get _client => SupabaseService.client;
+
   @override
   Future<UserProgressSnapshot> getProgress({required String userId}) async {
+    if (!_canSyncRemote(userId)) {
+      return _cachedSnapshot(userId: userId);
+    }
+
     try {
-      final response = await _client.dio.get<Map<String, dynamic>>(
-        '/progress/summary',
-        queryParameters: {'user_id': userId},
-      );
-      final data = response.data ?? <String, dynamic>{};
+      final row = await _client
+          .from('user_progress')
+          .select(
+            'memorized_ayah_count, reviewed_items_count, streak_days',
+          )
+          .eq('user_id', userId)
+          .maybeSingle();
       final snapshot = UserProgressSnapshot(
-        memorizedAyahCount: (data['memorized_ayah_count'] as num? ?? 0).toInt(),
-        reviewedItemsCount: (data['reviewed_items_count'] as num? ?? 0).toInt(),
-        streakDays: (data['streak_days'] as num? ?? 0).toInt(),
+        memorizedAyahCount:
+            (row?['memorized_ayah_count'] as num? ?? 0).toInt(),
+        reviewedItemsCount:
+            (row?['reviewed_items_count'] as num? ?? 0).toInt(),
+        streakDays: (row?['streak_days'] as num? ?? 0).toInt(),
       );
       await _cacheSnapshot(snapshot, userId: userId);
       return snapshot;
@@ -66,16 +74,20 @@ class LaravelUserProgressRepository implements UserProgressRepository {
       streakDays: local.streakDays,
     );
     await _cacheSnapshot(updated, userId: userId);
+
+    if (!_canSyncRemote(userId)) return;
+
     try {
-      await _client.dio.post<Map<String, dynamic>>(
-        '/progress/memorization',
-        data: {
-          'user_id': userId,
-          'surah_number': surahNumber,
-          'ayah_number': ayahNumber,
-          'progress': progress,
-        },
-      );
+      await _client.from('user_progress').upsert({
+        'user_id': userId,
+        'memorized_ayah_count': memorizedCount,
+        'reviewed_items_count': local.reviewedItemsCount,
+        'streak_days': local.streakDays,
+        'last_surah_number': surahNumber,
+        'last_ayah_number': ayahNumber,
+        'last_progress': progress,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
     } catch (_) {
       await _syncService?.enqueue(
         type: 'progress.memorization',
@@ -104,16 +116,17 @@ class LaravelUserProgressRepository implements UserProgressRepository {
       streakDays: local.streakDays,
     );
     await _cacheSnapshot(updated, userId: userId);
+
+    if (!_canSyncRemote(userId)) return;
+
     try {
-      await _client.dio.post<Map<String, dynamic>>(
-        '/progress/review',
-        data: {
-          'user_id': userId,
-          'review_id': reviewId,
-          'reviewed': reviewed,
-          'difficult': difficult,
-        },
-      );
+      await _client.from('user_progress').upsert({
+        'user_id': userId,
+        'memorized_ayah_count': updated.memorizedAyahCount,
+        'reviewed_items_count': updated.reviewedItemsCount,
+        'streak_days': updated.streakDays,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
     } catch (_) {
       await _syncService?.enqueue(
         type: 'progress.review',
@@ -127,16 +140,30 @@ class LaravelUserProgressRepository implements UserProgressRepository {
     }
   }
 
+  bool _canSyncRemote(String userId) {
+    return SupabaseService.isConfigured &&
+        SupabaseService.hasSession &&
+        userId.isNotEmpty &&
+        !userId.startsWith('guest') &&
+        !userId.startsWith('offline_');
+  }
+
   Future<void> _cacheSnapshot(
     UserProgressSnapshot snapshot, {
     required String userId,
   }) async {
-    await _setValue(_keyForUser(_memKey, userId), snapshot.memorizedAyahCount.toString());
+    await _setValue(
+      _keyForUser(_memKey, userId),
+      snapshot.memorizedAyahCount.toString(),
+    );
     await _setValue(
       _keyForUser(_reviewKey, userId),
       snapshot.reviewedItemsCount.toString(),
     );
-    await _setValue(_keyForUser(_streakKey, userId), snapshot.streakDays.toString());
+    await _setValue(
+      _keyForUser(_streakKey, userId),
+      snapshot.streakDays.toString(),
+    );
   }
 
   Future<UserProgressSnapshot> _cachedSnapshot({required String userId}) async {
@@ -145,9 +172,11 @@ class LaravelUserProgressRepository implements UserProgressRepository {
         ) ??
         0;
     final review =
-        int.tryParse(await _getValue(_keyForUser(_reviewKey, userId)) ?? '') ?? 0;
+        int.tryParse(await _getValue(_keyForUser(_reviewKey, userId)) ?? '') ??
+            0;
     final streak =
-        int.tryParse(await _getValue(_keyForUser(_streakKey, userId)) ?? '') ?? 0;
+        int.tryParse(await _getValue(_keyForUser(_streakKey, userId)) ?? '') ??
+            0;
     return UserProgressSnapshot(
       memorizedAyahCount: mem,
       reviewedItemsCount: review,

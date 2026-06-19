@@ -56,10 +56,20 @@ jobs:
         run: flutter gen-l10n
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: |
+          EXTRA_DEFINES=""
+          if [ -n "${{ secrets.SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            EXTRA_DEFINES="--dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}"
+          fi
+          flutter build apk --release $EXTRA_DEFINES
 
       - name: Build release AAB
-        run: flutter build appbundle --release
+        run: |
+          EXTRA_DEFINES=""
+          if [ -n "${{ secrets.SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            EXTRA_DEFINES="--dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}"
+          fi
+          flutter build appbundle --release $EXTRA_DEFINES
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

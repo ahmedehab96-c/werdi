@@ -1,13 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:werdi/features/achievements/data/repositories/laravel_achievements_repository.dart';
+import 'package:werdi/features/achievements/domain/repositories/achievements_repository.dart';
 import 'package:werdi/features/achievements/presentation/cubit/achievements_state.dart';
 
 class AchievementsCubit extends Cubit<AchievementsState> {
-  AchievementsCubit({required LaravelAchievementsRepository repository})
+  AchievementsCubit({required AchievementsRepository repository})
       : _repository = repository,
         super(const AchievementsState());
 
-  final LaravelAchievementsRepository _repository;
+  final AchievementsRepository _repository;
 
   Future<void> load() async {
     emit(state.copyWith(status: AchievementsStatus.loading));

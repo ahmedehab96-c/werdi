@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:werdi/core/di/app_injector.dart';
+import 'package:werdi/core/network/supabase_service.dart';
 
 final class BootstrapService {
   const BootstrapService._();
@@ -16,6 +17,7 @@ final class BootstrapService {
 
     await Hive.initFlutter();
     await AppInjector.appDatabase.ensureInitialized();
+    await SupabaseService.initialize();
     await AppInjector.restoreAuthSession();
     unawaited(AppInjector.quranContentSeedService.warmUpInBackground());
     unawaited(AppInjector.localQuranCacheService.clearExpired());

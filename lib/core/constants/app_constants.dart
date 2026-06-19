@@ -10,14 +10,16 @@ final class AppConstants {
     'APP_ENV',
     defaultValue: 'production',
   );
-  static const String laravelBaseUrl = String.fromEnvironment(
-    'LARAVEL_BASE_URL',
-    defaultValue: 'https://api.werdi.app/api',
+  static const String supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: '',
   );
-  static const bool useLaravelBackend = bool.fromEnvironment(
-    'USE_LARAVEL_BACKEND',
-    defaultValue: true,
+  static const String supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: '',
   );
+  static bool get useSupabaseBackend =>
+      supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
   static const Size designSize = Size(390, 844);
   static const Locale defaultLocale = Locale('ar');
   static const List<Locale> supportedLocales = [Locale('ar'), Locale('en')];

@@ -1,27 +1,28 @@
 import 'dart:convert';
+import 'dart:io';
 
-import 'package:dio/dio.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:werdi/core/database/app_database.dart';
-import 'package:werdi/core/network/laravel_api_client.dart';
+import 'package:werdi/core/network/supabase_service.dart';
 import 'package:werdi/core/services/app_preferences.dart';
 
 /// Queues write operations while offline, then replays them when possible.
 class OfflineSyncService {
   OfflineSyncService({
-    required LaravelApiClient client,
     AppPreferences? preferences,
     AppDatabase? database,
-  })  : _client = client,
-        _preferences = preferences ?? const SharedPrefsService(),
+  })  : _preferences = preferences ?? const SharedPrefsService(),
         _database = database;
 
-  final LaravelApiClient _client;
   final AppPreferences _preferences;
   final AppDatabase? _database;
 
   static const _queueKey = 'offline_sync_queue_v1';
   static const _maxQueueLength = 500;
   bool _migratedToDb = false;
+
+  SupabaseClient? get _client =>
+      SupabaseService.isConfigured ? SupabaseService.client : null;
 
   Future<void> enqueue({
     required String type,
@@ -41,6 +42,8 @@ class OfflineSyncService {
   }
 
   Future<void> flushPending() async {
+    if (!SupabaseService.isConfigured || !SupabaseService.hasSession) return;
+
     final queue = await _readQueue();
     if (queue.isEmpty) return;
 
@@ -54,7 +57,14 @@ class OfflineSyncService {
 
       try {
         await _execute(type: type, payload: payload);
-      } on DioException catch (e) {
+      } on SocketException {
+        remaining.add(item);
+        final index = queue.indexOf(item);
+        if (index + 1 < queue.length) {
+          remaining.addAll(queue.sublist(index + 1));
+        }
+        break;
+      } on PostgrestException catch (e) {
         if (_isConnectivityIssue(e)) {
           remaining.add(item);
           final index = queue.indexOf(item);
@@ -63,10 +73,7 @@ class OfflineSyncService {
           }
           break;
         }
-        // Drop non-connectivity failing operation (validation/server conflict)
-        // and continue replaying other operations.
       } catch (_) {
-        // Keep unknown failures for another try.
         remaining.add(item);
       }
     }
@@ -78,52 +85,123 @@ class OfflineSyncService {
     required String type,
     required Map<String, dynamic> payload,
   }) async {
+    final client = _client;
+    final userId = SupabaseService.currentUserId;
+    if (client == null || userId == null) return;
+
     switch (type) {
       case 'bookmark.toggle_surah':
-        await _client.dio.post<Map<String, dynamic>>(
-          '/bookmarks/surah',
-          data: {'surah_number': payload['surah_number']},
-        );
+        final surahNumber = (payload['surah_number'] as num).toInt();
+        final existing = await client
+            .from('bookmarks')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('type', 'surah')
+            .eq('surah_number', surahNumber)
+            .maybeSingle();
+        if (existing == null) {
+          await client.from('bookmarks').insert({
+            'user_id': userId,
+            'type': 'surah',
+            'surah_number': surahNumber,
+          });
+        } else {
+          await client
+              .from('bookmarks')
+              .delete()
+              .eq('user_id', userId)
+              .eq('type', 'surah')
+              .eq('surah_number', surahNumber);
+        }
       case 'bookmark.toggle_ayah':
-        await _client.dio.post<Map<String, dynamic>>(
-          '/bookmarks/ayah',
-          data: {
-            'surah_number': payload['surah_number'],
-            'ayah_number': payload['ayah_number'],
-            'preview_text': payload['preview_text'],
-          },
-        );
+        final surahNumber = (payload['surah_number'] as num).toInt();
+        final ayahNumber = (payload['ayah_number'] as num).toInt();
+        final previewText = payload['preview_text'] as String? ?? '';
+        final existing = await client
+            .from('bookmarks')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('type', 'ayah')
+            .eq('surah_number', surahNumber)
+            .eq('ayah_number', ayahNumber)
+            .maybeSingle();
+        if (existing == null) {
+          await client.from('bookmarks').insert({
+            'user_id': userId,
+            'type': 'ayah',
+            'surah_number': surahNumber,
+            'ayah_number': ayahNumber,
+            'preview_text': previewText,
+          });
+        } else {
+          await client
+              .from('bookmarks')
+              .delete()
+              .eq('user_id', userId)
+              .eq('type', 'ayah')
+              .eq('surah_number', surahNumber)
+              .eq('ayah_number', ayahNumber);
+        }
       case 'progress.memorization':
-        await _client.dio.post<Map<String, dynamic>>(
-          '/progress/memorization',
-          data: {
-            'user_id': payload['user_id'],
-            'surah_number': payload['surah_number'],
-            'ayah_number': payload['ayah_number'],
-            'progress': payload['progress'],
-          },
-        );
+        final targetUserId = payload['user_id'] as String? ?? userId;
+        final progressRow = await client
+            .from('user_progress')
+            .select(
+              'memorized_ayah_count, reviewed_items_count, streak_days',
+            )
+            .eq('user_id', targetUserId)
+            .maybeSingle();
+        final currentMemorized =
+            (progressRow?['memorized_ayah_count'] as num? ?? 0).toInt();
+        final reviewed =
+            (progressRow?['reviewed_items_count'] as num? ?? 0).toInt();
+        final streak = (progressRow?['streak_days'] as num? ?? 0).toInt();
+        final progress = (payload['progress'] as num).toDouble();
+        final memorizedCount = currentMemorized + 1;
+        await client.from('user_progress').upsert({
+          'user_id': targetUserId,
+          'memorized_ayah_count': memorizedCount,
+          'reviewed_items_count': reviewed,
+          'streak_days': streak,
+          'last_surah_number': (payload['surah_number'] as num).toInt(),
+          'last_ayah_number': (payload['ayah_number'] as num).toInt(),
+          'last_progress': progress,
+          'updated_at': DateTime.now().toIso8601String(),
+        });
       case 'progress.review':
-        await _client.dio.post<Map<String, dynamic>>(
-          '/progress/review',
-          data: {
-            'user_id': payload['user_id'],
-            'review_id': payload['review_id'],
-            'reviewed': payload['reviewed'],
-            'difficult': payload['difficult'],
-          },
-        );
+        final targetUserId = payload['user_id'] as String? ?? userId;
+        final reviewedFlag = payload['reviewed'] as bool? ?? false;
+        final progressRow = await client
+            .from('user_progress')
+            .select(
+              'memorized_ayah_count, reviewed_items_count, streak_days',
+            )
+            .eq('user_id', targetUserId)
+            .maybeSingle();
+        final memorized =
+            (progressRow?['memorized_ayah_count'] as num? ?? 0).toInt();
+        final reviewedCount =
+            (progressRow?['reviewed_items_count'] as num? ?? 0).toInt();
+        final streak = (progressRow?['streak_days'] as num? ?? 0).toInt();
+        await client.from('user_progress').upsert({
+          'user_id': targetUserId,
+          'memorized_ayah_count': memorized,
+          'reviewed_items_count':
+              reviewedFlag ? reviewedCount + 1 : reviewedCount,
+          'streak_days': streak,
+          'updated_at': DateTime.now().toIso8601String(),
+        });
       default:
-        // Unknown operation type should be ignored.
         return;
     }
   }
 
-  bool _isConnectivityIssue(DioException e) {
-    return e.type == DioExceptionType.connectionError ||
-        e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout ||
-        e.type == DioExceptionType.sendTimeout;
+  bool _isConnectivityIssue(PostgrestException e) {
+    final message = e.message.toLowerCase();
+    return message.contains('network') ||
+        message.contains('socket') ||
+        message.contains('timeout') ||
+        message.contains('connection');
   }
 
   Future<List<Map<String, dynamic>>> _readQueue() async {

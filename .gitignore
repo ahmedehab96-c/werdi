@@ -49,3 +49,8 @@ app.*.map.json
 *.jks
 *.keystore
 p8_private_key_*.p8
+
+# Supabase local secrets (do not commit)
+/config/dart_defines.json
+/config/supabase.env
+/supabase/.temp/

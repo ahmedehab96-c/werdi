@@ -50,8 +50,9 @@ lib/
 
 All concrete implementations are constructed in `core/di/app_injector.dart`. The
 injector exposes interface‑typed gateways so the rest of the app depends on
-abstractions, not implementations. A `useLaravelBackend` flag in `AppConstants`
-switches between the Laravel backend and local/no‑op implementations.
+abstractions, not implementations. Cloud data is stored in Supabase when
+`SUPABASE_URL` and `SUPABASE_ANON_KEY` are configured; otherwise the app runs in
+local-only mode.
 
 ## Design system
 
@@ -83,6 +84,16 @@ flutter run
 
 ARB files live in `lib/l10n/` (`intl_ar.arb`, `intl_en.arb`). Generation is
 configured via `l10n.yaml` and runs automatically on build (`generate: true`).
+
+### Supabase backend
+
+See `docs/SUPABASE_SETUP.md` and run schema from `docs/supabase_schema.sql`.
+
+```bash
+flutter run \
+  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY
+```
 
 ### Quality checks
 
@@ -122,6 +133,7 @@ For production release workflows and store submission prep, see:
 
 ## Tech stack
 
-Flutter (Material 3) · flutter_bloc · go_router · flutter_screenutil ·
-google_fonts · dio · hive · shared_preferences · just_audio ·
-flutter_local_notifications · flutter_secure_storage.
+Flutter (Material 3) · flutter_bloc · flutter_riverpod · go_router ·
+flutter_screenutil · google_fonts · dio · supabase_flutter · hive · drift ·
+shared_preferences · just_audio · flutter_local_notifications ·
+flutter_secure_storage.

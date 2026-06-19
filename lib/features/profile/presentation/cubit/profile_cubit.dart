@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:werdi/features/achievements/data/repositories/laravel_achievements_repository.dart';
+import 'package:werdi/features/achievements/domain/repositories/achievements_repository.dart';
 import 'package:werdi/features/auth/domain/repositories/auth_repository.dart';
 import 'package:werdi/features/profile/presentation/cubit/profile_state.dart';
 import 'package:werdi/shared/repositories/user_progress_repository.dart';
@@ -8,7 +8,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit({
     required AuthRepository authRepository,
     required UserProgressRepository progressRepository,
-    required LaravelAchievementsRepository achievementsRepository,
+    required AchievementsRepository achievementsRepository,
   })  : _authRepository = authRepository,
         _progressRepository = progressRepository,
         _achievementsRepository = achievementsRepository,
@@ -16,7 +16,7 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   final AuthRepository _authRepository;
   final UserProgressRepository _progressRepository;
-  final LaravelAchievementsRepository _achievementsRepository;
+  final AchievementsRepository _achievementsRepository;
 
   Future<void> load() async {
     emit(state.copyWith(status: ProfileStatus.loading));
