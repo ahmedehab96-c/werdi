@@ -2,6 +2,13 @@
 
 This project no longer uses the Laravel backend. All cloud data (auth, bookmarks, progress, achievements) is stored in Supabase.
 
+## Dedicated Werdi project
+
+The app uses a dedicated Supabase project (`werdi-quran`), separate from LifeOS.
+
+Project dashboard:
+https://supabase.com/dashboard/project/rewgjxbpjoyyjmxtzwvk
+
 ## 1) Create a Supabase project
 
 1. Go to [https://supabase.com](https://supabase.com)
