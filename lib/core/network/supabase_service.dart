@@ -8,10 +8,14 @@ final class SupabaseService {
 
   static Future<void> initialize() async {
     if (!isConfigured) return;
-    await Supabase.initialize(
-      url: AppConstants.supabaseUrl,
-      publishableKey: AppConstants.supabaseAnonKey,
-    );
+    try {
+      await Supabase.initialize(
+        url: AppConstants.supabaseUrl,
+        publishableKey: AppConstants.supabaseAnonKey,
+      );
+    } catch (_) {
+      // Keep app usable offline/local if remote auth init fails.
+    }
   }
 
   static SupabaseClient get client => Supabase.instance.client;
