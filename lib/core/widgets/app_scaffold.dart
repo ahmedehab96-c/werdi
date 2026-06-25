@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:werdi/core/responsive/responsive.dart';
+import 'package:werdi/core/widgets/app_branded_background.dart';
 
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
@@ -8,11 +10,11 @@ class AppScaffold extends StatelessWidget {
     this.floatingActionButton,
     this.bottomNavigationBar,
     this.padding,
-    this.maxContentWidth = defaultMaxContentWidth,
+    this.maxContentWidth,
+    this.brandedBackground = true,
   });
 
-  /// Default cap for the content column on large (tablet/desktop/web) screens.
-  /// Below this width (i.e. on phones) the constraint has no effect.
+  /// Default cap for the content column on large screens.
   static const double defaultMaxContentWidth = 1040;
 
   final Widget body;
@@ -20,15 +22,29 @@ class AppScaffold extends StatelessWidget {
   final Widget? floatingActionButton;
   final Widget? bottomNavigationBar;
   final EdgeInsetsGeometry? padding;
-
-  /// Maximum width the [body] is allowed to occupy. Content is centered once
-  /// the available width exceeds this value, keeping layouts readable on wide
-  /// screens. Pass a smaller value for focused flows (e.g. forms).
-  final double maxContentWidth;
+  final double? maxContentWidth;
+  final bool brandedBackground;
 
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final resolvedMaxWidth =
+        maxContentWidth ?? Responsive.contentMaxWidth(context);
+    final resolvedPadding = padding ??
+        EdgeInsets.symmetric(
+          horizontal: Responsive.horizontalPadding(context),
+        );
+
+    final content = Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: resolvedMaxWidth),
+        child: Padding(
+          padding: resolvedPadding,
+          child: body,
+        ),
+      ),
+    );
+
     return Directionality(
       textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
@@ -36,15 +52,9 @@ class AppScaffold extends StatelessWidget {
         floatingActionButton: floatingActionButton,
         bottomNavigationBar: bottomNavigationBar,
         body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxContentWidth),
-              child: Padding(
-                padding: padding ?? EdgeInsets.zero,
-                child: body,
-              ),
-            ),
-          ),
+          child: brandedBackground
+              ? AppBrandedBackground(child: content)
+              : content,
         ),
       ),
     );

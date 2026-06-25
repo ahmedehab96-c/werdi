@@ -23,4 +23,9 @@ final class AppConstants {
   static const Size designSize = Size(390, 844);
   static const Locale defaultLocale = Locale('ar');
   static const List<Locale> supportedLocales = [Locale('ar'), Locale('en')];
+
+  /// Public privacy policy (required for Google Play).
+  static const String privacyPolicyUrl =
+      'https://github.com/ahmedehab96-c/werdi/blob/main/PRIVACY.md';
+  static const String appVersionLabel = '1.0.1';
 }

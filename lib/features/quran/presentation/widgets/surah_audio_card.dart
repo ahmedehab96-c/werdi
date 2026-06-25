@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:werdi/core/audio/audio_playback.dart';
+import 'package:werdi/core/responsive/responsive.dart';
 import 'package:werdi/core/di/app_injector.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
 import 'package:werdi/core/widgets/app_button.dart';
@@ -129,7 +131,7 @@ class _SurahAudioCardState extends State<SurahAudioCard> {
                   setState(() => _isPlaying = false);
                   return;
                 }
-                final urls = cubit.getAudioVerseUrls(
+                final urls = cubit.getAudioAyahUrls(
                   surahNumber: widget.surah.number,
                   ayahNumber: _selectedAyah,
                 );
@@ -142,7 +144,10 @@ class _SurahAudioCardState extends State<SurahAudioCard> {
                   );
                   return;
                 }
-                await _playWithFallback(urls);
+                await playAudioUrlsWithFallback(
+                  AppInjector.audioRepository,
+                  urls: urls,
+                );
                 if (!mounted) return;
                 setState(() => _isPlaying = true);
               } catch (_) {
@@ -162,22 +167,9 @@ class _SurahAudioCardState extends State<SurahAudioCard> {
     );
   }
 
-  Future<void> _playWithFallback(List<String> urls) async {
-    for (final url in urls) {
-      try {
-        await AppInjector.audioRepository.loadSource(source: url);
-        await AppInjector.audioRepository.play();
-        return;
-      } catch (_) {
-        continue;
-      }
-    }
-    throw Exception('all_audio_urls_failed');
-  }
-
   Future<void> _checkAvailability(QuranCubit cubit) async {
     setState(() => _isCheckingAvailability = true);
-    final urls = cubit.getAudioVerseUrls(
+    final urls = cubit.getAudioAyahUrls(
       surahNumber: widget.surah.number,
       ayahNumber: _selectedAyah,
     );
@@ -296,7 +288,12 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
             ),
           ),
           SizedBox(
-            height: 420.h,
+            height: Responsive.valueFor(
+              context,
+              compact: 280,
+              medium: 360,
+              expanded: 420,
+            ),
             child: ListView.builder(
               itemCount: filtered.length,
               itemBuilder: (context, index) {

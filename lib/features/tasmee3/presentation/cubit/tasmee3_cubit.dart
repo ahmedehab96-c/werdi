@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:quran/quran.dart' as quran_pkg;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:werdi/core/audio/audio_playback.dart';
+import 'package:werdi/core/services/app_preferences.dart';
+import 'package:werdi/core/services/reciter_preferences.dart';
 import 'package:werdi/features/quran/domain/models/quran_audio_reciter.dart';
 import 'package:werdi/features/quran/domain/repositories/quran_repository.dart';
 import 'package:werdi/features/tasmee3/domain/models/ayah_range.dart';
@@ -17,19 +20,21 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     required Tasmee3Repository repository,
     required QuranRepository quranRepository,
     required AudioRepository audioRepository,
+    required AppPreferences preferences,
   })  : _repository = repository,
         _quranRepository = quranRepository,
         _audio = audioRepository,
+        _preferences = preferences,
         super(const Tasmee3State());
 
   final Tasmee3Repository _repository;
   final QuranRepository _quranRepository;
   final AudioRepository _audio;
+  final AppPreferences _preferences;
   final stt.SpeechToText _speech = stt.SpeechToText();
   bool _speechInitialized = false;
   bool _isAutoGrading = false;
-  static final QuranAudioReciter _defaultReciter =
-      QuranAudioReciter.offlineFallback().first;
+  QuranAudioReciter? _selectedReciter;
 
   Future<void> initialize() async {
     emit(state.copyWith(isLoading: true));
@@ -300,14 +305,29 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
 
   Future<void> playAudioTest() async {
     try {
-      final url = _quranRepository.getAudioVerseUrl(
+      _selectedReciter ??= await ReciterPreferences.loadSelected(_preferences);
+      final reciter = _selectedReciter;
+      if (reciter == null) {
+        emit(state.copyWith(
+          isAudioTestPlaying: false,
+          audioTestError: 'audio_test_failed',
+        ));
+        return;
+      }
+      final urls = _quranRepository.getAudioAyahUrls(
         surahNumber: state.selectedSurahNumber,
         ayahNumber: state.selectedRange.start,
-        reciter: _defaultReciter,
+        reciter: reciter,
       );
+      if (urls.isEmpty) {
+        emit(state.copyWith(
+          isAudioTestPlaying: false,
+          audioTestError: 'audio_test_failed',
+        ));
+        return;
+      }
       await _audio.stop();
-      await _audio.loadSource(source: url);
-      await _audio.play();
+      await playAudioUrlsWithFallback(_audio, urls: urls);
       emit(state.copyWith(
         isAudioTestPlaying: true,
         clearAudioTestError: true,

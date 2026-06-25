@@ -945,6 +945,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get darkModeSubtitle => 'Switch between light and dark theme';
 
   @override
+  String get themeModeTitle => 'Appearance';
+
+  @override
+  String get themeModeSubtitle => 'Choose light, dark, or follow the system';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
   String get language => 'Language';
 
   @override

@@ -1784,6 +1784,36 @@ abstract class AppLocalizations {
   /// **'Switch between light and dark theme'**
   String get darkModeSubtitle;
 
+  /// No description provided for @themeModeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get themeModeTitle;
+
+  /// No description provided for @themeModeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose light, dark, or follow the system'**
+  String get themeModeSubtitle;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

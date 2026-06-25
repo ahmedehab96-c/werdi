@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:werdi/core/animations/app_animations.dart';
 import 'package:werdi/core/di/app_injector.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
+import 'package:werdi/core/responsive/responsive.dart';
 import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_loading_state.dart';
 import 'package:werdi/core/widgets/app_scaffold.dart';
@@ -107,7 +108,7 @@ class _HomeView extends StatelessWidget {
     const gap = 12.0;
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth > 700) {
+        if (Responsive.sizeOf(context).index >= ScreenSize.expanded.index) {
           return Row(
             children: [
               Expanded(child: first),

@@ -8,6 +8,7 @@ import 'package:werdi/core/widgets/app_scaffold.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
 import 'package:werdi/core/widgets/app_status_chip.dart';
 import 'package:werdi/core/widgets/app_text.dart';
+import 'package:werdi/core/widgets/quran_ayah_text.dart';
 import 'package:werdi/features/review/domain/models/review_item.dart';
 import 'package:werdi/features/review/presentation/cubit/review_cubit.dart';
 import 'package:werdi/features/review/presentation/cubit/review_state.dart';
@@ -137,13 +138,11 @@ class _ReviewSmartCardState extends State<_ReviewSmartCard> {
                       .withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: AppText(
-                  item.ayahText,
+                child: QuranAyahText(
+                  text: item.ayahText,
                   textAlign: TextAlign.right,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    height: 2.0,
-                    fontFamily: 'Amiri',
-                  ),
+                  fontScale: 0.95,
+                  showFrame: true,
                 ),
               ),
           ],

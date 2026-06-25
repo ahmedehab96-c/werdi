@@ -936,6 +936,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get darkModeSubtitle => 'تبديل بين الثيم الفاتح والداكن';
 
   @override
+  String get themeModeTitle => 'المظهر';
+
+  @override
+  String get themeModeSubtitle =>
+      'اختر الوضع النهاري أو الليلي أو تلقائي حسب الجهاز';
+
+  @override
+  String get themeLight => 'نهاري';
+
+  @override
+  String get themeDark => 'ليلي';
+
+  @override
+  String get themeSystem => 'تلقائي';
+
+  @override
   String get language => 'اللغة';
 
   @override

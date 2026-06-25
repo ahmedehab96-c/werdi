@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:quran/quran.dart' as quran_pkg;
-import 'package:werdi/core/utils/arabic_text_normalizer.dart';
+import 'package:werdi/core/audio/audio_playback.dart';
 import 'package:werdi/core/di/app_injector.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
 import 'package:werdi/core/widgets/app_animated_progress.dart';
@@ -13,6 +13,7 @@ import 'package:werdi/core/widgets/app_scaffold.dart';
 import 'package:werdi/core/widgets/app_section_header.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
 import 'package:werdi/core/widgets/app_text.dart';
+import 'package:werdi/core/widgets/quran_ayah_text.dart';
 import 'package:werdi/features/memorization/presentation/pages/memorization_page.dart';
 import 'package:werdi/features/quran/domain/models/surah_item.dart';
 import 'package:werdi/features/quran/presentation/cubit/quran_cubit.dart';
@@ -212,7 +213,7 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
                                   return;
                                 }
                                 await AppInjector.audioRepository.stop();
-                                final urls = cubit.getAudioVerseUrls(
+                                final urls = cubit.getAudioAyahUrls(
                                   surahNumber: widget.surah.number,
                                   ayahNumber: verse.ayahNumber,
                                 );
@@ -225,13 +226,14 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
                                   );
                                   return;
                                 }
-                                await _playWithFallback(
+                                await playAudioUrlsWithFallback(
+                                  AppInjector.audioRepository,
                                   urls: urls,
-                                  onSuccess: () => setState(
-                                    () => _playingAyah = verse.ayahNumber,
-                                  ),
                                 );
                                 if (!mounted) return;
+                                setState(
+                                  () => _playingAyah = verse.ayahNumber,
+                                );
                               } catch (_) {
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(this.context).showSnackBar(
@@ -389,23 +391,6 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
         child: bodyList,
       ),
     );
-  }
-
-  Future<void> _playWithFallback({
-    required List<String> urls,
-    required VoidCallback onSuccess,
-  }) async {
-    for (final url in urls) {
-      try {
-        await AppInjector.audioRepository.loadSource(source: url);
-        await AppInjector.audioRepository.play();
-        onSuccess();
-        return;
-      } catch (_) {
-        continue;
-      }
-    }
-    throw Exception('all_audio_urls_failed');
   }
 
   List<QuranVerse> _buildFallbackVerses() {
@@ -583,47 +568,15 @@ class _HighlightedVerseText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseFontSize = Theme.of(context).textTheme.titleMedium?.fontSize ?? 20;
-    final baseStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
-          height: lineHeight,
-          fontSize: baseFontSize * fontScale,
-          color: sepiaEnabled ? const Color(0xFF4E342E) : null,
-        );
-    final rawQuery = query?.trim() ?? '';
-    if (!enabled || rawQuery.isEmpty) {
-      return AppText(text, style: baseStyle);
-    }
-
-    final normalizedQuery = ArabicTextNormalizer.normalize(rawQuery);
-    if (normalizedQuery.isEmpty) {
-      return AppText(text, style: baseStyle);
-    }
-
-    final tokens = text.split(RegExp(r'\s+'));
-    final spans = <InlineSpan>[];
-    final highlightStyle = baseStyle?.copyWith(
-      color: Theme.of(context).colorScheme.primary,
-      fontWeight: FontWeight.w800,
-    );
-
-    for (var i = 0; i < tokens.length; i++) {
-      final token = tokens[i];
-      final normalizedToken = ArabicTextNormalizer.normalize(token);
-      final isMatch = normalizedToken.contains(normalizedQuery);
-      spans.add(
-        TextSpan(
-          text: token,
-          style: isMatch ? highlightStyle : baseStyle,
-        ),
-      );
-      if (i != tokens.length - 1) {
-        spans.add(TextSpan(text: ' ', style: baseStyle));
-      }
-    }
-
-    return Text.rich(
-      TextSpan(children: spans),
-      textDirection: TextDirection.rtl,
+    return QuranAyahText(
+      text: text,
+      textAlign: TextAlign.right,
+      fontScale: fontScale,
+      lineHeight: lineHeight,
+      sepiaEnabled: sepiaEnabled,
+      highlightQuery: query,
+      highlightEnabled: enabled,
+      showFrame: false,
     );
   }
 }

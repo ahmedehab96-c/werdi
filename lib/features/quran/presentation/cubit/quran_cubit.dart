@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
 import 'package:werdi/core/services/app_preferences.dart';
+import 'package:werdi/core/services/reciter_preferences.dart';
 import 'package:werdi/features/quran/domain/repositories/bookmark_repository.dart';
 import 'package:werdi/features/quran/domain/models/quran_filter.dart';
 import 'package:werdi/features/quran/data/services/mp3quran_reciters_api.dart';
@@ -58,15 +59,22 @@ class QuranCubit extends Cubit<QuranState> {
 
     List<QuranAudioReciter> audioReciters;
     try {
-      audioReciters = await _mp3QuranRecitersApi.fetchRecitersSorted();
+      final fetched = await _mp3QuranRecitersApi.fetchRecitersSorted();
+      audioReciters = ReciterPreferences.filterAyahCapable(fetched);
     } catch (_) {
-      audioReciters = QuranAudioReciter.offlineFallbackSorted();
+      audioReciters = QuranAudioReciter.ayahCapableSorted();
     }
-    final selectedAudioReciter = _resolveSelectedAudioReciter(
-      audioReciters,
-      savedReciter,
+    if (audioReciters.isEmpty) {
+      audioReciters = QuranAudioReciter.ayahCapableSorted();
+    }
+    final selectedAudioReciter = ReciterPreferences.resolve(
+      candidates: audioReciters,
+      savedKey: savedReciter,
     );
-    await _preferences.setString(_reciterKey, selectedAudioReciter.persistenceKey);
+    await _preferences.setString(
+      ReciterPreferences.selectedReciterKey,
+      selectedAudioReciter.persistenceKey,
+    );
     final selectedSource = _resolvePreferredTafsirSource(
       sources: tafsirSources,
       savedSource: savedSource,
@@ -122,35 +130,6 @@ class QuranCubit extends Cubit<QuranState> {
       }
     }
     return sources.first;
-  }
-
-  QuranAudioReciter _resolveSelectedAudioReciter(
-    List<QuranAudioReciter> list,
-    String? saved,
-  ) {
-    if (list.isEmpty) {
-      throw StateError('audioReciters empty');
-    }
-    if (saved == null || saved.isEmpty) {
-      return _defaultAudioReciter(list);
-    }
-    final mp3Id = QuranAudioReciter.tryParsePersistenceKey(saved);
-    if (mp3Id != null) {
-      for (final r in list) {
-        if (r.mp3QuranId == mp3Id) return r;
-      }
-    }
-    for (final r in list) {
-      if (r.packageReciter?.name == saved) return r;
-    }
-    return _defaultAudioReciter(list);
-  }
-
-  QuranAudioReciter _defaultAudioReciter(List<QuranAudioReciter> list) {
-    for (final r in list) {
-      if (r.mp3QuranId == 123) return r;
-    }
-    return list.first;
   }
 
   void setQuery(String query) => emit(state.copyWith(query: query));
@@ -320,7 +299,11 @@ class QuranCubit extends Cubit<QuranState> {
   }
 
   Future<void> setSelectedAudioReciter(QuranAudioReciter reciter) async {
-    await _preferences.setString(_reciterKey, reciter.persistenceKey);
+    if (!reciter.supportsAyahPlayback) return;
+    await _preferences.setString(
+      ReciterPreferences.selectedReciterKey,
+      reciter.persistenceKey,
+    );
     emit(state.copyWith(selectedAudioReciter: reciter));
   }
 
@@ -341,6 +324,19 @@ class QuranCubit extends Cubit<QuranState> {
     final reciter = state.selectedAudioReciter;
     if (reciter == null) return const [];
     return _repository.getAudioVerseUrls(
+      surahNumber: surahNumber,
+      ayahNumber: ayahNumber,
+      reciter: reciter,
+    );
+  }
+
+  List<String> getAudioAyahUrls({
+    required int surahNumber,
+    required int ayahNumber,
+  }) {
+    final reciter = state.selectedAudioReciter;
+    if (reciter == null) return const [];
+    return _repository.getAudioAyahUrls(
       surahNumber: surahNumber,
       ayahNumber: ayahNumber,
       reciter: reciter,

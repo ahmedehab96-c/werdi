@@ -9,6 +9,7 @@ import 'package:werdi/core/widgets/app_empty_state.dart';
 import 'package:werdi/core/widgets/app_loading_state.dart';
 import 'package:werdi/core/widgets/app_scaffold.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
+import 'package:werdi/core/widgets/quran_ayah_text.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 import 'package:werdi/features/tasmee3/domain/models/tasmee3_result.dart';
 import 'package:werdi/features/tasmee3/presentation/cubit/tasmee3_cubit.dart';
@@ -27,6 +28,7 @@ class Tasmee3Page extends StatelessWidget {
         repository: AppInjector.tasmee3Gateway,
         quranRepository: AppInjector.quranRepository,
         audioRepository: AppInjector.audioRepository,
+        preferences: AppInjector.appPreferences,
       )..initialize(),
       child: const _Tasmee3View(),
     );
@@ -361,14 +363,9 @@ class _AyahCard extends StatelessWidget {
       child: Center(
         child: state.isRevealed
             ? SingleChildScrollView(
-                child: Text(
-                  state.currentAyahText ?? '',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        height: 2,
-                        fontWeight: FontWeight.w600,
-                      ),
-                  textDirection: TextDirection.rtl,
+                child: QuranAyahText(
+                  text: state.currentAyahText ?? '',
+                  fontScale: 1.1,
                 )
                     .animate()
                     .fadeIn(duration: 300.ms)

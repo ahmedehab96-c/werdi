@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:werdi/core/di/app_injector.dart';
+import 'package:werdi/core/responsive/responsive.dart';
 import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_button.dart';
 import 'package:werdi/core/widgets/app_loading_state.dart';
 import 'package:werdi/core/widgets/app_scaffold.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
+import 'package:werdi/core/widgets/quran_ayah_text.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 import 'package:werdi/features/memorization/presentation/cubit/memorization_cubit.dart';
 import 'package:werdi/features/memorization/presentation/cubit/memorization_state.dart';
@@ -26,6 +28,7 @@ class MemorizationPage extends StatelessWidget {
         progressRepository: AppInjector.userProgressGateway,
         authRepository: AppInjector.authGateway,
         reviewRepository: AppInjector.reviewGateway,
+        preferences: AppInjector.appPreferences,
         initialSurahNumber: initialSurahNumber,
       ),
       child: const _MemorizationView(),
@@ -257,14 +260,10 @@ class _SessionScreen extends StatelessWidget {
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   child: state.showAyahText
-                      ? AppText(
+                      ? QuranAyahText(
                           key: const ValueKey('visible'),
-                          ayah.text,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineLarge
-                              ?.copyWith(height: 1.8),
+                          text: ayah.text,
+                          fontScale: 1.15,
                         )
                       : GestureDetector(
                           key: const ValueKey('hidden'),
@@ -316,9 +315,17 @@ class _SessionScreen extends StatelessWidget {
               children: [
                 AppText(l10n.audioControls,
                     style: Theme.of(context).textTheme.titleSmall),
+                if (state.selectedReciterName != null) ...[
+                  SizedBox(height: AppSpacing.xxs),
+                  AppText(
+                    state.selectedReciterName!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 SizedBox(height: AppSpacing.sm),
                 LayoutBuilder(builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 390;
+                  final compact = Responsive.isCompact(context);
                   final controls = [
                     IconButton(
                       onPressed:
@@ -389,7 +396,7 @@ class _SessionScreen extends StatelessWidget {
           ),
           SizedBox(height: AppSpacing.md),
           LayoutBuilder(builder: (context, constraints) {
-            final compact = constraints.maxWidth < 360;
+            final compact = Responsive.isCompact(context);
             final memorizeBtn = AppButton(
               label: isMemorized ? l10n.memorizedDone : l10n.markMemorized,
               onPressed: cubit.toggleMemorized,

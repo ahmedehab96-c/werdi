@@ -1,5 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
+import 'package:werdi/core/audio/audio_playback.dart';
+import 'package:werdi/core/services/app_preferences.dart';
+import 'package:werdi/core/services/reciter_preferences.dart';
 import 'package:werdi/features/auth/domain/repositories/auth_repository.dart';
 import 'package:werdi/features/memorization/domain/repositories/memorization_repository.dart';
 import 'package:werdi/features/memorization/presentation/cubit/memorization_state.dart';
@@ -17,6 +20,7 @@ class MemorizationCubit extends Cubit<MemorizationState> {
     required AudioRepository audioRepository,
     required UserProgressRepository progressRepository,
     required AuthRepository authRepository,
+    required AppPreferences preferences,
     ReviewRepository? reviewRepository,
     this.initialSurahNumber,
   })  : _repository = repository,
@@ -24,6 +28,7 @@ class MemorizationCubit extends Cubit<MemorizationState> {
         _audio = audioRepository,
         _progressRepository = progressRepository,
         _authRepository = authRepository,
+        _preferences = preferences,
         _reviewRepository = reviewRepository,
         super(const MemorizationState()) {
     initialize();
@@ -35,19 +40,18 @@ class MemorizationCubit extends Cubit<MemorizationState> {
   final AudioRepository _audio;
   final UserProgressRepository _progressRepository;
   final AuthRepository _authRepository;
+  final AppPreferences _preferences;
   final ReviewRepository? _reviewRepository;
 
   String? _userId;
+  QuranAudioReciter? _selectedReciter;
   StreamSubscription<void>? _playbackCompletionSub;
   int _remainingRepeats = 1;
   bool _isHandlingCompletion = false;
 
-  // الافتراضي: العفاسي
-  static final QuranAudioReciter _defaultReciter =
-      QuranAudioReciter.offlineFallback().first;
-
   Future<void> initialize() async {
     _bindPlaybackCompletion();
+    _selectedReciter = await ReciterPreferences.loadSelected(_preferences);
     final results = await Future.wait([
       _quranRepository.getSurahs(),
       _authRepository.getMe().catchError((_) =>
@@ -72,6 +76,7 @@ class MemorizationCubit extends Cubit<MemorizationState> {
       selectedVerseCount: targetSurah?.verseCount ?? maxEnd,
       ayahStart: 1,
       ayahEnd: maxEnd,
+      selectedReciterName: _selectedReciter?.name,
     ));
   }
 
@@ -96,6 +101,7 @@ class MemorizationCubit extends Cubit<MemorizationState> {
 
   Future<void> startSession() async {
     emit(state.copyWith(phase: MemorizationPhase.loading));
+    _selectedReciter = await ReciterPreferences.loadSelected(_preferences);
     final ayahs = await _repository.getSessionAyahs(
       surahNumber: state.selectedSurahNumber,
       ayahStart: state.ayahStart,
@@ -108,6 +114,7 @@ class MemorizationCubit extends Cubit<MemorizationState> {
       isPlaying: false,
       memorizedAyahNumbers: const {},
       difficultAyahNumbers: const {},
+      selectedReciterName: _selectedReciter?.name,
     ));
     await _loadAndPlayCurrentAyah(autoPlay: false);
   }
@@ -123,6 +130,10 @@ class MemorizationCubit extends Cubit<MemorizationState> {
       emit(state.copyWith(isPlaying: false));
     } else {
       _remainingRepeats = state.repeatCount;
+      if (_selectedReciter == null) {
+        await _loadAndPlayCurrentAyah(autoPlay: true);
+        return;
+      }
       await _audio.play();
       emit(state.copyWith(isPlaying: true));
     }
@@ -210,20 +221,29 @@ class MemorizationCubit extends Cubit<MemorizationState> {
   Future<void> _loadAndPlayCurrentAyah({required bool autoPlay}) async {
     final ayah = state.currentAyah;
     if (ayah == null) return;
+    _selectedReciter ??= await ReciterPreferences.loadSelected(_preferences);
+    final reciter = _selectedReciter;
+    if (reciter == null) return;
+
     try {
-      final url = _quranRepository.getAudioVerseUrl(
+      final urls = _quranRepository.getAudioAyahUrls(
         surahNumber: state.selectedSurahNumber,
         ayahNumber: ayah.number,
-        reciter: _defaultReciter,
+        reciter: reciter,
       );
-      await _audio.loadSource(source: url);
+      if (urls.isEmpty) return;
+
       await _audio.setSpeed(state.playbackSpeed);
       if (autoPlay) {
         _remainingRepeats = state.repeatCount;
-        await _audio.play();
+        await playAudioUrlsWithFallback(_audio, urls: urls);
         emit(state.copyWith(isPlaying: true));
+      } else {
+        await _audio.loadSource(source: urls.first);
       }
-    } catch (_) {}
+    } catch (_) {
+      emit(state.copyWith(isPlaying: false));
+    }
   }
 
   void _bindPlaybackCompletion() {

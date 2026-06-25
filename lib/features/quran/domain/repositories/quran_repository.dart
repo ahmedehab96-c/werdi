@@ -29,5 +29,10 @@ abstract interface class QuranRepository {
     required int ayahNumber,
     required QuranAudioReciter reciter,
   });
+  List<String> getAudioAyahUrls({
+    required int surahNumber,
+    required int ayahNumber,
+    required QuranAudioReciter reciter,
+  });
   String getVerseWebUrl({required int surahNumber, required int ayahNumber});
 }

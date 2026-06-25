@@ -24,6 +24,9 @@ class QuranAudioReciter extends Equatable {
 
   bool get hasVerseLevelUrls => packageReciter != null;
 
+  /// True when memorization / tasmee3 can play this reciter ayah-by-ayah.
+  bool get supportsAyahPlayback => packageReciter != null;
+
   /// مفتاح حفظ الاختيار في التفضيلات.
   String get persistenceKey => 'mp3quran_$mp3QuranId';
 
@@ -86,6 +89,10 @@ class QuranAudioReciter extends Equatable {
     switch (mp3Id) {
       case 123:
         return QuranReciter.alafasy;
+      case 51:
+        return QuranReciter.abdulBasit;
+      case 31:
+        return QuranReciter.shuraim;
       case 118:
         return QuranReciter.husary;
       case 5:
@@ -96,8 +103,6 @@ class QuranAudioReciter extends Equatable {
         return QuranReciter.maherMuaiqly;
       case 54:
         return QuranReciter.sudais;
-      case 13:
-        return QuranReciter.alzainMohammedAhmed;
       case 138:
         return QuranReciter.nureenMohamedSiddiq;
       case 109:
@@ -125,8 +130,8 @@ class QuranAudioReciter extends Equatable {
 
   static Set<int> _allSurahs() => {for (var i = 1; i <= 114; i++) i};
 
-  /// نسخة مصغّرة عند تعذّر الاتصال بـ API (نفس بيانات [mp3quran.net](https://www.mp3quran.net)).
-  static List<QuranAudioReciter> offlineFallback() => [
+  /// Curated offline list — ayah-by-ayah only (verified reciters).
+  static List<QuranAudioReciter> ayahCapable() => [
     QuranAudioReciter(
       mp3QuranId: 123,
       name: 'مشاري العفاسي',
@@ -136,28 +141,12 @@ class QuranAudioReciter extends Equatable {
       packageReciter: QuranReciter.alafasy,
     ),
     QuranAudioReciter(
-      mp3QuranId: 118,
-      name: 'محمود خليل الحصري',
-      letter: 'م',
-      serverBaseUrl: 'https://server13.mp3quran.net/husr/',
+      mp3QuranId: 51,
+      name: 'عبدالباسط عبدالصمد',
+      letter: 'ع',
+      serverBaseUrl: 'https://server7.mp3quran.net/basit/',
       supportedSurahNumbers: _allSurahs(),
-      packageReciter: QuranReciter.husary,
-    ),
-    QuranAudioReciter(
-      mp3QuranId: 5,
-      name: 'أحمد بن علي العجمي',
-      letter: 'أ',
-      serverBaseUrl: 'https://server10.mp3quran.net/ajm/',
-      supportedSurahNumbers: _allSurahs(),
-      packageReciter: QuranReciter.ahmedAjamy,
-    ),
-    QuranAudioReciter(
-      mp3QuranId: 205,
-      name: 'أحمد الحذيفي',
-      letter: 'أ',
-      serverBaseUrl: 'https://server8.mp3quran.net/ahmad_huth/',
-      supportedSurahNumbers: _allSurahs(),
-      packageReciter: QuranReciter.hudhaify,
+      packageReciter: QuranReciter.abdulBasit,
     ),
     QuranAudioReciter(
       mp3QuranId: 102,
@@ -168,6 +157,14 @@ class QuranAudioReciter extends Equatable {
       packageReciter: QuranReciter.maherMuaiqly,
     ),
     QuranAudioReciter(
+      mp3QuranId: 31,
+      name: 'سعود الشريم',
+      letter: 'س',
+      serverBaseUrl: 'https://server7.mp3quran.net/shur/',
+      supportedSurahNumbers: _allSurahs(),
+      packageReciter: QuranReciter.shuraim,
+    ),
+    QuranAudioReciter(
       mp3QuranId: 54,
       name: 'عبدالرحمن السديس',
       letter: 'ع',
@@ -175,61 +172,18 @@ class QuranAudioReciter extends Equatable {
       supportedSurahNumbers: _allSurahs(),
       packageReciter: QuranReciter.sudais,
     ),
-    QuranAudioReciter(
-      mp3QuranId: 13,
-      name: 'الزين محمد أحمد',
-      letter: 'ا',
-      serverBaseUrl: 'https://server9.mp3quran.net/alzain/',
-      supportedSurahNumbers: _allSurahs(),
-      packageReciter: QuranReciter.alzainMohammedAhmed,
-    ),
-    QuranAudioReciter(
-      mp3QuranId: 138,
-      name: 'نورين محمد صديق',
-      letter: 'ن',
-      serverBaseUrl: 'https://server16.mp3quran.net/nourin_siddig/Rewayat-Aldori-A-n-Abi-Amr/',
-      supportedSurahNumbers: _allSurahs(),
-      packageReciter: QuranReciter.nureenMohamedSiddiq,
-    ),
-    QuranAudioReciter(
-      mp3QuranId: 109,
-      name: 'محمد أيوب',
-      letter: 'م',
-      serverBaseUrl: 'https://server16.mp3quran.net/ayyoub2/Rewayat-Hafs-A-n-Assem/',
-      supportedSurahNumbers: _allSurahs(),
-      packageReciter: QuranReciter.muhammadAyyoub,
-    ),
-    QuranAudioReciter(
-      mp3QuranId: 111,
-      name: 'محمد جبريل',
-      letter: 'م',
-      serverBaseUrl: 'https://server8.mp3quran.net/jbrl/',
-      supportedSurahNumbers: _allSurahs(),
-      packageReciter: QuranReciter.muhammadJibreel,
-    ),
-    QuranAudioReciter(
-      mp3QuranId: 112,
-      name: 'محمد صديق المنشاوي',
-      letter: 'م',
-      serverBaseUrl: 'https://server10.mp3quran.net/minsh/',
-      supportedSurahNumbers: _allSurahs(),
-      packageReciter: QuranReciter.minshawi,
-    ),
-    QuranAudioReciter(
-      mp3QuranId: 4,
-      name: 'شيخ أبو بكر الشاطري',
-      letter: 'ش',
-      serverBaseUrl: 'https://server11.mp3quran.net/shatri/',
-      supportedSurahNumbers: _allSurahs(),
-      packageReciter: QuranReciter.shaatree,
-    ),
   ];
 
-  static List<QuranAudioReciter> offlineFallbackSorted() {
-    final list = List<QuranAudioReciter>.from(offlineFallback());
+  /// @deprecated Use [ayahCapableSorted] for ayah playback.
+  static List<QuranAudioReciter> offlineFallback() => ayahCapable();
+
+  static List<QuranAudioReciter> ayahCapableSorted() {
+    final list = List<QuranAudioReciter>.from(ayahCapable());
     list.sort(compareArabicReciterNames);
     return list;
   }
+
+  static List<QuranAudioReciter> offlineFallbackSorted() => ayahCapableSorted();
 }
 
 int compareArabicReciterNames(QuranAudioReciter a, QuranAudioReciter b) {

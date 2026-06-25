@@ -21,6 +21,7 @@ class MemorizationState extends Equatable {
     this.memorizedAyahNumbers = const {},
     this.difficultAyahNumbers = const {},
     this.showAyahText = true,
+    this.selectedReciterName,
   });
 
   final MemorizationPhase phase;
@@ -38,6 +39,7 @@ class MemorizationState extends Equatable {
   final Set<int> memorizedAyahNumbers;
   final Set<int> difficultAyahNumbers;
   final bool showAyahText;
+  final String? selectedReciterName;
 
   MemorizationAyah? get currentAyah =>
       ayahs.isNotEmpty ? ayahs[currentIndex] : null;
@@ -61,6 +63,7 @@ class MemorizationState extends Equatable {
     Set<int>? memorizedAyahNumbers,
     Set<int>? difficultAyahNumbers,
     bool? showAyahText,
+    String? selectedReciterName,
   }) {
     return MemorizationState(
       phase: phase ?? this.phase,
@@ -78,6 +81,7 @@ class MemorizationState extends Equatable {
       memorizedAyahNumbers: memorizedAyahNumbers ?? this.memorizedAyahNumbers,
       difficultAyahNumbers: difficultAyahNumbers ?? this.difficultAyahNumbers,
       showAyahText: showAyahText ?? this.showAyahText,
+      selectedReciterName: selectedReciterName ?? this.selectedReciterName,
     );
   }
 
@@ -98,5 +102,6 @@ class MemorizationState extends Equatable {
     memorizedAyahNumbers,
     difficultAyahNumbers,
     showAyahText,
+    selectedReciterName ?? '',
   ];
 }

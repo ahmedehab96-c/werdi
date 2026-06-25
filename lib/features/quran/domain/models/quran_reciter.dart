@@ -1,11 +1,12 @@
 enum QuranReciter {
   alafasy,
+  abdulBasit,
   husary,
   ahmedAjamy,
   hudhaify,
   maherMuaiqly,
+  shuraim,
   sudais,
-  alzainMohammedAhmed,
   nureenMohamedSiddiq,
   muhammadAyyoub,
   muhammadJibreel,
@@ -18,6 +19,8 @@ extension QuranReciterText on QuranReciter {
     switch (this) {
       case QuranReciter.alafasy:
         return 'العفاسي';
+      case QuranReciter.abdulBasit:
+        return 'عبدالباسط';
       case QuranReciter.husary:
         return 'الحصري';
       case QuranReciter.ahmedAjamy:
@@ -26,10 +29,10 @@ extension QuranReciterText on QuranReciter {
         return 'الحذيفي';
       case QuranReciter.maherMuaiqly:
         return 'ماهر المعيقلي';
+      case QuranReciter.shuraim:
+        return 'سعود الشريم';
       case QuranReciter.sudais:
         return 'السديس';
-      case QuranReciter.alzainMohammedAhmed:
-        return 'الزين محمد أحمد';
       case QuranReciter.nureenMohamedSiddiq:
         return 'نورين محمد صديق';
       case QuranReciter.muhammadAyyoub:

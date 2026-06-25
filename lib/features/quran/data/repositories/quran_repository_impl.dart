@@ -164,6 +164,20 @@ class QuranRepositoryImpl implements QuranRepository {
   }
 
   @override
+  List<String> getAudioAyahUrls({
+    required int surahNumber,
+    required int ayahNumber,
+    required QuranAudioReciter reciter,
+  }) {
+    return _service.getAudioURLsForCatalogReciter(
+      surahNumber,
+      ayahNumber,
+      reciter,
+      ayahOnly: true,
+    );
+  }
+
+  @override
   String getVerseWebUrl({required int surahNumber, required int ayahNumber}) {
     return _service.getVerseURL(surahNumber, ayahNumber);
   }

@@ -30,8 +30,9 @@ abstract interface class QuranService {
   List<String> getAudioURLsForCatalogReciter(
     int surahNumber,
     int verseNumber,
-    QuranAudioReciter reciter,
-  );
+    QuranAudioReciter reciter, {
+    bool ayahOnly = false,
+  });
   String getVerseURL(int surahNumber, int verseNumber);
 }
 
@@ -121,8 +122,42 @@ class QuranPackageService implements QuranService {
       reciter: _mapReciter(reciter),
     );
     switch (reciter) {
+      case QuranReciter.abdulBasit:
+        return [
+          _cdnAyahUrl(
+            surahNumber: surahNumber,
+            verseNumber: verseNumber,
+            reciterCode: 'ar.abdulbasitmurattal',
+            bitrate: 192,
+          ),
+          _cdnAyahUrl(
+            surahNumber: surahNumber,
+            verseNumber: verseNumber,
+            reciterCode: 'ar.abdulbasitmurattal',
+          ),
+        ];
+      case QuranReciter.shuraim:
+        return [
+          _cdnAyahUrl(
+            surahNumber: surahNumber,
+            verseNumber: verseNumber,
+            reciterCode: 'ar.saoodshuraym',
+            bitrate: 64,
+          ),
+          _cdnAyahUrl(
+            surahNumber: surahNumber,
+            verseNumber: verseNumber,
+            reciterCode: 'ar.saoodshuraym',
+          ),
+        ];
       case QuranReciter.sudais:
         return [
+          _cdnAyahUrl(
+            surahNumber: surahNumber,
+            verseNumber: verseNumber,
+            reciterCode: 'ar.abdurrahmaansudais',
+            bitrate: 192,
+          ),
           _everyAyahUrl(
             surahNumber: surahNumber,
             verseNumber: verseNumber,
@@ -133,12 +168,6 @@ class QuranPackageService implements QuranService {
             verseNumber: verseNumber,
             readerFolder: 'Abdurrahmaan_As-Sudais_64kbps',
           ),
-          defaultUrl,
-        ];
-      case QuranReciter.alzainMohammedAhmed:
-        final surahPad = surahNumber.toString().padLeft(3, '0');
-        return [
-          'https://server9.mp3quran.net/alzain/$surahPad.mp3',
           defaultUrl,
         ];
       case QuranReciter.nureenMohamedSiddiq:
@@ -164,24 +193,28 @@ class QuranPackageService implements QuranService {
   List<String> getAudioURLsForCatalogReciter(
     int surahNumber,
     int verseNumber,
-    QuranAudioReciter reciter,
-  ) {
-    final urls = <String>[];
-    if (reciter.packageReciter != null) {
-      urls.addAll(
-        getAudioURLsByVerse(
-          surahNumber,
-          verseNumber,
-          reciter.packageReciter!,
-        ),
-      );
+    QuranAudioReciter reciter, {
+    bool ayahOnly = false,
+  }) {
+    if (reciter.packageReciter == null) {
+      return const [];
+    }
+    final urls = List<String>.from(
+      getAudioURLsByVerse(
+        surahNumber,
+        verseNumber,
+        reciter.packageReciter!,
+      ),
+    );
+    if (ayahOnly) {
+      return urls;
     }
     final surahPadded = surahNumber.toString().padLeft(3, '0');
     final wholeSurah = '${reciter.serverBaseUrl}$surahPadded.mp3';
     if (!urls.contains(wholeSurah)) {
       urls.add(wholeSurah);
     }
-    return urls.isEmpty ? [wholeSurah] : urls;
+    return urls;
   }
 
   @override
@@ -192,6 +225,11 @@ class QuranPackageService implements QuranService {
     switch (reciter) {
       case QuranReciter.alafasy:
         return quran.Reciter.arAlafasy;
+      case QuranReciter.abdulBasit:
+      case QuranReciter.shuraim:
+      case QuranReciter.sudais:
+      case QuranReciter.nureenMohamedSiddiq:
+        return quran.Reciter.arAlafasy;
       case QuranReciter.husary:
         return quran.Reciter.arHusary;
       case QuranReciter.ahmedAjamy:
@@ -200,10 +238,6 @@ class QuranPackageService implements QuranService {
         return quran.Reciter.arHudhaify;
       case QuranReciter.maherMuaiqly:
         return quran.Reciter.arMaherMuaiqly;
-      case QuranReciter.sudais:
-      case QuranReciter.alzainMohammedAhmed:
-      case QuranReciter.nureenMohamedSiddiq:
-        return quran.Reciter.arAlafasy;
       case QuranReciter.muhammadAyyoub:
         return quran.Reciter.arMuhammadAyyoub;
       case QuranReciter.muhammadJibreel:
@@ -223,5 +257,23 @@ class QuranPackageService implements QuranService {
     final surah = surahNumber.toString().padLeft(3, '0');
     final ayah = verseNumber.toString().padLeft(3, '0');
     return 'https://everyayah.com/data/$readerFolder/$surah$ayah.mp3';
+  }
+
+  int _absoluteVerseNumber(int surahNumber, int verseNumber) {
+    var verseNum = 0;
+    for (var i = 1; i < surahNumber; i++) {
+      verseNum += quran.getVerseCount(i);
+    }
+    return verseNum + verseNumber;
+  }
+
+  String _cdnAyahUrl({
+    required int surahNumber,
+    required int verseNumber,
+    required String reciterCode,
+    int bitrate = 128,
+  }) {
+    final absolute = _absoluteVerseNumber(surahNumber, verseNumber);
+    return 'https://cdn.islamic.network/quran/audio/$bitrate/$reciterCode/$absolute.mp3';
   }
 }
