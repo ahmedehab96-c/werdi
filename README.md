@@ -34,6 +34,24 @@ The app features dark/light/system themes, multiple reciters, offline storage wi
 
 Flutter · BLoC · go_router · Drift · Supabase
 
-## Download
+## Download & Install (Android)
 
-[Download APK (Android)](https://github.com/ahmedehab96-c/werdi/releases/download/portfolio-apk-v1/werdi.apk)
+### English
+1. Open **[Releases](https://github.com/ahmedehab96-c/werdi/releases/tag/portfolio-apk-v1)** on your Android phone (Chrome).
+2. Pick **one** APK under **Assets**:
+   - **`app-arm64-v8a-release.apk`** — most phones (2017+)
+   - **`app-armeabi-v7a-release.apk`** — older 32-bit phones (if arm64 fails)
+3. Wait until download is **100% complete**, then open from **Downloads** → **Install**.
+4. If blocked: **Settings → Install unknown apps → Chrome → Allow**.
+5. If *App not installed*: uninstall any older Werdi build, then retry with the **other** APK file.
+6. Requires **Android 7.0+**.
+
+### العربية
+1. افتح **[Releases](https://github.com/ahmedehab96-c/werdi/releases/tag/portfolio-apk-v1)** من جوال أندرويد (Chrome).
+2. اختر **ملف APK واحد** من **Assets**:
+   - **`app-arm64-v8a-release.apk`** — أغلب الهواتف الحديثة (2017+)
+   - **`app-armeabi-v7a-release.apk`** — هواتف أقدم (إذا فشل arm64)
+3. انتظر اكتمال التحميل **100%** ثم افتح من **التنزيلات** → **تثبيت**.
+4. إذا ظهر حظر: **الإعدادات → تثبيت تطبيقات غير معروفة → Chrome → السماح**.
+5. إذا ظهر *لم يتم التثبيت*: احذف نسخة وردي القديمة وجرب **الملف الآخر**.
+6. يتطلب **أندرويد 7.0+**.
