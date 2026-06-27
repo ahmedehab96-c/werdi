@@ -53,16 +53,18 @@ Flutter · BLoC · go_router · Drift · Supabase · just_audio · flutter_scree
 2. Download **`app-release.apk`** (~150 MB) under **Assets** — works on all supported phones.
 3. Wait until download is **100% complete**, then open from **Downloads** → **Install**.
 4. If blocked: **Settings → Install unknown apps → Chrome → Allow**.
-5. If *App not installed*: uninstall any older Werdi build, then retry.
-6. Requires **Android 7.0+**. Current build: **v1.0.1**.
+5. **Google Play Protect warning?** This is normal for apps outside the Play Store. Tap **Install anyway** (not OK). The app is safe — it is your developer's own build from GitHub.
+6. If *App not installed*: uninstall any older Werdi build, then retry.
+7. Requires **Android 7.0+**. Current build: **v1.0.1**.
 
 ### العربية
 1. افتح **[Releases](https://github.com/ahmedehab96-c/werdi/releases/tag/portfolio-apk-v1)** من جوال أندرويد (Chrome).
 2. حمّل **`app-release.apk`** (~150 ميجا) من **Assets** — يعمل على كل الهواتف المدعومة.
 3. انتظر اكتمال التحميل **100%** ثم افتح من **التنزيلات** → **تثبيت**.
 4. إذا ظهر حظر: **الإعدادات → تثبيت تطبيقات غير معروفة → Chrome → السماح**.
-5. إذا ظهر *لم يتم التثبيت*: احذف نسخة وردي القديمة ثم أعد المحاولة.
-6. يتطلب **أندرويد 7.0+**. الإصدار الحالي: **1.0.1**.
+5. **ظهرت رسالة Google Play Protect؟** هذا طبيعي للتطبيقات خارج متجر Google Play. اضغط **التثبيت على أي حال** (Install anyway) وليس **موافق** (OK). التطبيق آمن — نسخة المطوّر من GitHub.
+6. إذا ظهر *لم يتم التثبيت*: احذف نسخة وردي القديمة ثم أعد المحاولة.
+7. يتطلب **أندرويد 7.0+**. الإصدار الحالي: **1.0.1**.
 
 ## Development
 

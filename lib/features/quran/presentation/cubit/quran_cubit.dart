@@ -47,15 +47,54 @@ class QuranCubit extends Cubit<QuranState> {
   Timer? _searchDebounce;
 
   Future<void> initialize() async {
-    emit(state.copyWith(isLoading: true, isLoadingAudioReciters: true));
     final surahs = await _repository.getSurahs();
     final juzList = await _repository.getJuz();
-    final tafsirSources = await _tafsirRepository.getSources();
-    final savedSource = await _preferences.getString(_tafsirSourceKey);
-    final savedLanguage = await _preferences.getString(_translationLanguageKey);
     final savedReciter = await _preferences.getString(_reciterKey);
     final savedLastRead = await _preferences.getString(_lastReadKey);
-    final savedSearchFocusMode = await _preferences.getString(_searchFocusModeKey);
+    final savedSearchFocusMode =
+        await _preferences.getString(_searchFocusModeKey);
+    final savedLanguage = await _preferences.getString(_translationLanguageKey);
+
+    final defaultReciters = QuranAudioReciter.ayahCapableSorted();
+    final selectedAudioReciter = ReciterPreferences.resolve(
+      candidates: defaultReciters,
+      savedKey: savedReciter,
+    );
+    final selectedLanguage = QuranTranslationLanguage.values.firstWhere(
+      (item) => item.name == savedLanguage,
+      orElse: () => QuranTranslationLanguage.enSaheeh,
+    );
+
+    emit(
+      state.copyWith(
+        isLoading: false,
+        surahs: surahs,
+        juzList: juzList,
+        lastReadPlaceholder: savedLastRead ?? '',
+        recentSearches: const [],
+        audioReciters: defaultReciters,
+        selectedAudioReciter: selectedAudioReciter,
+        isLoadingAudioReciters: true,
+        selectedTranslationLanguage: selectedLanguage,
+        openSearchResultsInFocusMode: savedSearchFocusMode != '0',
+      ),
+    );
+
+    unawaited(_loadSecondaryData(
+      savedSource: await _preferences.getString(_tafsirSourceKey),
+      savedReciter: savedReciter,
+    ));
+  }
+
+  Future<void> _loadSecondaryData({
+    required String? savedSource,
+    required String? savedReciter,
+  }) async {
+    final tafsirSources = await _tafsirRepository.getSources();
+    final selectedSource = _resolvePreferredTafsirSource(
+      sources: tafsirSources,
+      savedSource: savedSource,
+    );
 
     List<QuranAudioReciter> audioReciters;
     try {
@@ -75,14 +114,7 @@ class QuranCubit extends Cubit<QuranState> {
       ReciterPreferences.selectedReciterKey,
       selectedAudioReciter.persistenceKey,
     );
-    final selectedSource = _resolvePreferredTafsirSource(
-      sources: tafsirSources,
-      savedSource: savedSource,
-    );
-    final selectedLanguage = QuranTranslationLanguage.values.firstWhere(
-      (item) => item.name == savedLanguage,
-      orElse: () => QuranTranslationLanguage.enSaheeh,
-    );
+
     List<AyahBookmark> bookmarkedAyahs = const [];
     Set<int> bookmarkedSurahIds = const {};
     try {
@@ -91,23 +123,17 @@ class QuranCubit extends Cubit<QuranState> {
       bookmarkedAyahs = saved.ayahs;
     } catch (_) {}
 
+    if (isClosed) return;
     emit(
       state.copyWith(
-        isLoading: false,
-        surahs: surahs,
-        juzList: juzList,
         bookmarkedSurahIds: bookmarkedSurahIds,
         bookmarkedAyahs: bookmarkedAyahs,
         lastMemorizedPositions: const [],
-        lastReadPlaceholder: savedLastRead ?? '',
-        recentSearches: const [],
         tafsirSources: tafsirSources,
         selectedTafsirSource: selectedSource,
-        selectedTranslationLanguage: selectedLanguage,
         audioReciters: audioReciters,
         selectedAudioReciter: selectedAudioReciter,
         isLoadingAudioReciters: false,
-        openSearchResultsInFocusMode: savedSearchFocusMode != '0',
       ),
     );
   }

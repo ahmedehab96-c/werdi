@@ -66,7 +66,7 @@ class _QuranView extends StatelessWidget {
         child: BlocBuilder<QuranCubit, QuranState>(
           builder: (context, state) {
             final cubit = context.read<QuranCubit>();
-            if (state.isLoading) {
+            if (state.surahs.isEmpty) {
               return AppLoadingState(message: context.l10n.loadingQuran);
             }
             return Column(
@@ -119,7 +119,12 @@ class _LastReadAndBookmarksCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return AppSurfaceCard(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.md + 4,
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(
@@ -129,25 +134,45 @@ class _LastReadAndBookmarksCard extends StatelessWidget {
                   context.l10n.lastRead,
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 6.h),
                 AppText(
                   state.lastReadPlaceholder.isEmpty
                       ? '—'
                       : state.lastReadPlaceholder,
                   style: Theme.of(context).textTheme.bodyMedium,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
+          SizedBox(width: AppSpacing.sm),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            constraints: BoxConstraints(minWidth: 88.w),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
             decoration: BoxDecoration(
               color: scheme.primaryContainer,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: AppText(
-              context.l10n.bookmarksCount(state.bookmarkedSurahIds.length),
-              style: Theme.of(context).textTheme.bodySmall,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.bookmark_rounded,
+                  size: 20.sp,
+                  color: scheme.onPrimaryContainer,
+                ),
+                SizedBox(height: 4.h),
+                AppText(
+                  context.l10n.bookmarksCount(state.bookmarkedSurahIds.length),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: scheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                ),
+              ],
             ),
           ),
         ],
@@ -322,35 +347,70 @@ class _SegmentedTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 360;
-        return SegmentedButton<int>(
-          showSelectedIcon: false,
-          style: ButtonStyle(
-            visualDensity: compact ? VisualDensity.compact : null,
+    final scheme = Theme.of(context).colorScheme;
+    final tabs = [
+      (0, Icons.menu_book_rounded, l10n.surahTab),
+      (1, Icons.grid_view_rounded, l10n.juzTab),
+      (2, Icons.bookmark_rounded, l10n.bookmarks),
+    ];
+
+    return Row(
+      children: tabs.map((tab) {
+        final isSelected = selected == tab.$1;
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: tab.$1 == 0 ? 0 : 4.w,
+              right: tab.$1 == tabs.length - 1 ? 0 : 4.w,
+            ),
+            child: Material(
+              color: isSelected
+                  ? scheme.primaryContainer
+                  : scheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => onChanged(tab.$1),
+                child: SizedBox(
+                  height: 72.h,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        tab.$2,
+                        size: 22.sp,
+                        color: isSelected
+                            ? scheme.onPrimaryContainer
+                            : scheme.onSurfaceVariant,
+                      ),
+                      SizedBox(height: 6.h),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4.w),
+                        child: Text(
+                          tab.$3,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: isSelected
+                                        ? scheme.onPrimaryContainer
+                                        : scheme.onSurfaceVariant,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    height: 1.2,
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-          segments: [
-            ButtonSegment<int>(
-              value: 0,
-              icon: const Icon(Icons.menu_book_rounded),
-              label: Text(l10n.surahTab),
-            ),
-            ButtonSegment<int>(
-              value: 1,
-              icon: const Icon(Icons.grid_view_rounded),
-              label: Text(l10n.juzTab),
-            ),
-            ButtonSegment<int>(
-              value: 2,
-              icon: const Icon(Icons.bookmark_rounded),
-              label: Text(l10n.bookmarks),
-            ),
-          ],
-          selected: {selected},
-          onSelectionChanged: (selection) => onChanged(selection.first),
         );
-      },
+      }).toList(),
     );
   }
 }
