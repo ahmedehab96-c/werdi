@@ -14,6 +14,9 @@ abstract interface class UserProgressRepository {
     required bool reviewed,
     required bool difficult,
   });
+
+  /// Records user activity for streak tracking without changing counts.
+  Future<void> recordActivity({required String userId});
 }
 
 class UserProgressSnapshot {

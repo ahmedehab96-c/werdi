@@ -132,6 +132,11 @@
   },
   "streakConsecutiveDays": "{count} consecutive days",
   "startStreakHint": "Start today to build your streak",
+  "streakPurposeHint": "Consecutive days of memorization, review, or recitation",
+  "nextBadgeHint": "Next badge: {title}",
+  "@nextBadgeHint": {
+    "placeholders": { "title": { "type": "String" } }
+  },
   "@streakConsecutiveDays": {
     "placeholders": { "count": { "type": "int" } }
   },

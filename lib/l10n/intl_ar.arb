@@ -132,6 +132,11 @@
   },
   "streakConsecutiveDays": "{count} يوم متتالي",
   "startStreakHint": "ابدأ اليوم لبناء سلسلة إنجازك",
+  "streakPurposeHint": "أيام متتالية من الحفظ أو المراجعة أو التسميع",
+  "nextBadgeHint": "الشارة التالية: {title}",
+  "@nextBadgeHint": {
+    "placeholders": { "title": { "type": "String" } }
+  },
   "@streakConsecutiveDays": {
     "placeholders": { "count": { "type": "int" } }
   },

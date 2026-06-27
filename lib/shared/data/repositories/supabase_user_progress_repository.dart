@@ -140,6 +140,59 @@ class SupabaseUserProgressRepository implements UserProgressRepository {
     }
   }
 
+  @override
+  Future<void> recordActivity({required String userId}) async {
+    final streak = await _recordActivity(userId);
+    final local = await _cachedSnapshot(userId: userId);
+    await _cacheSnapshot(
+      UserProgressSnapshot(
+        memorizedAyahCount: local.memorizedAyahCount,
+        reviewedItemsCount: local.reviewedItemsCount,
+        streakDays: streak,
+      ),
+      userId: userId,
+    );
+    if (!_canSyncRemote(userId)) return;
+    try {
+      await _client.from('user_progress').upsert({
+        'user_id': userId,
+        'memorized_ayah_count': local.memorizedAyahCount,
+        'reviewed_items_count': local.reviewedItemsCount,
+        'streak_days': streak,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {}
+  }
+
+  Future<int> _recordActivity(String userId) async {
+    final today = _dateOnly(DateTime.now());
+    final lastRaw = await _getValue(_keyForUser(_lastActivityKey, userId));
+    final last = lastRaw != null ? DateTime.tryParse(lastRaw) : null;
+    var streak =
+        int.tryParse(await _getValue(_keyForUser(_streakKey, userId)) ?? '') ??
+            0;
+    if (last == null) {
+      streak = 1;
+    } else {
+      final gap = today.difference(_dateOnly(last)).inDays;
+      if (gap == 0) {
+        streak = streak == 0 ? 1 : streak;
+      } else if (gap == 1) {
+        streak += 1;
+      } else {
+        streak = 1;
+      }
+    }
+    await _setValue(_keyForUser(_lastActivityKey, userId), today.toIso8601String());
+    await _setValue(_keyForUser(_streakKey, userId), streak.toString());
+    return streak;
+  }
+
+  DateTime _dateOnly(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
+
+  static const _lastActivityKey = 'progress_last_activity_date';
+
   bool _canSyncRemote(String userId) {
     return SupabaseService.isReady &&
         SupabaseService.hasSession &&

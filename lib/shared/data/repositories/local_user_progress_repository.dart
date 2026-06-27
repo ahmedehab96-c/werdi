@@ -88,6 +88,11 @@ class LocalUserProgressRepository implements UserProgressRepository {
     );
   }
 
+  @override
+  Future<void> recordActivity({required String userId}) async {
+    await _recordActivity(userId);
+  }
+
   Future<int> _effectiveStreak(String userId) async {
     final stored =
         int.tryParse(await _getValue(_keyForUser(_streakKey, userId)) ?? '') ??

@@ -560,6 +560,18 @@ abstract class AppLocalizations {
   /// **'Start today to build your streak'**
   String get startStreakHint;
 
+  /// No description provided for @streakPurposeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Consecutive days of memorization, review, or recitation'**
+  String get streakPurposeHint;
+
+  /// No description provided for @nextBadgeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Next badge: {title}'**
+  String nextBadgeHint(String title);
+
   /// No description provided for @milestoneProgress.
   ///
   /// In en, this message translates to:

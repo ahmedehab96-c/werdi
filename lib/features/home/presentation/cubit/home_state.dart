@@ -1,8 +1,11 @@
 import 'package:equatable/equatable.dart';
 
+enum HomePlanAction { review, memorize, tasmee3 }
+
 class HomeState extends Equatable {
   const HomeState({
     this.isLoading = false,
+    this.isRefreshing = false,
     this.userName = '',
     this.motivationSubtitle = '',
     this.dailyTargetAyahs = 8,
@@ -24,9 +27,12 @@ class HomeState extends Equatable {
     this.weeklyMemorizedAyahs = 0,
     this.weeklySessions = 0,
     this.recommendedNextStep = '—',
+    this.recommendedPlanAction = HomePlanAction.memorize,
+    this.nextBadgeTitle = '',
   });
 
   final bool isLoading;
+  final bool isRefreshing;
   final String userName;
   final String motivationSubtitle;
   final int dailyTargetAyahs;
@@ -48,6 +54,8 @@ class HomeState extends Equatable {
   final int weeklyMemorizedAyahs;
   final int weeklySessions;
   final String recommendedNextStep;
+  final HomePlanAction recommendedPlanAction;
+  final String nextBadgeTitle;
 
   int get dailyRemainingAyahs =>
       (dailyTargetAyahs - dailyCompletedAyahs).clamp(0, 999);
@@ -59,6 +67,7 @@ class HomeState extends Equatable {
 
   HomeState copyWith({
     bool? isLoading,
+    bool? isRefreshing,
     String? userName,
     String? motivationSubtitle,
     int? dailyTargetAyahs,
@@ -80,9 +89,12 @@ class HomeState extends Equatable {
     int? weeklyMemorizedAyahs,
     int? weeklySessions,
     String? recommendedNextStep,
+    HomePlanAction? recommendedPlanAction,
+    String? nextBadgeTitle,
   }) {
     return HomeState(
       isLoading: isLoading ?? this.isLoading,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
       userName: userName ?? this.userName,
       motivationSubtitle: motivationSubtitle ?? this.motivationSubtitle,
       dailyTargetAyahs: dailyTargetAyahs ?? this.dailyTargetAyahs,
@@ -104,12 +116,16 @@ class HomeState extends Equatable {
       weeklyMemorizedAyahs: weeklyMemorizedAyahs ?? this.weeklyMemorizedAyahs,
       weeklySessions: weeklySessions ?? this.weeklySessions,
       recommendedNextStep: recommendedNextStep ?? this.recommendedNextStep,
+      recommendedPlanAction:
+          recommendedPlanAction ?? this.recommendedPlanAction,
+      nextBadgeTitle: nextBadgeTitle ?? this.nextBadgeTitle,
     );
   }
 
   @override
   List<Object> get props => [
     isLoading,
+    isRefreshing,
     userName,
     motivationSubtitle,
     dailyTargetAyahs,
@@ -131,5 +147,7 @@ class HomeState extends Equatable {
     weeklyMemorizedAyahs,
     weeklySessions,
     recommendedNextStep,
+    recommendedPlanAction,
+    nextBadgeTitle,
   ];
 }

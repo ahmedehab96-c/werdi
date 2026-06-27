@@ -415,6 +415,60 @@ class AppDatabase extends GeneratedDatabase {
     );
   }
 
+  Future<int> countMemorizationToday({required String userId}) async {
+    await ensureInitialized();
+    final today = DateTime.now();
+    final start =
+        DateTime(today.year, today.month, today.day).toIso8601String();
+    final rows = await customSelect(
+      '''
+      SELECT COUNT(*) AS count
+      FROM memorization_progress
+      WHERE user_id = ? AND datetime(updated_at) >= datetime(?)
+      ''',
+      variables: <Variable<Object>>[
+        Variable<String>(userId),
+        Variable<String>(start),
+      ],
+    ).getSingle();
+    return rows.read<int>('count');
+  }
+
+  Future<int> countMemorizationThisWeek({required String userId}) async {
+    await ensureInitialized();
+    final weekStart = DateTime.now().subtract(const Duration(days: 6));
+    final sinceIso =
+        DateTime(weekStart.year, weekStart.month, weekStart.day).toIso8601String();
+    final rows = await customSelect(
+      '''
+      SELECT COUNT(*) AS count
+      FROM memorization_progress
+      WHERE user_id = ? AND datetime(updated_at) >= datetime(?)
+      ''',
+      variables: <Variable<Object>>[
+        Variable<String>(userId),
+        Variable<String>(sinceIso),
+      ],
+    ).getSingle();
+    return rows.read<int>('count');
+  }
+
+  Future<int> countReviewsThisWeek() async {
+    await ensureInitialized();
+    final weekStart = DateTime.now().subtract(const Duration(days: 6));
+    final sinceIso =
+        DateTime(weekStart.year, weekStart.month, weekStart.day).toIso8601String();
+    final rows = await customSelect(
+      '''
+      SELECT COUNT(*) AS count
+      FROM review_items
+      WHERE reviewed = 1 AND datetime(updated_at) >= datetime(?)
+      ''',
+      variables: <Variable<Object>>[Variable<String>(sinceIso)],
+    ).getSingle();
+    return rows.read<int>('count');
+  }
+
   Future<int> getMemorizedAyahCount({required String userId}) async {
     await ensureInitialized();
     final rows = await customSelect(

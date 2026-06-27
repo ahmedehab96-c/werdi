@@ -273,6 +273,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get startStreakHint => 'ابدأ اليوم لبناء سلسلة إنجازك';
 
   @override
+  String get streakPurposeHint =>
+      'أيام متتالية من الحفظ أو المراجعة أو التسميع';
+
+  @override
+  String nextBadgeHint(String title) {
+    return 'الشارة التالية: $title';
+  }
+
+  @override
   String milestoneProgress(int current, int next) {
     return '$current / $next آية نحو الإنجاز القادم';
   }

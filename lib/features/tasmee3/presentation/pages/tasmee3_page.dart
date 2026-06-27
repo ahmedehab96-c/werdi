@@ -28,6 +28,7 @@ class Tasmee3Page extends StatelessWidget {
         repository: AppInjector.tasmee3Gateway,
         quranRepository: AppInjector.quranRepository,
         audioRepository: AppInjector.audioRepository,
+        progressRepository: AppInjector.userProgressGateway,
         preferences: AppInjector.appPreferences,
       )..initialize(),
       child: const _Tasmee3View(),
@@ -64,14 +65,24 @@ class _Tasmee3View extends StatelessWidget {
           ),
           body: state.isLoading
               ? AppLoadingState(message: context.l10n.preparingSession)
-              : Padding(
-                  padding: EdgeInsets.all(AppSpacing.md),
-                  child: switch (state.status) {
-                    Tasmee3FlowStatus.setup => _SetupScreen(state: state),
-                    Tasmee3FlowStatus.testing => _TestingScreen(state: state),
-                    Tasmee3FlowStatus.summary => _SummaryScreen(state: state),
-                    Tasmee3FlowStatus.history => _HistoryScreen(state: state),
-                  },
+              : Column(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.all(AppSpacing.md),
+                        child: switch (state.status) {
+                          Tasmee3FlowStatus.setup =>
+                            _SetupScreen(state: state),
+                          Tasmee3FlowStatus.testing =>
+                            _TestingScreen(state: state),
+                          Tasmee3FlowStatus.summary =>
+                            _SummaryScreen(state: state),
+                          Tasmee3FlowStatus.history =>
+                            _HistoryScreen(state: state),
+                        },
+                      ),
+                    ),
+                  ],
                 ),
         );
       },
@@ -513,100 +524,115 @@ class _SummaryScreen extends StatelessWidget {
     final l10n = context.l10n;
     final cubit = context.read<Tasmee3Cubit>();
     final result = state.result!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ScoreSummaryCard(result: result).animate().fadeIn(duration: 400.ms),
-        SizedBox(height: AppSpacing.md),
-        AppSurfaceCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppText(
-                l10n.ayahsToReview,
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              SizedBox(height: AppSpacing.sm),
-              if (result.unknownCount == 0 && result.hesitantCount == 0)
+    final evaluations = state.ayahEvaluations.values
+        .where(
+          (e) =>
+              e.hasErrors || result.grades[e.ayahNumber] != AyahGrade.known,
+        )
+        .toList();
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: ScoreSummaryCard(result: result).animate().fadeIn(duration: 400.ms),
+        ),
+        SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+        SliverToBoxAdapter(
+          child: AppSurfaceCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 AppText(
-                  l10n.excellent,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.green,
-                      ),
-                )
-              else ...[
-                ...state.ayahEvaluations.values
-                    .where(
-                      (e) =>
-                          e.hasErrors ||
-                          result.grades[e.ayahNumber] != AyahGrade.known,
-                    )
-                    .map(
-                      (evaluation) => Padding(
-                        padding: EdgeInsets.only(bottom: AppSpacing.md),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Row(
-                              children: [
-                                AppText(
-                                  l10n.ayahNumbered(evaluation.ayahNumber),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                                const Spacer(),
-                                AppText(
-                                  l10n.voiceAccuracy(evaluation.accuracyPercent),
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                SizedBox(width: 8.w),
-                                FilledButton.tonalIcon(
-                                  onPressed: () =>
-                                      cubit.toggleReciterAyah(evaluation.ayahNumber),
-                                  icon: const Icon(
-                                    Icons.volume_up_rounded,
-                                    size: 18,
-                                  ),
-                                  label: Text(l10n.listenReciterAyah),
-                                  style: FilledButton.styleFrom(
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: AppSpacing.sm),
-                            AyahDiffText(
-                              words: evaluation.expectedWords,
-                              wordCorrect: evaluation.expectedWordCorrect,
-                              fontScale: 0.95,
-                            ),
-                          ],
+                  l10n.ayahsToReview,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                SizedBox(height: AppSpacing.sm),
+                if (result.unknownCount == 0 && result.hesitantCount == 0)
+                  AppText(
+                    l10n.excellent,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.green,
                         ),
-                      ),
-                    ),
+                  ),
               ],
-            ],
+            ),
           ),
         ),
-        const Spacer(),
-        AppButton(
-          label: l10n.retakeTest,
-          onPressed: cubit.retryTest,
-          icon: const Icon(Icons.replay_rounded),
+        if (evaluations.isNotEmpty) ...[
+          SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+          SliverList.separated(
+            itemCount: evaluations.length,
+            separatorBuilder: (_, _) => SizedBox(height: AppSpacing.sm),
+            itemBuilder: (context, index) {
+              final evaluation = evaluations[index];
+              return AppSurfaceCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Wrap(
+                      spacing: 8.w,
+                      runSpacing: 8.h,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        AppText(
+                          l10n.ayahNumbered(evaluation.ayahNumber),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        AppText(
+                          l10n.voiceAccuracy(evaluation.accuracyPercent),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: () =>
+                              cubit.toggleReciterAyah(evaluation.ayahNumber),
+                          icon: const Icon(Icons.volume_up_rounded, size: 18),
+                          label: Text(l10n.listenReciterAyah),
+                          style: FilledButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: AppSpacing.sm),
+                    AyahDiffText(
+                      words: evaluation.expectedWords,
+                      wordCorrect: evaluation.expectedWordCorrect,
+                      fontScale: 0.95,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+        SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
+        SliverToBoxAdapter(
+          child: AppButton(
+            label: l10n.retakeTest,
+            onPressed: cubit.retryTest,
+            icon: const Icon(Icons.replay_rounded),
+          ),
         ),
-        SizedBox(height: AppSpacing.sm),
-        OutlinedButton.icon(
-          onPressed: cubit.openHistory,
-          icon: const Icon(Icons.history_rounded),
-          label: Text(l10n.sessionHistory),
+        SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+        SliverToBoxAdapter(
+          child: OutlinedButton.icon(
+            onPressed: cubit.openHistory,
+            icon: const Icon(Icons.history_rounded),
+            label: Text(l10n.sessionHistory),
+          ),
         ),
-        SizedBox(height: AppSpacing.sm),
-        TextButton(
-          onPressed: cubit.backToSetup,
-          child: Text(l10n.backToSetup),
+        SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+        SliverToBoxAdapter(
+          child: TextButton(
+            onPressed: cubit.backToSetup,
+            child: Text(l10n.backToSetup),
+          ),
         ),
+        SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
       ],
     );
   }

@@ -34,8 +34,34 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class _HomeView extends StatelessWidget {
+class _HomeView extends StatefulWidget {
   const _HomeView();
+
+  @override
+  State<_HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<_HomeView> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<HomeCubit>().refresh();
+    }
+  }
+
+  Future<void> _onRefresh() => context.read<HomeCubit>().refresh();
 
   @override
   Widget build(BuildContext context) {
@@ -45,45 +71,54 @@ class _HomeView extends StatelessWidget {
           if (state.isLoading) {
             return AppLoadingState(message: context.l10n.preparingDashboard);
           }
-          return CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
+          return RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              slivers: [
+                if (state.isRefreshing)
+                  const SliverToBoxAdapter(
+                    child: LinearProgressIndicator(minHeight: 2),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      HomeGreetingSection(state: state).entranceStagger(0),
-                      AppVSpace.of(AppSpacing.lg),
-                      DailyGoalCard(state: state).entranceStagger(1),
-                      AppVSpace.of(AppSpacing.lg),
-                      ProgressOverviewCard(state: state).entranceStagger(2),
-                      AppVSpace.of(AppSpacing.lg),
-                      HomeSectionTitle(
-                        title: context.l10n.quickActionsTitle,
-                      ).entranceStagger(3),
-                      AppVSpace.of(AppSpacing.sm),
-                      const HomeQuickActionsGrid().entranceStagger(4),
-                      AppVSpace.of(AppSpacing.lg),
-                      _responsiveInfoCards(context, state).entranceStagger(5),
-                      AppVSpace.of(AppSpacing.lg),
-                      ReviewReminderCard(state: state).entranceStagger(6),
-                      AppVSpace.of(AppSpacing.lg),
-                      WeeklyInsightsCard(state: state).entranceStagger(7),
-                      AppVSpace.of(AppSpacing.lg),
-                      _responsiveBottomCards(context, state).entranceStagger(8),
-                      AppVSpace.of(AppSpacing.lg),
-                      RecommendedPlanCard(state: state).entranceStagger(9),
-                      AppVSpace.of(AppSpacing.xl),
-                    ],
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        HomeGreetingSection(state: state).entranceStagger(0),
+                        AppVSpace.of(AppSpacing.lg),
+                        DailyGoalCard(state: state).entranceStagger(1),
+                        AppVSpace.of(AppSpacing.lg),
+                        ProgressOverviewCard(state: state).entranceStagger(2),
+                        AppVSpace.of(AppSpacing.lg),
+                        HomeSectionTitle(
+                          title: context.l10n.quickActionsTitle,
+                        ).entranceStagger(3),
+                        AppVSpace.of(AppSpacing.sm),
+                        const HomeQuickActionsGrid().entranceStagger(4),
+                        AppVSpace.of(AppSpacing.lg),
+                        _responsiveInfoCards(context, state).entranceStagger(5),
+                        AppVSpace.of(AppSpacing.lg),
+                        ReviewReminderCard(state: state).entranceStagger(6),
+                        AppVSpace.of(AppSpacing.lg),
+                        WeeklyInsightsCard(state: state).entranceStagger(7),
+                        AppVSpace.of(AppSpacing.lg),
+                        _responsiveBottomCards(context, state).entranceStagger(8),
+                        AppVSpace.of(AppSpacing.lg),
+                        RecommendedPlanCard(state: state).entranceStagger(9),
+                        AppVSpace.of(AppSpacing.xl),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),

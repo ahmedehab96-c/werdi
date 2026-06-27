@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:quran/quran.dart' as quran_pkg;
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:werdi/core/constants/app_constants.dart';
 import 'package:werdi/core/audio/audio_playback.dart';
 import 'package:werdi/core/services/app_preferences.dart';
 import 'package:werdi/core/services/reciter_preferences.dart';
@@ -19,22 +20,26 @@ import 'package:werdi/features/tasmee3/domain/repositories/tasmee3_repository.da
 import 'package:werdi/features/tasmee3/domain/services/ayah_speech_evaluator.dart';
 import 'package:werdi/features/tasmee3/presentation/cubit/tasmee3_state.dart';
 import 'package:werdi/shared/repositories/audio_repository.dart';
+import 'package:werdi/shared/repositories/user_progress_repository.dart';
 
 class Tasmee3Cubit extends Cubit<Tasmee3State> {
   Tasmee3Cubit({
     required Tasmee3Repository repository,
     required QuranRepository quranRepository,
     required AudioRepository audioRepository,
+    required UserProgressRepository progressRepository,
     required AppPreferences preferences,
   })  : _repository = repository,
         _quranRepository = quranRepository,
         _audio = audioRepository,
+        _progressRepository = progressRepository,
         _preferences = preferences,
         super(const Tasmee3State());
 
   final Tasmee3Repository _repository;
   final QuranRepository _quranRepository;
   final AudioRepository _audio;
+  final UserProgressRepository _progressRepository;
   final AppPreferences _preferences;
   final stt.SpeechToText _speech = stt.SpeechToText();
   bool _speechInitialized = false;
@@ -287,6 +292,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
         result: result,
       );
       await _repository.saveSession(session);
+      await _progressRepository.recordActivity(userId: AppConstants.localUserId);
       final history = await _repository.getHistory();
       emit(state.copyWith(
         status: Tasmee3FlowStatus.summary,

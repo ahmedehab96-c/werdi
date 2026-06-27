@@ -7,11 +7,43 @@ import 'package:werdi/core/widgets/app_badge_chip.dart';
 import 'package:werdi/core/widgets/app_animated_progress.dart';
 import 'package:werdi/core/widgets/app_button.dart';
 import 'package:werdi/core/widgets/app_metric_tile.dart';
+import 'package:werdi/core/widgets/app_icon_container.dart';
 import 'package:werdi/core/widgets/app_status_chip.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 import 'package:werdi/features/home/presentation/cubit/home_state.dart';
 import 'package:werdi/routes/app_routes.dart';
+
+class _HomeCardHeader extends StatelessWidget {
+  const _HomeCardHeader({
+    required this.icon,
+    required this.title,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final String title;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        AppIconContainer(icon: icon, size: 44.w),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: AppText(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ),
+        ?trailing,
+      ],
+    );
+  }
+}
 
 class DailyGoalCard extends StatelessWidget {
   const DailyGoalCard({required this.state, super.key});
@@ -26,12 +58,7 @@ class DailyGoalCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText(
-            l10n.dailyGoal,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-          ),
+          _HomeCardHeader(icon: Icons.flag_rounded, title: l10n.dailyGoal),
           SizedBox(height: 10.h),
           AppText(
             l10n.dailyGoalDescription(
@@ -91,11 +118,9 @@ class ProgressOverviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText(
-            l10n.progressOverview,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          _HomeCardHeader(
+            icon: Icons.insights_rounded,
+            title: l10n.progressOverview,
           ),
           SizedBox(height: 12.h),
           Row(
@@ -142,11 +167,9 @@ class LastMemorizedSurahCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText(
-            l10n.continueJourney,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          _HomeCardHeader(
+            icon: Icons.play_circle_outline_rounded,
+            title: l10n.continueJourney,
           ),
           SizedBox(height: 10.h),
           AppText(state.lastMemorizedContext),
@@ -181,20 +204,15 @@ class ReviewReminderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: AppText(
-                  l10n.reviewReminder,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              if (state.hasOverdueReviews)
-                AppStatusChip(
-                  label: l10n.overdueShort(state.overdueReviewCount),
-                  foreground: Theme.of(context).colorScheme.error,
-                ),
-            ],
+          _HomeCardHeader(
+            icon: Icons.notifications_active_rounded,
+            title: l10n.reviewReminder,
+            trailing: state.hasOverdueReviews
+                ? AppStatusChip(
+                    label: l10n.overdueShort(state.overdueReviewCount),
+                    foreground: Theme.of(context).colorScheme.error,
+                  )
+                : null,
           ),
           SizedBox(height: 8.h),
           AppText(l10n.reviewDueToday(state.reviewDueCount)),
@@ -224,9 +242,9 @@ class DailyMotivationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText(
-            l10n.dailyMotivation,
-            style: Theme.of(context).textTheme.titleSmall,
+          _HomeCardHeader(
+            icon: Icons.auto_awesome_rounded,
+            title: l10n.dailyMotivation,
           ),
           SizedBox(height: 10.h),
           AppText(
@@ -255,10 +273,11 @@ class StreakCard extends StatelessWidget {
       onTap: () => context.pushNamed(AppRoutes.achievements),
       child: Row(
         children: [
-          const Icon(
-            Icons.local_fire_department_rounded,
-            color: Colors.orange,
-            size: 34,
+          AppIconContainer(
+            icon: Icons.local_fire_department_rounded,
+            size: 52.w,
+            background: Colors.orange.withValues(alpha: 0.15),
+            foreground: Colors.orange,
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -270,11 +289,22 @@ class StreakCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 SizedBox(height: 4.h),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 350),
+                  child: AppText(
+                    state.streakDays > 0
+                        ? l10n.streakConsecutiveDays(state.streakDays)
+                        : l10n.startStreakHint,
+                    key: ValueKey(state.streakDays),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+                SizedBox(height: 4.h),
                 AppText(
-                  state.streakDays > 0
-                      ? l10n.streakConsecutiveDays(state.streakDays)
-                      : l10n.startStreakHint,
-                  style: Theme.of(context).textTheme.bodyLarge,
+                  l10n.streakPurposeHint,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
@@ -304,21 +334,15 @@ class AchievementsPreviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: AppText(
-                  l10n.achievementsPreview,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              Icon(
-                Directionality.of(context) == TextDirection.rtl
-                    ? Icons.chevron_left_rounded
-                    : Icons.chevron_right_rounded,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ],
+          _HomeCardHeader(
+            icon: Icons.emoji_events_rounded,
+            title: l10n.achievementsPreview,
+            trailing: Icon(
+              Directionality.of(context) == TextDirection.rtl
+                  ? Icons.chevron_left_rounded
+                  : Icons.chevron_right_rounded,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           SizedBox(height: 10.h),
           if (state.badges.isEmpty)
@@ -344,6 +368,15 @@ class AchievementsPreviewCard extends StatelessWidget {
             ),
             style: Theme.of(context).textTheme.bodySmall,
           ),
+          if (state.nextBadgeTitle.isNotEmpty) ...[
+            SizedBox(height: 6.h),
+            AppText(
+              l10n.nextBadgeHint(state.nextBadgeTitle),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ],
         ],
       ),
     );
@@ -362,9 +395,9 @@ class WeeklyInsightsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText(
-            l10n.weeklyInsights,
-            style: Theme.of(context).textTheme.titleSmall,
+          _HomeCardHeader(
+            icon: Icons.calendar_view_week_rounded,
+            title: l10n.weeklyInsights,
           ),
           SizedBox(height: 10.h),
           Row(
@@ -407,31 +440,58 @@ class RecommendedPlanCard extends StatelessWidget {
     final l10n = context.l10n;
     return AppSurfaceCard(
       onTap: () => _openRecommendedPlan(context),
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: const Icon(Icons.lightbulb_outline_rounded),
-        title: AppText(l10n.suggestedPlanToday),
-        subtitle: AppText(state.recommendedNextStep),
-        trailing: Icon(
-          Directionality.of(context) == TextDirection.rtl
-              ? Icons.chevron_left_rounded
-              : Icons.chevron_right_rounded,
-        ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppIconContainer(
+            icon: Icons.lightbulb_rounded,
+            size: 48.w,
+            background: Theme.of(context).colorScheme.tertiaryContainer,
+            foreground: Theme.of(context).colorScheme.tertiary,
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(
+                  l10n.suggestedPlanToday,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                SizedBox(height: 6.h),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: AppText(
+                    state.recommendedNextStep,
+                    key: ValueKey(state.recommendedNextStep),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Directionality.of(context) == TextDirection.rtl
+                ? Icons.chevron_left_rounded
+                : Icons.chevron_right_rounded,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ],
       ),
     );
   }
 
   void _openRecommendedPlan(BuildContext context) {
-    final step = state.recommendedNextStep;
-    if (step.contains('مراجعة') || step.contains('صعبة')) {
-      context.pushNamed(AppRoutes.review);
-      return;
+    switch (state.recommendedPlanAction) {
+      case HomePlanAction.review:
+        context.pushNamed(AppRoutes.review);
+      case HomePlanAction.tasmee3:
+        context.pushNamed(AppRoutes.tasmee3);
+      case HomePlanAction.memorize:
+        context.pushNamed(AppRoutes.memorization);
     }
-    if (step.contains('تسميع')) {
-      context.pushNamed(AppRoutes.tasmee3);
-      return;
-    }
-    context.pushNamed(AppRoutes.memorization);
   }
 }
 

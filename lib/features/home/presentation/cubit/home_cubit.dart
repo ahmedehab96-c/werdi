@@ -45,92 +45,125 @@ class HomeCubit extends Cubit<HomeState> {
     'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً',
   ];
 
-  Future<void> initialize() async {
-    emit(state.copyWith(isLoading: true));
+  Future<void> initialize() => _load(showFullLoader: true);
 
-    final localResults = await Future.wait([
-      _reviewRepository.getReviewItems(),
-      _preferences.getString(_lastReadKey),
-      _preferences.getString(_userNameKey),
-      _tasmee3Repository.getHistory(),
-    ]);
+  Future<void> refresh() => _load(showFullLoader: false);
 
-    final reviewItems = localResults[0] as List<dynamic>;
-    final lastReadSurah = localResults[1] as String?;
-    final userName = localResults[2] as String?;
-    final tasmee3History = localResults[3] as List<dynamic>;
+  Future<void> _load({required bool showFullLoader}) async {
+    if (showFullLoader) {
+      emit(state.copyWith(isLoading: true));
+    } else {
+      emit(state.copyWith(isRefreshing: true));
+    }
 
-    final pendingCount =
-        reviewItems.where((i) => !(i.reviewed as bool)).length;
-    final overdueCount =
-        reviewItems.where((i) => i.difficult as bool).length;
+    try {
+      final localResults = await Future.wait([
+        _reviewRepository.getReviewItems(),
+        _preferences.getString(_lastReadKey),
+        _preferences.getString(_userNameKey),
+        _tasmee3Repository.getHistory(),
+      ]);
 
-    final currentSurah =
-        lastReadSurah?.replaceFirst('سورة ', '') ?? state.currentSurahName;
-    final lastContext = lastReadSurah ?? state.lastMemorizedContext;
+      final reviewItems = localResults[0] as List<dynamic>;
+      final lastReadSurah = localResults[1] as String?;
+      final userName = localResults[2] as String?;
+      final tasmee3History = localResults[3] as List<dynamic>;
 
-    final snapshot = await _progressRepository.getProgress(
-      userId: AppConstants.localUserId,
-    );
+      final pendingCount =
+          reviewItems.where((i) => !(i.reviewed as bool)).length;
+      final overdueCount =
+          reviewItems.where((i) => i.difficult as bool).length;
+      final lastReviewed = reviewItems
+          .where((i) => i.reviewed as bool)
+          .map((i) => i.title as String)
+          .firstOrNull;
 
-    final achievements = await _achievementsRepository.evaluateFromMetrics(
-      memorizedAyahCount: snapshot.memorizedAyahCount,
-      reviewedItemsCount: snapshot.reviewedItemsCount,
-      streakDays: snapshot.streakDays,
-      tasmee3Sessions: tasmee3History.length,
-    );
+      final currentSurah =
+          lastReadSurah?.replaceFirst('سورة ', '') ?? state.currentSurahName;
+      final lastContext = lastReadSurah ?? state.lastMemorizedContext;
 
-    final dailyCounts = await _database.memorizationCountsByDay(
-      userId: AppConstants.localUserId,
-    );
-    final maxDaily = dailyCounts.isEmpty
-        ? 1
-        : dailyCounts.reduce((a, b) => a > b ? a : b).clamp(1, 999);
-    final weeklyProgress =
-        dailyCounts.map((c) => (c / maxDaily).clamp(0.0, 1.0)).toList();
+      final snapshot = await _progressRepository.getProgress(
+        userId: AppConstants.localUserId,
+      );
 
-    final weeklySessions = await _database.countActiveDaysThisWeek(
-      userId: AppConstants.localUserId,
-    );
+      final achievements = await _achievementsRepository.evaluateFromMetrics(
+        memorizedAyahCount: snapshot.memorizedAyahCount,
+        reviewedItemsCount: snapshot.reviewedItemsCount,
+        streakDays: snapshot.streakDays,
+        tasmee3Sessions: tasmee3History.length,
+      );
 
-    final totalProgress =
-        (snapshot.memorizedAyahCount / 6236).clamp(0.0, 1.0);
-    final dailyCompleted =
-        snapshot.memorizedAyahCount % state.dailyTargetAyahs;
-    final nextMilestone = _nextMilestone(snapshot.memorizedAyahCount);
-    final quote = _dailyQuotes[DateTime.now().day % _dailyQuotes.length];
-    final badges = achievements.earned.map((e) => e.title).toList();
-    final recommended = _recommendedStep(
-      pendingReviews: pendingCount,
-      overdueReviews: overdueCount,
-      dailyRemaining: (state.dailyTargetAyahs - dailyCompleted).clamp(0, 999),
-      surahName: currentSurah,
-      streakDays: snapshot.streakDays,
-    );
+      final dailyCounts = await _database.memorizationCountsByDay(
+        userId: AppConstants.localUserId,
+      );
+      final maxDaily = dailyCounts.isEmpty
+          ? 1
+          : dailyCounts.reduce((a, b) => a > b ? a : b).clamp(1, 999);
+      final weeklyProgress =
+          dailyCounts.map((c) => (c / maxDaily).clamp(0.0, 1.0)).toList();
 
-    emit(state.copyWith(
-      isLoading: false,
-      userName: userName ?? '',
-      motivationSubtitle: snapshot.streakDays > 0
-          ? '${snapshot.streakDays} يوم التزام متواصل'
-          : 'ابدأ اليوم وابنِ سلسلة إنجازك',
-      reviewDueCount: pendingCount,
-      overdueReviewCount: overdueCount,
-      currentSurahName: currentSurah,
-      lastMemorizedContext: lastContext,
-      dailyCompletedAyahs: dailyCompleted,
-      totalMemorizationProgress: totalProgress,
-      currentMilestoneAyahs: snapshot.memorizedAyahCount,
-      nextMilestoneAyahs: nextMilestone,
-      streakDays: snapshot.streakDays,
-      weeklyMemorizedAyahs: snapshot.memorizedAyahCount,
-      weeklyReviewedAyahs: snapshot.reviewedItemsCount,
-      weeklySessions: weeklySessions,
-      weeklyProgress: weeklyProgress,
-      badges: badges,
-      dailyQuote: quote,
-      recommendedNextStep: recommended,
-    ));
+      final weeklySessions = await _database.countActiveDaysThisWeek(
+        userId: AppConstants.localUserId,
+      );
+      final todayAyahs = await _database.countMemorizationToday(
+        userId: AppConstants.localUserId,
+      );
+      final weeklyMemorized = await _database.countMemorizationThisWeek(
+        userId: AppConstants.localUserId,
+      );
+      final weeklyReviewed = await _database.countReviewsThisWeek();
+
+      final totalProgress =
+          (snapshot.memorizedAyahCount / 6236).clamp(0.0, 1.0);
+      final surahProgress = snapshot.memorizedAyahCount == 0
+          ? 0.0
+          : (todayAyahs / state.dailyTargetAyahs).clamp(0.0, 1.0);
+      final nextMilestone = _nextMilestone(snapshot.memorizedAyahCount);
+      final quote = _dailyQuotes[DateTime.now().day % _dailyQuotes.length];
+      final badges = achievements.earned.map((e) => e.title).toList();
+      final nextBadge = achievements.upcoming.isNotEmpty
+          ? achievements.upcoming.first.title
+          : '';
+      final plan = _recommendedPlan(
+        pendingReviews: pendingCount,
+        overdueReviews: overdueCount,
+        dailyRemaining:
+            (state.dailyTargetAyahs - todayAyahs).clamp(0, state.dailyTargetAyahs),
+        surahName: currentSurah,
+        streakDays: snapshot.streakDays,
+      );
+
+      emit(state.copyWith(
+        isLoading: false,
+        isRefreshing: false,
+        userName: userName ?? '',
+        motivationSubtitle: snapshot.streakDays > 0
+            ? '${snapshot.streakDays} يوم التزام — واصل اليوم!'
+            : 'ابدأ جلسة اليوم لبناء سلسلة إنجازك',
+        reviewDueCount: pendingCount,
+        overdueReviewCount: overdueCount,
+        currentSurahName: currentSurah,
+        lastMemorizedContext: lastContext,
+        lastReviewContext: lastReviewed ?? '—',
+        dailyCompletedAyahs: todayAyahs,
+        totalMemorizationProgress: totalProgress,
+        currentSurahProgress: surahProgress,
+        currentMilestoneAyahs: snapshot.memorizedAyahCount,
+        nextMilestoneAyahs: nextMilestone,
+        streakDays: snapshot.streakDays,
+        weeklyMemorizedAyahs: weeklyMemorized,
+        weeklyReviewedAyahs: weeklyReviewed,
+        weeklySessions: weeklySessions,
+        weeklyProgress: weeklyProgress,
+        badges: badges,
+        nextBadgeTitle: nextBadge,
+        dailyQuote: quote,
+        recommendedNextStep: plan.text,
+        recommendedPlanAction: plan.action,
+      ));
+    } catch (_) {
+      emit(state.copyWith(isLoading: false, isRefreshing: false));
+    }
   }
 
   int _nextMilestone(int current) {
@@ -140,7 +173,7 @@ class HomeCubit extends Cubit<HomeState> {
     return ((current ~/ 500) + 1) * 500;
   }
 
-  String _recommendedStep({
+  ({String text, HomePlanAction action}) _recommendedPlan({
     required int pendingReviews,
     required int overdueReviews,
     required int dailyRemaining,
@@ -148,17 +181,32 @@ class HomeCubit extends Cubit<HomeState> {
     required int streakDays,
   }) {
     if (overdueReviews > 0) {
-      return 'ركّز على $overdueReviews آيات صعبة في المراجعة';
+      return (
+        text: 'ركّز على $overdueReviews آيات صعبة في المراجعة',
+        action: HomePlanAction.review,
+      );
     }
     if (pendingReviews > 0) {
-      return 'راجع $pendingReviews آيات اليوم قبل الحفظ الجديد';
+      return (
+        text: 'راجع $pendingReviews آيات اليوم قبل الحفظ الجديد',
+        action: HomePlanAction.review,
+      );
     }
     if (dailyRemaining > 0) {
-      return 'احفظ $dailyRemaining آيات من سورة $surahName';
+      return (
+        text: 'احفظ $dailyRemaining آيات من سورة $surahName',
+        action: HomePlanAction.memorize,
+      );
     }
     if (streakDays == 0) {
-      return 'ابدأ جلسة حفظ أو مراجعة لبدء سلسلة الإنجاز';
+      return (
+        text: 'ابدأ جلسة حفظ أو مراجعة لبدء سلسلة الإنجاز',
+        action: HomePlanAction.memorize,
+      );
     }
-    return 'جرّب جلسة تسميع على سورة $surahName';
+    return (
+      text: 'جرّب جلسة تسميع على سورة $surahName',
+      action: HomePlanAction.tasmee3,
+    );
   }
 }

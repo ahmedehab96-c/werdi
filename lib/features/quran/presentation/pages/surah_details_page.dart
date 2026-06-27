@@ -123,34 +123,38 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
           SizedBox(height: 12.h),
 
           // ── أزرار الإجراءات
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => MemorizationPage(
-                        initialSurahNumber: widget.surah.number,
+          AppSurfaceCard(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _SurahActionButton(
+                    icon: Icons.school_rounded,
+                    label: l10n.startMemorizing,
+                    filled: true,
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => MemorizationPage(
+                          initialSurahNumber: widget.surah.number,
+                        ),
                       ),
                     ),
                   ),
-                  icon: const Icon(Icons.school_rounded),
-                  label: Text(l10n.startMemorizing),
                 ),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const ReviewPage(),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: _SurahActionButton(
+                    icon: Icons.history_edu_rounded,
+                    label: l10n.startReview,
+                    filled: false,
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const ReviewPage(),
+                      ),
                     ),
                   ),
-                  icon: const Icon(Icons.history_edu_rounded),
-                  label: Text(l10n.startReview),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           SizedBox(height: 14.h),
         ],
@@ -683,6 +687,74 @@ class _FocusReadingToolbar extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SurahActionButton extends StatelessWidget {
+  const _SurahActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    required this.filled,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: 56.h,
+      child: filled
+          ? FilledButton(
+              onPressed: onPressed,
+              style: FilledButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 10.w),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 20.sp),
+                  SizedBox(width: 6.w),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13.sp),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : OutlinedButton(
+              onPressed: onPressed,
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                side: BorderSide(color: scheme.outline),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 20.sp),
+                  SizedBox(width: 6.w),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13.sp),
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }
