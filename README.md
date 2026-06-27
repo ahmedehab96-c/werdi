@@ -2,43 +2,45 @@
 
 ## About
 
-Werdi (وردي) is an Arabic-first Quran memorization and revision app (v1.0.1) with full English support. Open the app and start immediately — **no login required**. All progress is stored locally on the device, with optional Supabase sync.
+Werdi (وردي) v1.0.1 is an Arabic-first Quran memorization and revision app with full English support. The latest release removes the login gate — open the app and start immediately. Progress is stored locally on the device, with optional Supabase sync.
 
-Users can memorize ayah by ayah with repetition controls, run smart revision sessions, practice voice recitation (tasmee3) with feedback, browse the Mushaf with search, tafsir, and bookmarks, and listen to ayah-by-ayah audio from multiple reciters (Alafasy, Abdul Basit, Maher, Shuraim, Sudais).
+Core flows: animated splash and onboarding, ayah-by-ayah memorization with repetition and playback speed, smart revision sessions, voice recitation (tasmee3) with recording and speech-to-text feedback, Mushaf browsing with search/tafsir/bookmarks, ayah-by-ayah audio (Alafasy, Abdul Basit, Maher, Shuraim, Sudais), achievements, and daily reminder notifications.
 
-The UI uses Material 3 with Mushaf-style ayah text, branded light/dark/system themes, achievements tracking, and a fully responsive layout for phones and tablets.
+The UI uses Material 3 with Mushaf-style ayah text, branded backgrounds, custom page transitions, light/dark/system themes, and a responsive layout for phones and tablets.
 
 ---
 
-وردي (Werdi) هو تطبيق عربي أولاً لحفظ ومراجعة القرآن الكريم (الإصدار 1.0.1) مع دعم إنجليزي كامل. افتح التطبيق وابدأ مباشرة — **بدون تسجيل دخول**. كل التقدم يُحفظ محلياً على الجهاز مع مزامنة اختيارية عبر Supabase.
+وردي (Werdi) v1.0.1 تطبيق عربي أولاً لحفظ ومراجعة القرآن مع دعم إنجليزي كامل. الإصدار الأخير يزيل تسجيل الدخول — افتح التطبيق وابدأ مباشرة. التقدم يُحفظ محلياً مع مزامنة Supabase اختيارية.
 
-يمكن للمستخدم الحفظ آية بآية مع التحكم بالتكرار، وتشغيل جلسات مراجعة ذكية، والتسميع الصوتي (tasmee3)، وتصفح المصحف مع البحث والتفسير والإشارات، والاستماع لصوت الآيات من عدة قراء (العفاسي، عبدالباسط، ماهر، الشريم، السديس).
+يشمل: شاشة افتتاحية وonboarding متحركة، حفظ آية بآية مع التكرار وسرعة التشغيل، مراجعة ذكية، تسميع صوتي (tasmee3) مع تسجيل وتحويل كلام، تصفح المصحف مع البحث والتفسير والإشارات، صوت آية بآية بعدة قراء، إنجازات، وتذكيرات يومية.
 
-الواجهة Material 3 مع عرض آيات بأسلوب المصحف، ثيمات نهاري/ليلي/تلقائي، تتبع إنجازات، وتخطيط متجاوب للهواتف والأجهزة اللوحية.
+الواجهة Material 3 مع عرض آيات بأسلوب المصحف وخلفيات مميزة وانتقالات صفحات مخصصة وثيمات نهاري/ليلي/تلقائي وتخطيط متجاوب.
 
 ## Features
 
-- No account required — open and start memorizing locally
+- No login — splash → onboarding → home instantly
+- Animated splash screen and polished onboarding flow
 - Ayah-by-ayah memorization with repetition and playback speed
-- Voice recitation (tasmee3) with automatic correction
-- Smart revision list and achievements progress
+- Voice recitation (tasmee3) with recording and speech-to-text
+- Smart revision list, achievements, and daily reminders
 - Mushaf-style ayah display with search, tafsir, and bookmarks
 - Ayah-by-ayah audio with multiple reciters
-- Material 3 light, dark, and system themes
+- Material 3 themes (light, dark, system) and custom page transitions
 - Responsive layout for phones and tablets
-- Optional Supabase sync; offline-first with Drift
+- Offline-first with Drift; optional Supabase sync
 
 ---
 
-- بدون حساب — افتح التطبيق وابدأ الحفظ محلياً
+- بدون تسجيل دخول — افتتاحية → onboarding → الرئيسية مباشرة
+- شاشة افتتاحية متحركة وonboarding محسّن
 - حفظ آية بآية مع التكرار وسرعة التشغيل
-- التسميع الصوتي مع تصحيح تلقائي
-- مراجعة ذكية وتتبع الإنجازات
+- تسميع صوتي مع تسجيل وتحويل كلام
+- مراجعة ذكية وإنجازات وتذكيرات يومية
 - عرض آيات بأسلوب المصحف مع البحث والتفسير والإشارات
 - صوت آية بآية مع عدة قراء
-- ثيمات Material 3 نهاري وليلي وتلقائي
+- ثيمات Material 3 وانتقالات صفحات مخصصة
 - تخطيط متجاوب للهواتف والأجهزة اللوحية
-- مزامنة Supabase اختيارية مع تخزين محلي عبر Drift
+- تخزين محلي عبر Drift مع مزامنة Supabase اختيارية
 
 ## Tech Stack
 
