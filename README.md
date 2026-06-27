@@ -48,23 +48,19 @@ Flutter · BLoC · go_router · Drift · Supabase · just_audio · flutter_scree
 
 ### English
 1. Open **[Releases](https://github.com/ahmedehab96-c/werdi/releases/tag/portfolio-apk-v1)** on your Android phone (Chrome).
-2. Pick **one** APK under **Assets**:
-   - **`app-arm64-v8a-release.apk`** — most phones (2017+)
-   - **`app-armeabi-v7a-release.apk`** — older 32-bit phones (if arm64 fails)
+2. Download **`app-release.apk`** (~150 MB) under **Assets** — works on all supported phones.
 3. Wait until download is **100% complete**, then open from **Downloads** → **Install**.
 4. If blocked: **Settings → Install unknown apps → Chrome → Allow**.
-5. If *App not installed*: uninstall any older Werdi build, then retry with the **other** APK file.
-6. Requires **Android 7.0+**.
+5. If *App not installed*: uninstall any older Werdi build, then retry.
+6. Requires **Android 7.0+**. Current build: **v1.0.1**.
 
 ### العربية
 1. افتح **[Releases](https://github.com/ahmedehab96-c/werdi/releases/tag/portfolio-apk-v1)** من جوال أندرويد (Chrome).
-2. اختر **ملف APK واحد** من **Assets**:
-   - **`app-arm64-v8a-release.apk`** — أغلب الهواتف الحديثة (2017+)
-   - **`app-armeabi-v7a-release.apk`** — هواتف أقدم (إذا فشل arm64)
+2. حمّل **`app-release.apk`** (~150 ميجا) من **Assets** — يعمل على كل الهواتف المدعومة.
 3. انتظر اكتمال التحميل **100%** ثم افتح من **التنزيلات** → **تثبيت**.
 4. إذا ظهر حظر: **الإعدادات → تثبيت تطبيقات غير معروفة → Chrome → السماح**.
-5. إذا ظهر *لم يتم التثبيت*: احذف نسخة وردي القديمة وجرب **الملف الآخر**.
-6. يتطلب **أندرويد 7.0+**.
+5. إذا ظهر *لم يتم التثبيت*: احذف نسخة وردي القديمة ثم أعد المحاولة.
+6. يتطلب **أندرويد 7.0+**. الإصدار الحالي: **1.0.1**.
 
 ## Development
 
