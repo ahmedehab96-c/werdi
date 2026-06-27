@@ -2,18 +2,22 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:werdi/core/constants/app_constants.dart';
 import 'package:werdi/features/achievements/domain/repositories/achievements_repository.dart';
 import 'package:werdi/features/profile/presentation/cubit/profile_state.dart';
+import 'package:werdi/features/tasmee3/domain/repositories/tasmee3_repository.dart';
 import 'package:werdi/shared/repositories/user_progress_repository.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit({
     required UserProgressRepository progressRepository,
     required AchievementsRepository achievementsRepository,
+    required Tasmee3Repository tasmee3Repository,
   })  : _progressRepository = progressRepository,
         _achievementsRepository = achievementsRepository,
+        _tasmee3Repository = tasmee3Repository,
         super(const ProfileState());
 
   final UserProgressRepository _progressRepository;
   final AchievementsRepository _achievementsRepository;
+  final Tasmee3Repository _tasmee3Repository;
 
   Future<void> load() async {
     emit(state.copyWith(status: ProfileStatus.loading));
@@ -24,7 +28,16 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       List<String> badges = const [];
       try {
-        final result = await _achievementsRepository.getAchievements();
+        var result = await _achievementsRepository.getAchievements();
+        if (result.earned.isEmpty) {
+          final sessions = await _tasmee3Repository.getHistory();
+          result = await _achievementsRepository.evaluateFromMetrics(
+            memorizedAyahCount: progress.memorizedAyahCount,
+            reviewedItemsCount: progress.reviewedItemsCount,
+            streakDays: progress.streakDays,
+            tasmee3Sessions: sessions.length,
+          );
+        }
         badges = result.earned.map((a) => a.title).toList();
       } catch (_) {}
 

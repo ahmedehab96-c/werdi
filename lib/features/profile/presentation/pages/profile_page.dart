@@ -24,6 +24,7 @@ class ProfilePage extends StatelessWidget {
       create: (_) => ProfileCubit(
         progressRepository: AppInjector.userProgressGateway,
         achievementsRepository: AppInjector.achievementsRepository,
+        tasmee3Repository: AppInjector.tasmee3Gateway,
       )..load(),
       child: const _ProfileView(),
     );

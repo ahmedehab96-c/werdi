@@ -24,6 +24,9 @@ class HomePage extends StatelessWidget {
       create: (_) => HomeCubit(
         progressRepository: AppInjector.userProgressGateway,
         reviewRepository: AppInjector.localReviewRepository,
+        achievementsRepository: AppInjector.achievementsRepository,
+        tasmee3Repository: AppInjector.tasmee3Gateway,
+        database: AppInjector.appDatabase,
         preferences: AppInjector.appPreferences,
       )..initialize(),
       child: const _HomeView(),

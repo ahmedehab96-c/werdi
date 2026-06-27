@@ -1,3 +1,4 @@
+import 'package:werdi/core/constants/app_constants.dart';
 import 'package:werdi/core/database/app_database.dart';
 import 'package:werdi/core/services/app_preferences.dart';
 import 'package:werdi/core/services/drift_app_preferences.dart';
@@ -29,6 +30,8 @@ import 'package:werdi/features/tasmee3/domain/repositories/tasmee3_repository.da
 import 'package:werdi/shared/data/repositories/just_audio_repository.dart';
 import 'package:werdi/shared/repositories/audio_repository.dart';
 import 'package:werdi/shared/repositories/user_progress_repository.dart';
+import 'package:werdi/shared/data/repositories/local_user_progress_repository.dart';
+import 'package:werdi/shared/data/repositories/supabase_user_progress_repository.dart';
 
 final class AppInjector {
   const AppInjector._();
@@ -40,7 +43,16 @@ final class AppInjector {
   );
 
   static final UserProgressRepository userProgressGateway =
-      _LocalUserProgressRepository();
+      AppConstants.useSupabaseBackend
+          ? SupabaseUserProgressRepository(
+              preferences: appPreferences,
+              syncService: offlineSyncService,
+              database: appDatabase,
+            )
+          : LocalUserProgressRepository(
+              database: appDatabase,
+              preferences: appPreferences,
+            );
 
   static final LocalQuranCacheService localQuranCacheService =
       LocalQuranCacheService(database: appDatabase);
@@ -96,30 +108,4 @@ final class AppInjector {
     database: appDatabase,
     fallback: const SharedPrefsService(),
   );
-}
-
-class _LocalUserProgressRepository implements UserProgressRepository {
-  @override
-  Future<UserProgressSnapshot> getProgress({required String userId}) async =>
-      const UserProgressSnapshot(
-        memorizedAyahCount: 0,
-        reviewedItemsCount: 0,
-        streakDays: 0,
-      );
-
-  @override
-  Future<void> saveMemorizationProgress({
-    required String userId,
-    required int surahNumber,
-    required int ayahNumber,
-    required double progress,
-  }) async {}
-
-  @override
-  Future<void> saveReviewProgress({
-    required String userId,
-    required String reviewId,
-    required bool reviewed,
-    required bool difficult,
-  }) async {}
 }

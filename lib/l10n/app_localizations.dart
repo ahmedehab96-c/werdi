@@ -554,6 +554,12 @@ abstract class AppLocalizations {
   /// **'{count} consecutive days'**
   String streakConsecutiveDays(int count);
 
+  /// No description provided for @startStreakHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Start today to build your streak'**
+  String get startStreakHint;
+
   /// No description provided for @milestoneProgress.
   ///
   /// In en, this message translates to:

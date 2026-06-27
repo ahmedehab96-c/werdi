@@ -131,6 +131,7 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "streakConsecutiveDays": "{count} يوم متتالي",
+  "startStreakHint": "ابدأ اليوم لبناء سلسلة إنجازك",
   "@streakConsecutiveDays": {
     "placeholders": { "count": { "type": "int" } }
   },

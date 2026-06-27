@@ -131,6 +131,7 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "streakConsecutiveDays": "{count} consecutive days",
+  "startStreakHint": "Start today to build your streak",
   "@streakConsecutiveDays": {
     "placeholders": { "count": { "type": "int" } }
   },

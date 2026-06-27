@@ -59,7 +59,7 @@ class SupabaseAchievementsRepository implements AchievementsRepository {
       getAchievements() async {
     if (!SupabaseService.isReady || !SupabaseService.hasSession) {
       final cached = await _fromCache();
-      if (cached != null) return cached;
+      if (cached != null && cached.earned.isNotEmpty) return cached;
       return (
         earned: const <AchievementItem>[],
         upcoming: _upcomingFromKeys(const <String>{}),
@@ -89,12 +89,45 @@ class SupabaseAchievementsRepository implements AchievementsRepository {
       return (earned: earned, upcoming: upcoming);
     } catch (_) {
       final cached = await _fromCache();
-      if (cached != null) return cached;
+      if (cached != null && cached.earned.isNotEmpty) return cached;
       return (
         earned: const <AchievementItem>[],
         upcoming: _upcomingFromKeys(const <String>{}),
       );
     }
+  }
+
+  @override
+  Future<({List<AchievementItem> earned, List<AchievementItem> upcoming})>
+      evaluateFromMetrics({
+    required int memorizedAyahCount,
+    required int reviewedItemsCount,
+    required int streakDays,
+    required int tasmee3Sessions,
+  }) async {
+    final metrics = <String, int>{
+      'memorized_ayah_count': memorizedAyahCount,
+      'reviewed_items_count': reviewedItemsCount,
+      'streak_days': streakDays,
+      'tasmee3_sessions': tasmee3Sessions,
+    };
+    final earned = <AchievementItem>[];
+    for (final badge in _badges) {
+      final metric = badge['metric'] as String;
+      final threshold = (badge['threshold'] as num).toInt();
+      if ((metrics[metric] ?? 0) >= threshold) {
+        earned.add(
+          AchievementItem(
+            key: '${badge['key']}',
+            title: '${badge['title']}',
+          ),
+        );
+      }
+    }
+    final earnedKeys = earned.map((e) => e.key).toSet();
+    final upcoming = _upcomingFromKeys(earnedKeys);
+    await _cache(earned, upcoming);
+    return (earned: earned, upcoming: upcoming);
   }
 
   Future<void> _awardEligible(String userId) async {

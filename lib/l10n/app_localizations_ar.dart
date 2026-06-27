@@ -270,6 +270,9 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get startStreakHint => 'ابدأ اليوم لبناء سلسلة إنجازك';
+
+  @override
   String milestoneProgress(int current, int next) {
     return '$current / $next آية نحو الإنجاز القادم';
   }

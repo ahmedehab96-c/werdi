@@ -273,6 +273,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get startStreakHint => 'Start today to build your streak';
+
+  @override
   String milestoneProgress(int current, int next) {
     return '$current / $next ayahs to next milestone';
   }

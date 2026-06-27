@@ -427,6 +427,76 @@ class AppDatabase extends GeneratedDatabase {
     ).getSingle();
     return rows.read<int>('count');
   }
+
+  Future<int> countReviewedItems() async {
+    await ensureInitialized();
+    final rows = await customSelect(
+      'SELECT COUNT(*) AS count FROM review_items WHERE reviewed = 1',
+    ).getSingle();
+    return rows.read<int>('count');
+  }
+
+  /// Memorization events per calendar day for the last [days] days (oldest first).
+  Future<List<int>> memorizationCountsByDay({
+    required String userId,
+    int days = 7,
+  }) async {
+    await ensureInitialized();
+    final counts = List<int>.filled(days, 0);
+    final since = DateTime.now().subtract(Duration(days: days - 1));
+    final sinceIso = DateTime(since.year, since.month, since.day).toIso8601String();
+    final rows = await customSelect(
+      '''
+      SELECT date(updated_at) AS day, COUNT(*) AS count
+      FROM memorization_progress
+      WHERE user_id = ? AND datetime(updated_at) >= datetime(?)
+      GROUP BY date(updated_at)
+      ''',
+      variables: <Variable<Object>>[
+        Variable<String>(userId),
+        Variable<String>(sinceIso),
+      ],
+    ).get();
+    final start = DateTime(since.year, since.month, since.day);
+    for (final row in rows) {
+      final dayStr = row.read<String>('day');
+      final parsed = DateTime.tryParse(dayStr);
+      if (parsed == null) continue;
+      final day = DateTime(parsed.year, parsed.month, parsed.day);
+      final index = day.difference(start).inDays;
+      if (index >= 0 && index < days) {
+        counts[index] = row.read<int>('count');
+      }
+    }
+    return counts;
+  }
+
+  Future<int> countActiveDaysThisWeek({required String userId}) async {
+    await ensureInitialized();
+    final weekStart = DateTime.now().subtract(const Duration(days: 6));
+    final sinceIso =
+        DateTime(weekStart.year, weekStart.month, weekStart.day).toIso8601String();
+    final memRows = await customSelect(
+      '''
+      SELECT COUNT(DISTINCT date(updated_at)) AS count
+      FROM memorization_progress
+      WHERE user_id = ? AND datetime(updated_at) >= datetime(?)
+      ''',
+      variables: <Variable<Object>>[
+        Variable<String>(userId),
+        Variable<String>(sinceIso),
+      ],
+    ).getSingle();
+    final reviewRows = await customSelect(
+      '''
+      SELECT COUNT(DISTINCT date(updated_at)) AS count
+      FROM review_items
+      WHERE reviewed = 1 AND datetime(updated_at) >= datetime(?)
+      ''',
+      variables: <Variable<Object>>[Variable<String>(sinceIso)],
+    ).getSingle();
+    return memRows.read<int>('count') + reviewRows.read<int>('count');
+  }
 }
 
 LazyDatabase _openConnection() {

@@ -11,12 +11,14 @@ class AppSurfaceCard extends StatelessWidget {
     this.padding,
     this.color,
     this.enableEntrance = false,
+    this.onTap,
   });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final Color? color;
   final bool enableEntrance;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +28,20 @@ class AppSurfaceCard extends StatelessWidget {
       child: child,
     );
 
-    if (!enableEntrance) return card;
+    final interactive = onTap == null
+        ? card
+        : Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(16),
+              child: card,
+            ),
+          );
 
-    return card
+    if (!enableEntrance) return interactive;
+
+    return interactive
         .animate()
         .fadeIn(duration: AppDurations.fast, curve: Curves.easeOut)
         .scale(

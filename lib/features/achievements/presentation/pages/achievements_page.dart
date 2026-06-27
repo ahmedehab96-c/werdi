@@ -25,6 +25,8 @@ class AchievementsPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => AchievementsCubit(
         repository: AppInjector.achievementsRepository,
+        progressRepository: AppInjector.userProgressGateway,
+        tasmee3Repository: AppInjector.tasmee3Gateway,
       )..load(),
       child: const _AchievementsView(),
     );

@@ -252,6 +252,7 @@ class StreakCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AppSurfaceCard(
+      onTap: () => context.pushNamed(AppRoutes.achievements),
       child: Row(
         children: [
           const Icon(
@@ -260,19 +261,29 @@ class StreakCard extends StatelessWidget {
             size: 34,
           ),
           SizedBox(width: 12.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppText(
-                l10n.streakTitle,
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              SizedBox(height: 4.h),
-              AppText(
-                l10n.streakConsecutiveDays(state.streakDays),
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(
+                  l10n.streakTitle,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                SizedBox(height: 4.h),
+                AppText(
+                  state.streakDays > 0
+                      ? l10n.streakConsecutiveDays(state.streakDays)
+                      : l10n.startStreakHint,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Directionality.of(context) == TextDirection.rtl
+                ? Icons.chevron_left_rounded
+                : Icons.chevron_right_rounded,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ],
       ),
@@ -289,21 +300,40 @@ class AchievementsPreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AppSurfaceCard(
+      onTap: () => context.pushNamed(AppRoutes.achievements),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText(
-            l10n.achievementsPreview,
-            style: Theme.of(context).textTheme.titleSmall,
+          Row(
+            children: [
+              Expanded(
+                child: AppText(
+                  l10n.achievementsPreview,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              Icon(
+                Directionality.of(context) == TextDirection.rtl
+                    ? Icons.chevron_left_rounded
+                    : Icons.chevron_right_rounded,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ],
           ),
           SizedBox(height: 10.h),
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: state.badges
-                .map((badge) => AppBadgeChip(label: badge))
-                .toList(),
-          ),
+          if (state.badges.isEmpty)
+            AppText(
+              l10n.noAchievementsSubtitle,
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          else
+            Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
+              children: state.badges
+                  .map((badge) => AppBadgeChip(label: badge))
+                  .toList(),
+            ),
           SizedBox(height: 12.h),
           AppAnimatedProgress(value: state.milestoneProgress),
           SizedBox(height: 6.h),
@@ -374,11 +404,13 @@ class RecommendedPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return AppSurfaceCard(
+      onTap: () => _openRecommendedPlan(context),
       child: ListTile(
         contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.lightbulb_outline_rounded),
-        title: AppText(context.l10n.suggestedPlanToday),
+        title: AppText(l10n.suggestedPlanToday),
         subtitle: AppText(state.recommendedNextStep),
         trailing: Icon(
           Directionality.of(context) == TextDirection.rtl
@@ -387,6 +419,19 @@ class RecommendedPlanCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _openRecommendedPlan(BuildContext context) {
+    final step = state.recommendedNextStep;
+    if (step.contains('مراجعة') || step.contains('صعبة')) {
+      context.pushNamed(AppRoutes.review);
+      return;
+    }
+    if (step.contains('تسميع')) {
+      context.pushNamed(AppRoutes.tasmee3);
+      return;
+    }
+    context.pushNamed(AppRoutes.memorization);
   }
 }
 
