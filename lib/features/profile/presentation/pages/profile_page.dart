@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
+import 'package:werdi/core/constants/app_assets.dart';
 import 'package:werdi/core/di/app_injector.dart';
+import 'package:werdi/core/extensions/context_extensions.dart';
 import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_animated_progress.dart';
 import 'package:werdi/core/widgets/app_badge_chip.dart';
@@ -13,8 +14,6 @@ import 'package:werdi/core/widgets/app_surface_card.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 import 'package:werdi/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:werdi/features/profile/presentation/cubit/profile_state.dart';
-import 'package:werdi/core/extensions/context_extensions.dart';
-import 'package:werdi/routes/app_routes.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -23,7 +22,6 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => ProfileCubit(
-        authRepository: AppInjector.authGateway,
         progressRepository: AppInjector.userProgressGateway,
         achievementsRepository: AppInjector.achievementsRepository,
       )..load(),
@@ -51,7 +49,6 @@ class _ProfileView extends StatelessWidget {
             );
           }
 
-          final user = state.user!;
           final progress = state.progress!;
 
           return SingleChildScrollView(
@@ -59,11 +56,7 @@ class _ProfileView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _ProfileHeaderCard(
-                  name: user.name,
-                  email: user.email,
-                  isGuest: user.isGuest,
-                ),
+                const _ProfileHeaderCard(),
                 SizedBox(height: AppSpacing.md),
                 _StatsCard(progress: progress),
                 SizedBox(height: AppSpacing.md),
@@ -80,27 +73,20 @@ class _ProfileView extends StatelessWidget {
 }
 
 class _ProfileHeaderCard extends StatelessWidget {
-  const _ProfileHeaderCard({
-    required this.name,
-    required this.email,
-    required this.isGuest,
-  });
-
-  final String name;
-  final String email;
-  final bool isGuest;
+  const _ProfileHeaderCard();
 
   @override
   Widget build(BuildContext context) {
     return AppSurfaceCard(
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            child: Text(
-              isGuest || name.isEmpty ? '؟' : name[0],
-              style: Theme.of(context).textTheme.headlineSmall,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.asset(
+              AppAssets.logo,
+              width: 56,
+              height: 56,
+              fit: BoxFit.cover,
             ),
           ),
           SizedBox(width: AppSpacing.sm),
@@ -109,24 +95,13 @@ class _ProfileHeaderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppText(
-                  isGuest ? context.l10n.guest : name,
+                  context.l10n.appName,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 AppText(
-                  isGuest
-                      ? context.l10n.signInForFullFeatures
-                      : email,
+                  context.l10n.profileLocalSubtitle,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-                if (isGuest)
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: TextButton.icon(
-                      onPressed: () => context.pushNamed(AppRoutes.auth),
-                      icon: const Icon(Icons.login_rounded, size: 18),
-                      label: Text(context.l10n.loginTab),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -244,11 +219,11 @@ class _GoalsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final memorized = progress.memorizedAyahCount as int;
-    final goalAyahs = 300;
+    const goalAyahs = 300;
     final memProgress = (memorized / goalAyahs).clamp(0.0, 1.0);
 
     final reviewed = progress.reviewedItemsCount as int;
-    final goalReviews = 15;
+    const goalReviews = 15;
     final reviewProgress = (reviewed / goalReviews).clamp(0.0, 1.0);
     final l10n = context.l10n;
 

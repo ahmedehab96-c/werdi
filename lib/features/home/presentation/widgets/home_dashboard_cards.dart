@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:werdi/core/animations/app_animations.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
 import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_badge_chip.dart';
@@ -76,7 +75,7 @@ class DailyGoalCard extends StatelessWidget {
           ),
         ],
       ),
-    ).fadeInSmooth();
+    );
   }
 }
 
@@ -127,7 +126,7 @@ class ProgressOverviewCard extends StatelessWidget {
           _WeeklyBars(values: state.weeklyProgress),
         ],
       ),
-    ).fadeInSmooth();
+    );
   }
 }
 
@@ -163,7 +162,7 @@ class LastMemorizedSurahCard extends StatelessWidget {
           ),
         ],
       ),
-    ).fadeInSmooth();
+    );
   }
 }
 
@@ -206,7 +205,7 @@ class ReviewReminderCard extends StatelessWidget {
           ),
         ],
       ),
-    ).fadeInSmooth();
+    );
   }
 }
 
@@ -240,7 +239,7 @@ class DailyMotivationCard extends StatelessWidget {
           AppText(l10n.motivationFooter),
         ],
       ),
-    ).fadeInSmooth();
+    );
   }
 }
 
@@ -277,7 +276,7 @@ class StreakCard extends StatelessWidget {
           ),
         ],
       ),
-    ).fadeInSmooth();
+    );
   }
 }
 
@@ -317,7 +316,7 @@ class AchievementsPreviewCard extends StatelessWidget {
           ),
         ],
       ),
-    ).fadeInSmooth();
+    );
   }
 }
 
@@ -364,7 +363,7 @@ class WeeklyInsightsCard extends StatelessWidget {
           ),
         ],
       ),
-    ).fadeInSmooth();
+    );
   }
 }
 
@@ -387,7 +386,7 @@ class RecommendedPlanCard extends StatelessWidget {
               : Icons.chevron_right_rounded,
         ),
       ),
-    ).fadeInSmooth();
+    );
   }
 }
 

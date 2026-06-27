@@ -31,6 +31,10 @@ class Tasmee3State extends Equatable {
     this.spokenAccuracy = 0,
     this.isAudioTestPlaying = false,
     this.audioTestError,
+    this.ayahRecordingPaths = const {},
+    this.isPlayingUserRecording = false,
+    this.playingReciterAyahNumber,
+    this.isReciterAyahPlaying = false,
   });
 
   final Tasmee3FlowStatus status;
@@ -57,6 +61,10 @@ class Tasmee3State extends Equatable {
   final int spokenAccuracy;
   final bool isAudioTestPlaying;
   final String? audioTestError;
+  final Map<int, String> ayahRecordingPaths;
+  final bool isPlayingUserRecording;
+  final int? playingReciterAyahNumber;
+  final bool isReciterAyahPlaying;
   int get selectedSurahVerseCount =>
       availableSurahVerseCounts.isNotEmpty &&
               availableSurahNumbers.contains(selectedSurahNumber)
@@ -71,6 +79,8 @@ class Tasmee3State extends Equatable {
       ayahTexts.isNotEmpty && currentAyahIndex < ayahTexts.length
           ? ayahTexts[currentAyahIndex]
           : null;
+
+  String? get currentAyahRecordingPath => ayahRecordingPaths[currentAyahNumber];
 
   List<Tasmee3Session> get filteredHistory {
     if (historyFilter == 'الكل') return history;
@@ -107,6 +117,11 @@ class Tasmee3State extends Equatable {
     bool? isAudioTestPlaying,
     String? audioTestError,
     bool clearAudioTestError = false,
+    Map<int, String>? ayahRecordingPaths,
+    bool? isPlayingUserRecording,
+    int? playingReciterAyahNumber,
+    bool clearPlayingReciterAyahNumber = false,
+    bool? isReciterAyahPlaying,
   }) {
     return Tasmee3State(
       status: status ?? this.status,
@@ -136,6 +151,13 @@ class Tasmee3State extends Equatable {
       isAudioTestPlaying: isAudioTestPlaying ?? this.isAudioTestPlaying,
       audioTestError:
           clearAudioTestError ? null : (audioTestError ?? this.audioTestError),
+      ayahRecordingPaths: ayahRecordingPaths ?? this.ayahRecordingPaths,
+      isPlayingUserRecording:
+          isPlayingUserRecording ?? this.isPlayingUserRecording,
+      playingReciterAyahNumber: clearPlayingReciterAyahNumber
+          ? null
+          : (playingReciterAyahNumber ?? this.playingReciterAyahNumber),
+      isReciterAyahPlaying: isReciterAyahPlaying ?? this.isReciterAyahPlaying,
     );
   }
 
@@ -165,5 +187,9 @@ class Tasmee3State extends Equatable {
         spokenAccuracy,
         isAudioTestPlaying,
         audioTestError,
+        ayahRecordingPaths,
+        isPlayingUserRecording,
+        playingReciterAyahNumber,
+        isReciterAyahPlaying,
       ];
 }

@@ -56,10 +56,12 @@ class HomeQuickActionsGrid extends StatelessWidget {
         return Wrap(
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
-          children: actions.map((action) {
+          children: actions.asMap().entries.map((entry) {
+            final index = entry.key;
+            final action = entry.value;
             return SizedBox(
               width: itemWidth,
-              child: _ActionCard(action: action),
+              child: _ActionCard(action: action, index: index),
             );
           }).toList(),
         );
@@ -69,9 +71,10 @@ class HomeQuickActionsGrid extends StatelessWidget {
 }
 
 class _ActionCard extends StatefulWidget {
-  const _ActionCard({required this.action});
+  const _ActionCard({required this.action, required this.index});
 
   final HomeQuickAction action;
+  final int index;
 
   @override
   State<_ActionCard> createState() => _ActionCardState();
@@ -100,7 +103,8 @@ class _ActionCardState extends State<_ActionCard> {
       },
       child: AnimatedScale(
         duration: const Duration(milliseconds: 160),
-        scale: _pressed ? 0.97 : 1,
+        scale: _pressed ? 0.96 : 1,
+        curve: Curves.easeOutCubic,
         child: AppSurfaceCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +123,7 @@ class _ActionCardState extends State<_ActionCard> {
             ],
           ),
         ),
-      ).fadeInSmooth(),
+      ).entranceStagger(widget.index, stepMs: 90),
     );
   }
 }

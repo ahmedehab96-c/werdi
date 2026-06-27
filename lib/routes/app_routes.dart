@@ -3,8 +3,6 @@ final class AppRoutes {
 
   static const splash = 'splash';
   static const onboarding = 'onboarding';
-  static const auth = 'auth';
-  static const forgotPassword = 'forgotPassword';
   static const home = 'home';
   static const quran = 'quran';
   static const memorization = 'memorization';
@@ -17,8 +15,6 @@ final class AppRoutes {
 
   static const splashPath = '/';
   static const onboardingPath = '/onboarding';
-  static const authPath = '/auth';
-  static const forgotPasswordPath = '/auth/forgot-password';
   static const homePath = '/home';
   static const quranPath = '/quran';
   static const memorizationPath = '/memorization';

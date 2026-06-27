@@ -788,6 +788,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get playMyRecording => 'Play my recording';
+
+  @override
+  String get stopMyRecording => 'Stop my recording';
+
+  @override
+  String get listenReciterAyah => 'Listen to reciter';
+
+  @override
+  String get stopReciterAyah => 'Stop reciter';
+
+  @override
   String get startTest => 'Start test';
 
   @override
@@ -1055,6 +1067,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guest => 'Guest';
+
+  @override
+  String get profileLocalSubtitle =>
+      'Your progress is saved on this device — no account needed';
 
   @override
   String get signInForFullFeatures => 'Sign in to unlock all features';

@@ -780,6 +780,18 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get playMyRecording => 'سماع تسجيلي';
+
+  @override
+  String get stopMyRecording => 'إيقاف تسجيلي';
+
+  @override
+  String get listenReciterAyah => 'سماع الشيخ';
+
+  @override
+  String get stopReciterAyah => 'إيقاف صوت الشيخ';
+
+  @override
   String get startTest => 'ابدأ الاختبار';
 
   @override
@@ -1046,6 +1058,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get guest => 'زائر';
+
+  @override
+  String get profileLocalSubtitle => 'تقدمك محفوظ على هذا الجهاز — بدون حساب';
 
   @override
   String get signInForFullFeatures => 'تسجيل الدخول للحصول على كامل الميزات';

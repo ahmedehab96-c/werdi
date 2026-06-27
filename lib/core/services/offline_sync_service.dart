@@ -21,8 +21,7 @@ class OfflineSyncService {
   static const _maxQueueLength = 500;
   bool _migratedToDb = false;
 
-  SupabaseClient? get _client =>
-      SupabaseService.isConfigured ? SupabaseService.client : null;
+  SupabaseClient? get _client => SupabaseService.clientOrNull;
 
   Future<void> enqueue({
     required String type,
@@ -42,7 +41,7 @@ class OfflineSyncService {
   }
 
   Future<void> flushPending() async {
-    if (!SupabaseService.isConfigured || !SupabaseService.hasSession) return;
+    if (!SupabaseService.isReady || !SupabaseService.hasSession) return;
 
     final queue = await _readQueue();
     if (queue.isEmpty) return;

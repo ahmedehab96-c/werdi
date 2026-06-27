@@ -469,6 +469,22 @@ class _AyahCard extends StatelessWidget {
                         ),
                       ),
                     ],
+                    if (state.currentAyahRecordingPath != null) ...[
+                      SizedBox(height: AppSpacing.md),
+                      FilledButton.tonalIcon(
+                        onPressed: cubit.togglePlayUserRecording,
+                        icon: Icon(
+                          state.isPlayingUserRecording
+                              ? Icons.stop_circle_rounded
+                              : Icons.play_circle_rounded,
+                        ),
+                        label: Text(
+                          state.isPlayingUserRecording
+                              ? l10n.stopMyRecording
+                              : l10n.playMyRecording,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -590,23 +606,29 @@ class _SummaryScreen extends StatelessWidget {
               else
                 Wrap(
                   spacing: 8.w,
-                  runSpacing: 6.h,
+                  runSpacing: 8.h,
                   children: result.grades.entries
                       .where((e) => e.value != AyahGrade.known)
-                      .map(
-                        (e) => Chip(
-                          avatar: Icon(
-                            e.value == AyahGrade.hesitant
-                                ? Icons.warning_amber_rounded
-                                : Icons.cancel_rounded,
-                            size: 16.sp,
-                            color: e.value == AyahGrade.hesitant
+                      .map((e) {
+                        final isPlaying = state.isReciterAyahPlaying &&
+                            state.playingReciterAyahNumber == e.key;
+                        return FilledButton.tonalIcon(
+                          onPressed: () => cubit.toggleReciterAyah(e.key),
+                          icon: Icon(
+                            isPlaying
+                                ? Icons.stop_circle_rounded
+                                : Icons.volume_up_rounded,
+                          ),
+                          label: Text(
+                            '${l10n.ayahNumbered(e.key)} • ${isPlaying ? l10n.stopReciterAyah : l10n.listenReciterAyah}',
+                          ),
+                          style: FilledButton.styleFrom(
+                            foregroundColor: e.value == AyahGrade.hesitant
                                 ? Colors.orange
                                 : Colors.redAccent,
                           ),
-                          label: Text(l10n.ayahNumbered(e.key)),
-                        ),
-                      )
+                        );
+                      })
                       .toList(),
                 ),
             ],

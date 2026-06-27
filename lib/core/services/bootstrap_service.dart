@@ -18,7 +18,6 @@ final class BootstrapService {
     await Hive.initFlutter();
     await AppInjector.appDatabase.ensureInitialized();
     await SupabaseService.initialize();
-    await AppInjector.restoreAuthSession();
     unawaited(AppInjector.quranContentSeedService.warmUpInBackground());
     unawaited(AppInjector.localQuranCacheService.clearExpired());
     unawaited(AppInjector.offlineSyncService.flushPending());

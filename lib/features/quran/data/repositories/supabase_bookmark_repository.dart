@@ -146,7 +146,7 @@ class SupabaseBookmarkRepository implements BookmarkRepository {
   }
 
   bool get _canSyncRemote =>
-      SupabaseService.isConfigured && SupabaseService.hasSession;
+      SupabaseService.isReady && SupabaseService.hasSession;
 
   ({Set<int> surahIds, List<AyahBookmark> ayahs}) _parseRows(List<dynamic> rows) {
     final surahIds = <int>{};

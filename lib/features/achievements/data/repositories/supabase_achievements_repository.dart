@@ -57,7 +57,7 @@ class SupabaseAchievementsRepository implements AchievementsRepository {
   @override
   Future<({List<AchievementItem> earned, List<AchievementItem> upcoming})>
       getAchievements() async {
-    if (!SupabaseService.isConfigured || !SupabaseService.hasSession) {
+    if (!SupabaseService.isReady || !SupabaseService.hasSession) {
       final cached = await _fromCache();
       if (cached != null) return cached;
       return (

@@ -351,6 +351,10 @@
   "@voiceAccuracy": {
     "placeholders": { "percent": { "type": "int" } }
   },
+  "playMyRecording": "سماع تسجيلي",
+  "stopMyRecording": "إيقاف تسجيلي",
+  "listenReciterAyah": "سماع الشيخ",
+  "stopReciterAyah": "إيقاف صوت الشيخ",
   "startTest": "ابدأ الاختبار",
   "testProgress": "التقدم",
   "revealAyah": "كشف الآية",
@@ -463,6 +467,7 @@
   "onboardingSubtitle4": "لوحة تقدم راقية تعكس رحلتك خطوة بخطوة.",
 
   "guest": "زائر",
+  "profileLocalSubtitle": "تقدمك محفوظ على هذا الجهاز — بدون حساب",
   "signInForFullFeatures": "تسجيل الدخول للحصول على كامل الميزات",
   "currentGoals": "الأهداف الحالية",
   "goalDone": "تم! 🎉",

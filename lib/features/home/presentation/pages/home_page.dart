@@ -23,7 +23,6 @@ class HomePage extends StatelessWidget {
     return BlocProvider(
       create: (_) => HomeCubit(
         progressRepository: AppInjector.userProgressGateway,
-        authRepository: AppInjector.authGateway,
         reviewRepository: AppInjector.localReviewRepository,
         preferences: AppInjector.appPreferences,
       )..initialize(),
@@ -55,27 +54,27 @@ class _HomeView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      HomeGreetingSection(state: state).fadeInSmooth(),
+                      HomeGreetingSection(state: state).entranceStagger(0),
                       AppVSpace.of(AppSpacing.lg),
-                      DailyGoalCard(state: state),
+                      DailyGoalCard(state: state).entranceStagger(1),
                       AppVSpace.of(AppSpacing.lg),
-                      ProgressOverviewCard(state: state),
+                      ProgressOverviewCard(state: state).entranceStagger(2),
                       AppVSpace.of(AppSpacing.lg),
                       HomeSectionTitle(
                         title: context.l10n.quickActionsTitle,
-                      ).fadeInQuick(),
+                      ).entranceStagger(3),
                       AppVSpace.of(AppSpacing.sm),
-                      const HomeQuickActionsGrid().fadeInSmooth(),
+                      const HomeQuickActionsGrid().entranceStagger(4),
                       AppVSpace.of(AppSpacing.lg),
-                      _responsiveInfoCards(context, state).fadeInSmooth(),
+                      _responsiveInfoCards(context, state).entranceStagger(5),
                       AppVSpace.of(AppSpacing.lg),
-                      ReviewReminderCard(state: state),
+                      ReviewReminderCard(state: state).entranceStagger(6),
                       AppVSpace.of(AppSpacing.lg),
-                      WeeklyInsightsCard(state: state),
+                      WeeklyInsightsCard(state: state).entranceStagger(7),
                       AppVSpace.of(AppSpacing.lg),
-                      _responsiveBottomCards(context, state).fadeInSmooth(),
+                      _responsiveBottomCards(context, state).entranceStagger(8),
                       AppVSpace.of(AppSpacing.lg),
-                      RecommendedPlanCard(state: state),
+                      RecommendedPlanCard(state: state).entranceStagger(9),
                       AppVSpace.of(AppSpacing.xl),
                     ],
                   ),
@@ -102,8 +101,6 @@ class _HomeView extends StatelessWidget {
     );
   }
 
-  /// Lays out two cards side by side on wide layouts and stacked on narrow
-  /// ones, keeping the gap consistent across both axes.
   Widget _responsivePair(Widget first, Widget second) {
     const gap = 12.0;
     return LayoutBuilder(

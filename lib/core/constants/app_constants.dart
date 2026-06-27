@@ -6,6 +6,8 @@ final class AppConstants {
   const AppConstants._();
 
   static const String appName = 'وردي';
+  /// Single local identity — no login required.
+  static const String localUserId = 'local';
   static const String appEnv = String.fromEnvironment(
     'APP_ENV',
     defaultValue: 'production',

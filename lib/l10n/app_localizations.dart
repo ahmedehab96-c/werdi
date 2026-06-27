@@ -1490,6 +1490,30 @@ abstract class AppLocalizations {
   /// **'Matching accuracy: {percent}%'**
   String voiceAccuracy(int percent);
 
+  /// No description provided for @playMyRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Play my recording'**
+  String get playMyRecording;
+
+  /// No description provided for @stopMyRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop my recording'**
+  String get stopMyRecording;
+
+  /// No description provided for @listenReciterAyah.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen to reciter'**
+  String get listenReciterAyah;
+
+  /// No description provided for @stopReciterAyah.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop reciter'**
+  String get stopReciterAyah;
+
   /// No description provided for @startTest.
   ///
   /// In en, this message translates to:
@@ -1987,6 +2011,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Guest'**
   String get guest;
+
+  /// No description provided for @profileLocalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your progress is saved on this device — no account needed'**
+  String get profileLocalSubtitle;
 
   /// No description provided for @signInForFullFeatures.
   ///

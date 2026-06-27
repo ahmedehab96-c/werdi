@@ -141,7 +141,7 @@ class SupabaseUserProgressRepository implements UserProgressRepository {
   }
 
   bool _canSyncRemote(String userId) {
-    return SupabaseService.isConfigured &&
+    return SupabaseService.isReady &&
         SupabaseService.hasSession &&
         userId.isNotEmpty &&
         !userId.startsWith('guest') &&

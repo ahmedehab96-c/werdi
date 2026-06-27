@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:werdi/core/animations/app_animations.dart';
 import 'package:werdi/core/constants/app_assets.dart';
 import 'package:werdi/core/constants/app_constants.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
@@ -29,7 +30,7 @@ class HomeGreetingSection extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
-              ),
+              ).slideUpEntrance(),
               if (state.motivationSubtitle.isNotEmpty) ...[
                 AppVSpace.of(AppSpacing.xs),
                 AppText(
@@ -37,7 +38,7 @@ class HomeGreetingSection extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: color.onSurfaceVariant,
                       ),
-                ),
+                ).slideUpEntrance(delay: const Duration(milliseconds: 80)),
               ],
             ],
           ),
@@ -48,12 +49,12 @@ class HomeGreetingSection extends StatelessWidget {
               tooltip: 'الإشعارات',
               onPressed: () => context.pushNamed(AppRoutes.notifications),
               icon: const Icon(Icons.notifications_none_rounded),
-            ),
+            ).tapFeedback(),
             IconButton(
               tooltip: context.l10n.settingsTitle,
               onPressed: () => context.pushNamed(AppRoutes.settings),
               icon: const Icon(Icons.settings_outlined),
-            ),
+            ).tapFeedback(),
             SizedBox(
               width: 44.w,
               height: 44.w,
@@ -62,7 +63,7 @@ class HomeGreetingSection extends StatelessWidget {
                 fit: BoxFit.contain,
                 filterQuality: FilterQuality.high,
               ),
-            ),
+            ).floatLoop(),
           ],
         ),
       ],

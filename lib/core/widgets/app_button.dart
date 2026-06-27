@@ -36,8 +36,8 @@ class _AppButtonState extends State<AppButton> {
       onTapUp: (_) => setState(() => _pressed = false),
       child: AnimatedScale(
         duration: AppDurations.instant,
-        curve: Curves.easeOut,
-        scale: _pressed ? 0.985 : 1,
+        curve: Curves.easeOutBack,
+        scale: _pressed ? 0.96 : 1,
         child: SizedBox(
           width: double.infinity,
           height: 52.h,

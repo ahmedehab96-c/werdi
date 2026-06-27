@@ -1,9 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
+import 'package:just_audio/just_audio.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:quran/quran.dart' as quran_pkg;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:werdi/core/audio/audio_playback.dart';
+import 'package:werdi/core/audio/voice_recorder_service.dart';
 import 'package:werdi/core/services/app_preferences.dart';
 import 'package:werdi/core/services/reciter_preferences.dart';
 import 'package:werdi/features/quran/domain/models/quran_audio_reciter.dart';
@@ -25,13 +27,27 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
         _quranRepository = quranRepository,
         _audio = audioRepository,
         _preferences = preferences,
-        super(const Tasmee3State());
+        super(const Tasmee3State()) {
+    _userRecordingSubscription = _userRecordingPlayer.playerStateStream.listen(
+      (playerState) {
+        if (playerState.processingState == ProcessingState.completed &&
+            !playerState.playing) {
+          if (state.isPlayingUserRecording) {
+            emit(state.copyWith(isPlayingUserRecording: false));
+          }
+        }
+      },
+    );
+  }
 
   final Tasmee3Repository _repository;
   final QuranRepository _quranRepository;
   final AudioRepository _audio;
   final AppPreferences _preferences;
   final stt.SpeechToText _speech = stt.SpeechToText();
+  final VoiceRecorderService _voiceRecorder = VoiceRecorderService();
+  final AudioPlayer _userRecordingPlayer = AudioPlayer();
+  StreamSubscription<PlayerState>? _userRecordingSubscription;
   bool _speechInitialized = false;
   bool _isAutoGrading = false;
   QuranAudioReciter? _selectedReciter;
@@ -98,6 +114,8 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
 
   Future<void> startTest() async {
     await stopAudioTest();
+    await stopReciterAyah();
+    await stopUserRecordingPlayback();
     emit(state.copyWith(isLoading: true));
     final texts = <String>[];
     for (int i = state.selectedRange.start; i <= state.selectedRange.end; i++) {
@@ -118,6 +136,8 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       spokenAccuracy: 0,
       isListening: false,
       clearSpeechError: true,
+      ayahRecordingPaths: const {},
+      isPlayingUserRecording: false,
       isLoading: false,
     ));
     unawaited(startListening());
@@ -127,6 +147,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
 
   Future<void> gradeAyah(AyahGrade grade) async {
     await stopListening();
+    await stopUserRecordingPlayback();
     final newGrades = Map<int, AyahGrade>.from(state.grades)
       ..[state.currentAyahNumber] = grade;
 
@@ -165,6 +186,8 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
 
   Future<void> retryTest() async {
     await stopListening();
+    await stopReciterAyah();
+    await stopUserRecordingPlayback();
     emit(state.copyWith(
       status: Tasmee3FlowStatus.testing,
       currentAyahIndex: 0,
@@ -177,6 +200,8 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       spokenAccuracy: 0,
       isListening: false,
       clearSpeechError: true,
+      ayahRecordingPaths: const {},
+      isPlayingUserRecording: false,
     ));
     unawaited(startListening());
   }
@@ -184,6 +209,8 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
   Future<void> backToSetup() async {
     await stopListening();
     await stopAudioTest();
+    await stopReciterAyah();
+    await stopUserRecordingPlayback();
     emit(state.copyWith(
       status: Tasmee3FlowStatus.setup,
       currentAyahIndex: 0,
@@ -198,6 +225,10 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       clearSpeechError: true,
       isAudioTestPlaying: false,
       clearAudioTestError: true,
+      ayahRecordingPaths: const {},
+      isPlayingUserRecording: false,
+      isReciterAyahPlaying: false,
+      clearPlayingReciterAyahNumber: true,
     ));
   }
 
@@ -222,7 +253,10 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       spokenWords: const [],
       spokenWordMatches: const [],
       spokenAccuracy: 0,
+      isPlayingUserRecording: false,
     ));
+
+    await _startVoiceRecording();
 
     await _speech.listen(
       listenOptions: stt.SpeechListenOptions(
@@ -254,6 +288,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
   }
 
   Future<void> stopListening() async {
+    await _saveVoiceRecording();
     if (!_speechInitialized) return;
     if (_speech.isListening) {
       await _speech.stop();
@@ -344,6 +379,98 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     if (!state.isAudioTestPlaying) return;
     await _audio.stop();
     emit(state.copyWith(isAudioTestPlaying: false));
+  }
+
+  Future<void> togglePlayUserRecording() async {
+    if (state.isPlayingUserRecording) {
+      await stopUserRecordingPlayback();
+      return;
+    }
+    final path = state.currentAyahRecordingPath;
+    if (path == null) return;
+    await stopAudioTest();
+    await stopReciterAyah();
+    try {
+      await _userRecordingPlayer.setFilePath(path);
+      await _userRecordingPlayer.play();
+      emit(state.copyWith(isPlayingUserRecording: true));
+    } catch (_) {
+      emit(state.copyWith(isPlayingUserRecording: false));
+    }
+  }
+
+  Future<void> stopUserRecordingPlayback() async {
+    if (!state.isPlayingUserRecording) {
+      await _userRecordingPlayer.stop();
+      return;
+    }
+    await _userRecordingPlayer.stop();
+    emit(state.copyWith(isPlayingUserRecording: false));
+  }
+
+  Future<void> toggleReciterAyah(int ayahNumber) async {
+    if (state.isReciterAyahPlaying &&
+        state.playingReciterAyahNumber == ayahNumber) {
+      await stopReciterAyah();
+      return;
+    }
+    await stopReciterAyah();
+    await stopUserRecordingPlayback();
+    try {
+      _selectedReciter ??= await ReciterPreferences.loadSelected(_preferences);
+      final reciter = _selectedReciter;
+      if (reciter == null) return;
+      final urls = _quranRepository.getAudioAyahUrls(
+        surahNumber: state.selectedSurahNumber,
+        ayahNumber: ayahNumber,
+        reciter: reciter,
+      );
+      if (urls.isEmpty) return;
+      emit(state.copyWith(
+        playingReciterAyahNumber: ayahNumber,
+        isReciterAyahPlaying: true,
+      ));
+      await playAudioUrlsWithFallback(_audio, urls: urls);
+      await _audio.onPlaybackCompleted.first;
+      if (state.playingReciterAyahNumber == ayahNumber &&
+          state.isReciterAyahPlaying) {
+        emit(state.copyWith(
+          isReciterAyahPlaying: false,
+          clearPlayingReciterAyahNumber: true,
+        ));
+      }
+    } catch (_) {
+      emit(state.copyWith(
+        isReciterAyahPlaying: false,
+        clearPlayingReciterAyahNumber: true,
+      ));
+    }
+  }
+
+  Future<void> stopReciterAyah() async {
+    if (!state.isReciterAyahPlaying && state.playingReciterAyahNumber == null) {
+      return;
+    }
+    await _audio.stop();
+    emit(state.copyWith(
+      isReciterAyahPlaying: false,
+      clearPlayingReciterAyahNumber: true,
+    ));
+  }
+
+  Future<void> _startVoiceRecording() async {
+    await _voiceRecorder.cancel();
+    final fileName =
+        'tasmee3_${state.selectedSurahNumber}_${state.currentAyahNumber}.m4a';
+    await _voiceRecorder.start(fileName: fileName);
+  }
+
+  Future<void> _saveVoiceRecording() async {
+    final path = await _voiceRecorder.stop();
+    if (path == null || path.isEmpty) return;
+    final paths = Map<int, String>.from(state.ayahRecordingPaths)
+      ..[state.currentAyahNumber] = path;
+    emit(state.copyWith(ayahRecordingPaths: paths));
   }
 
   _SpeechEvaluation _evaluateSpeech({
@@ -446,6 +573,11 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
   Future<void> close() async {
     await stopListening();
     await stopAudioTest();
+    await stopReciterAyah();
+    await stopUserRecordingPlayback();
+    await _userRecordingSubscription?.cancel();
+    await _userRecordingPlayer.dispose();
+    await _voiceRecorder.dispose();
     return super.close();
   }
 

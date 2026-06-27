@@ -1,9 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
+import 'package:werdi/core/constants/app_constants.dart';
 import 'package:werdi/core/audio/audio_playback.dart';
 import 'package:werdi/core/services/app_preferences.dart';
 import 'package:werdi/core/services/reciter_preferences.dart';
-import 'package:werdi/features/auth/domain/repositories/auth_repository.dart';
 import 'package:werdi/features/memorization/domain/repositories/memorization_repository.dart';
 import 'package:werdi/features/memorization/presentation/cubit/memorization_state.dart';
 import 'package:werdi/features/quran/domain/models/quran_audio_reciter.dart';
@@ -19,7 +19,6 @@ class MemorizationCubit extends Cubit<MemorizationState> {
     required QuranRepository quranRepository,
     required AudioRepository audioRepository,
     required UserProgressRepository progressRepository,
-    required AuthRepository authRepository,
     required AppPreferences preferences,
     ReviewRepository? reviewRepository,
     this.initialSurahNumber,
@@ -27,7 +26,6 @@ class MemorizationCubit extends Cubit<MemorizationState> {
         _quranRepository = quranRepository,
         _audio = audioRepository,
         _progressRepository = progressRepository,
-        _authRepository = authRepository,
         _preferences = preferences,
         _reviewRepository = reviewRepository,
         super(const MemorizationState()) {
@@ -39,11 +37,9 @@ class MemorizationCubit extends Cubit<MemorizationState> {
   final QuranRepository _quranRepository;
   final AudioRepository _audio;
   final UserProgressRepository _progressRepository;
-  final AuthRepository _authRepository;
   final AppPreferences _preferences;
   final ReviewRepository? _reviewRepository;
 
-  String? _userId;
   QuranAudioReciter? _selectedReciter;
   StreamSubscription<void>? _playbackCompletionSub;
   int _remainingRepeats = 1;
@@ -52,15 +48,7 @@ class MemorizationCubit extends Cubit<MemorizationState> {
   Future<void> initialize() async {
     _bindPlaybackCompletion();
     _selectedReciter = await ReciterPreferences.loadSelected(_preferences);
-    final results = await Future.wait([
-      _quranRepository.getSurahs(),
-      _authRepository.getMe().catchError((_) =>
-          const AuthUser(id: 'guest', name: '', email: '', isGuest: true)),
-    ]);
-
-    final surahs = results[0] as List<dynamic>;
-    final user = results[1] as AuthUser;
-    _userId = user.id;
+    final surahs = await _quranRepository.getSurahs();
 
     final targetSurah = initialSurahNumber != null
         ? (surahs.cast<dynamic>().where((s) => s.number == initialSurahNumber).firstOrNull ?? (surahs.isNotEmpty ? surahs.first : null))
@@ -194,7 +182,7 @@ class MemorizationCubit extends Cubit<MemorizationState> {
     }
     try {
       await _progressRepository.saveMemorizationProgress(
-        userId: _userId ?? 'guest',
+        userId: AppConstants.localUserId,
         surahNumber: state.selectedSurahNumber,
         ayahNumber: current.number,
         progress: set.length / state.ayahs.length,

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quran/quran.dart' as quran_pkg;
+import 'package:werdi/core/constants/app_constants.dart';
 import 'package:werdi/features/review/domain/models/review_item.dart';
 import 'package:werdi/features/review/domain/repositories/review_repository.dart';
 import 'package:werdi/features/review/presentation/cubit/review_state.dart';
@@ -70,7 +71,7 @@ class ReviewCubit extends Cubit<ReviewState> {
     } catch (_) {}
     try {
       await _progressRepository.saveReviewProgress(
-        userId: 'current',
+        userId: AppConstants.localUserId,
         reviewId: id,
         reviewed: current.reviewed,
         difficult: current.difficult,

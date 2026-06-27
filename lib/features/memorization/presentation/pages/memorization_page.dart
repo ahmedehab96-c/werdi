@@ -26,7 +26,6 @@ class MemorizationPage extends StatelessWidget {
         quranRepository: AppInjector.quranRepository,
         audioRepository: AppInjector.audioRepository,
         progressRepository: AppInjector.userProgressGateway,
-        authRepository: AppInjector.authGateway,
         reviewRepository: AppInjector.reviewGateway,
         preferences: AppInjector.appPreferences,
         initialSurahNumber: initialSurahNumber,

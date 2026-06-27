@@ -102,15 +102,18 @@ class _OnboardingViewState extends State<_OnboardingView> {
                     },
                     child: AppText(context.l10n.skip),
                   ),
-                ),
+                ).entranceStagger(0),
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
                     itemCount: widget.items.length,
                     onPageChanged: cubit.setPage,
                     itemBuilder: (context, index) {
-                      final item = widget.items[index];
-                      return _OnboardingCard(item: item).fadeInSmooth();
+                      return _OnboardingCard(
+                        key: ValueKey('onboarding_$index'),
+                        item: widget.items[index],
+                        pageIndex: index,
+                      );
                     },
                   ),
                 ),
@@ -131,7 +134,7 @@ class _OnboardingViewState extends State<_OnboardingView> {
                         ? Icons.play_arrow_rounded
                         : Icons.arrow_back_rounded,
                   ),
-                ),
+                ).slideUpEntrance(delay: const Duration(milliseconds: 120)),
               ],
             ),
           ),
@@ -142,54 +145,61 @@ class _OnboardingViewState extends State<_OnboardingView> {
 }
 
 class _OnboardingCard extends StatelessWidget {
-  const _OnboardingCard({required this.item});
+  const _OnboardingCard({
+    required this.item,
+    required this.pageIndex,
+    super.key,
+  });
 
   final OnboardingItem item;
+  final int pageIndex;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final side = (MediaQuery.sizeOf(context).width * 0.62).clamp(180.0, 260.0);
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Builder(
-          builder: (context) {
-            final side = (MediaQuery.sizeOf(context).width * 0.62).clamp(
-              180.0,
-              260.0,
-            );
-            return Container(
-              width: side,
-              height: side,
-              padding: const EdgeInsets.all(26),
-              decoration: BoxDecoration(
-                borderRadius: AppRadius.card,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    theme.colorScheme.primaryContainer,
-                    theme.colorScheme.surfaceContainerHighest,
-                  ],
-                ),
+        Container(
+          width: side,
+          height: side,
+          padding: const EdgeInsets.all(26),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.card,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                theme.colorScheme.primaryContainer,
+                theme.colorScheme.surfaceContainerHighest,
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
-              child: Image.asset(AppAssets.logo),
-            );
-          },
-        ),
+            ],
+          ),
+          child: Image.asset(AppAssets.logo),
+        )
+            .popIn()
+            .floatLoop(),
         AppVSpace.of(AppSpacing.xl),
         AppText(
           item.title,
           textAlign: TextAlign.center,
           style: theme.textTheme.titleLarge,
-        ),
+        ).slideUpEntrance(delay: const Duration(milliseconds: 120)),
         AppVSpace.of(AppSpacing.sm),
         AppText(
           item.subtitle,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium,
-        ),
+        ).slideUpEntrance(delay: const Duration(milliseconds: 220)),
       ],
     );
   }
@@ -209,10 +219,11 @@ class _PageDots extends StatelessWidget {
       children: List.generate(count, (index) {
         final active = current == index;
         return AnimatedContainer(
-          duration: AppDurations.fast,
+          duration: AppDurations.normal,
+          curve: Curves.easeOutBack,
           margin: const EdgeInsets.symmetric(horizontal: 4),
-          height: 8,
-          width: active ? 22 : 8,
+          height: active ? 10 : 8,
+          width: active ? 28 : 8,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
             color: active
@@ -221,6 +232,6 @@ class _PageDots extends StatelessWidget {
           ),
         );
       }),
-    );
+    ).entranceStagger(1);
   }
 }

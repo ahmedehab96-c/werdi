@@ -351,6 +351,10 @@
   "@voiceAccuracy": {
     "placeholders": { "percent": { "type": "int" } }
   },
+  "playMyRecording": "Play my recording",
+  "stopMyRecording": "Stop my recording",
+  "listenReciterAyah": "Listen to reciter",
+  "stopReciterAyah": "Stop reciter",
   "startTest": "Start test",
   "testProgress": "Progress",
   "revealAyah": "Reveal ayah",
@@ -463,6 +467,7 @@
   "onboardingSubtitle4": "An elegant progress dashboard that reflects your journey step by step.",
 
   "guest": "Guest",
+  "profileLocalSubtitle": "Your progress is saved on this device — no account needed",
   "signInForFullFeatures": "Sign in to unlock all features",
   "currentGoals": "Current goals",
   "goalDone": "Done! 🎉",

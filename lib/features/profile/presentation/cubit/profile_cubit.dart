@@ -1,29 +1,26 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:werdi/core/constants/app_constants.dart';
 import 'package:werdi/features/achievements/domain/repositories/achievements_repository.dart';
-import 'package:werdi/features/auth/domain/repositories/auth_repository.dart';
 import 'package:werdi/features/profile/presentation/cubit/profile_state.dart';
 import 'package:werdi/shared/repositories/user_progress_repository.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit({
-    required AuthRepository authRepository,
     required UserProgressRepository progressRepository,
     required AchievementsRepository achievementsRepository,
-  })  : _authRepository = authRepository,
-        _progressRepository = progressRepository,
+  })  : _progressRepository = progressRepository,
         _achievementsRepository = achievementsRepository,
         super(const ProfileState());
 
-  final AuthRepository _authRepository;
   final UserProgressRepository _progressRepository;
   final AchievementsRepository _achievementsRepository;
 
   Future<void> load() async {
     emit(state.copyWith(status: ProfileStatus.loading));
     try {
-      final user = await _authRepository.getMe();
-      final progress =
-          await _progressRepository.getProgress(userId: user.id);
+      final progress = await _progressRepository.getProgress(
+        userId: AppConstants.localUserId,
+      );
 
       List<String> badges = const [];
       try {
@@ -33,7 +30,6 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       emit(state.copyWith(
         status: ProfileStatus.loaded,
-        user: user,
         progress: progress,
         earnedBadgeLabels: badges,
       ));
