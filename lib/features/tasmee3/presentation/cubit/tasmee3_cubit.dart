@@ -1,9 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:just_audio/just_audio.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:quran/quran.dart' as quran_pkg;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:werdi/core/audio/audio_playback.dart';
 import 'package:werdi/core/audio/voice_recorder_service.dart';
 import 'package:werdi/core/services/app_preferences.dart';
@@ -51,6 +53,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
   bool _speechInitialized = false;
   bool _isAutoGrading = false;
   QuranAudioReciter? _selectedReciter;
+  String? _speechLocaleId;
 
   Future<void> initialize() async {
     emit(state.copyWith(isLoading: true));
@@ -140,7 +143,10 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       isPlayingUserRecording: false,
       isLoading: false,
     ));
-    unawaited(startListening());
+    await _ensureSpeechReady();
+    if (state.speechAvailable) {
+      unawaited(startListening());
+    }
   }
 
   void revealCurrentAyah() => emit(state.copyWith(isRevealed: true));
@@ -246,6 +252,14 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     final ayahText = state.currentAyahText ?? '';
     if (ayahText.isEmpty) return;
 
+    // Release mic from any prior clip recorder so speech_to_text can use it.
+    await _voiceRecorder.cancel();
+    emit(state.copyWith(isRecordingForPlayback: false));
+
+    if (_speech.isListening) {
+      await _speech.stop();
+    }
+
     emit(state.copyWith(
       isListening: true,
       clearSpeechError: true,
@@ -256,50 +270,87 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       isPlayingUserRecording: false,
     ));
 
-    await _startVoiceRecording();
-
-    await _speech.listen(
-      listenOptions: stt.SpeechListenOptions(
-        localeId: 'ar',
-        listenMode: stt.ListenMode.dictation,
-        partialResults: true,
-        cancelOnError: true,
-      ),
-      onResult: (result) {
-        if (state.status != Tasmee3FlowStatus.testing) return;
-        final spoken = result.recognizedWords.trim();
-        final evaluation = _evaluateSpeech(
-          expected: ayahText,
-          spoken: spoken,
-        );
-        emit(state.copyWith(
-          spokenText: spoken,
-          spokenWords: evaluation.words,
-          spokenWordMatches: evaluation.matches,
-          spokenAccuracy: evaluation.accuracyPercent,
-          isListening: !result.finalResult,
-        ));
-        if (result.finalResult && spoken.isNotEmpty) {
-          final autoGrade = _gradeFromAccuracy(evaluation.accuracyPercent);
-          unawaited(_autoGradeCurrentAyah(autoGrade));
-        }
-      },
-    );
+    final localeId = _speechLocaleId ?? 'ar_SA';
+    try {
+      await _speech.listen(
+        listenOptions: stt.SpeechListenOptions(
+          localeId: localeId,
+          listenMode: stt.ListenMode.dictation,
+          partialResults: true,
+          cancelOnError: false,
+          listenFor: const Duration(seconds: 90),
+          pauseFor: const Duration(seconds: 4),
+        ),
+        onResult: (result) {
+          if (state.status != Tasmee3FlowStatus.testing) return;
+          final spoken = result.recognizedWords.trim();
+          final evaluation = _evaluateSpeech(
+            expected: ayahText,
+            spoken: spoken,
+          );
+          emit(state.copyWith(
+            spokenText: spoken,
+            spokenWords: evaluation.words,
+            spokenWordMatches: evaluation.matches,
+            spokenAccuracy: evaluation.accuracyPercent,
+            isListening: !result.finalResult,
+          ));
+          if (result.finalResult && spoken.isNotEmpty) {
+            final autoGrade = _gradeFromAccuracy(evaluation.accuracyPercent);
+            unawaited(_autoGradeCurrentAyah(autoGrade));
+          }
+        },
+      );
+    } catch (_) {
+      emit(state.copyWith(
+        isListening: false,
+        speechError: 'speech_recognition_error',
+      ));
+    }
   }
 
   Future<void> stopListening() async {
-    await _saveVoiceRecording();
-    if (!_speechInitialized) return;
     if (_speech.isListening) {
       await _speech.stop();
+    }
+    if (state.isRecordingForPlayback) {
+      await _saveVoiceRecording();
+      emit(state.copyWith(isRecordingForPlayback: false));
     }
     if (state.isListening) {
       emit(state.copyWith(isListening: false));
     }
   }
 
+  /// Records a short clip for self-review (does not run during speech recognition).
+  Future<void> startPlaybackRecording() async {
+    if (state.status != Tasmee3FlowStatus.testing) return;
+    await stopListening();
+    await stopUserRecordingPlayback();
+    final micPermission = await Permission.microphone.request();
+    if (!micPermission.isGranted) {
+      emit(state.copyWith(speechError: 'microphone_permission_denied'));
+      return;
+    }
+    await _voiceRecorder.cancel();
+    final fileName =
+        'tasmee3_${state.selectedSurahNumber}_${state.currentAyahNumber}.m4a';
+    final started = await _voiceRecorder.start(fileName: fileName);
+    if (!started) return;
+    emit(state.copyWith(
+      isRecordingForPlayback: true,
+      clearSpeechError: true,
+    ));
+  }
+
+  Future<void> stopPlaybackRecording() async {
+    if (!state.isRecordingForPlayback) return;
+    await _saveVoiceRecording();
+    emit(state.copyWith(isRecordingForPlayback: false));
+  }
+
   Future<void> _ensureSpeechReady() async {
-    if (_speechInitialized) return;
+    if (_speechInitialized && state.speechAvailable) return;
 
     final micPermission = await Permission.microphone.request();
     if (!micPermission.isGranted) {
@@ -310,24 +361,103 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       return;
     }
 
-    final available = await _speech.initialize(
-      onStatus: (status) {
-        if (status == 'done' || status == 'notListening') {
-          emit(state.copyWith(isListening: false));
-        }
-      },
-      onError: (_) {
+    if (Platform.isIOS) {
+      final speechPermission = await Permission.speech.request();
+      if (!speechPermission.isGranted) {
         emit(state.copyWith(
-          isListening: false,
-          speechError: 'speech_recognition_error',
+          speechAvailable: false,
+          speechError: 'microphone_permission_denied',
         ));
-      },
-    );
-    _speechInitialized = true;
+        return;
+      }
+    }
+
+    if (!_speechInitialized) {
+      final available = await _speech.initialize(
+        onStatus: (status) {
+          if (status == 'done' || status == 'notListening') {
+            if (state.isListening) {
+              emit(state.copyWith(isListening: false));
+            }
+          }
+        },
+        onError: _handleSpeechError,
+      );
+      _speechInitialized = true;
+      if (available) {
+        _speechLocaleId = await _resolveSpeechLocale();
+      }
+      emit(state.copyWith(
+        speechAvailable: available,
+        speechError: available ? null : 'speech_not_available',
+      ));
+      return;
+    }
+
+    // Mic permission granted after a prior failed attempt.
+    try {
+      _speechLocaleId ??= await _resolveSpeechLocale();
+      final locales = await _speech.locales();
+      emit(state.copyWith(
+        speechAvailable: locales.isNotEmpty,
+        speechError: locales.isEmpty ? 'speech_not_available' : null,
+        clearSpeechError: locales.isNotEmpty,
+      ));
+    } catch (_) {
+      emit(state.copyWith(
+        speechAvailable: false,
+        speechError: 'speech_not_available',
+      ));
+    }
+  }
+
+  void _handleSpeechError(SpeechRecognitionError error) {
+    if (state.status != Tasmee3FlowStatus.testing) return;
+    final msg = error.errorMsg.toLowerCase();
+    if (msg.contains('no_match') || msg.contains('no match')) {
+      emit(state.copyWith(isListening: false, clearSpeechError: true));
+      return;
+    }
+    if (msg.contains('timeout')) {
+      emit(state.copyWith(isListening: false, speechError: 'speech_timeout'));
+      return;
+    }
     emit(state.copyWith(
-      speechAvailable: available,
-      speechError: available ? null : 'speech_not_available',
+      isListening: false,
+      speechError:
+          error.permanent ? 'speech_not_available' : 'speech_recognition_error',
     ));
+  }
+
+  Future<String?> _resolveSpeechLocale() async {
+    try {
+      final locales = await _speech.locales();
+      if (locales.isEmpty) return 'ar_SA';
+      const preferred = [
+        'ar_SA',
+        'ar-SA',
+        'ar_EG',
+        'ar-EG',
+        'ar_AE',
+        'ar-AE',
+        'ar',
+      ];
+      for (final pref in preferred) {
+        for (final locale in locales) {
+          final id = locale.localeId;
+          if (id == pref ||
+              id.replaceAll('-', '_') == pref.replaceAll('-', '_')) {
+            return id;
+          }
+        }
+      }
+      for (final locale in locales) {
+        if (locale.localeId.startsWith('ar')) return locale.localeId;
+      }
+      return locales.first.localeId;
+    } catch (_) {
+      return 'ar_SA';
+    }
   }
 
   Future<void> toggleAudioTest() async {
@@ -456,13 +586,6 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       isReciterAyahPlaying: false,
       clearPlayingReciterAyahNumber: true,
     ));
-  }
-
-  Future<void> _startVoiceRecording() async {
-    await _voiceRecorder.cancel();
-    final fileName =
-        'tasmee3_${state.selectedSurahNumber}_${state.currentAyahNumber}.m4a';
-    await _voiceRecorder.start(fileName: fileName);
   }
 
   Future<void> _saveVoiceRecording() async {

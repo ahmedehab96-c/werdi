@@ -431,11 +431,31 @@ class _AyahCard extends StatelessWidget {
                             ? l10n.microphonePermissionRequired
                             : state.speechError == 'speech_not_available'
                                 ? l10n.speechNotAvailable
-                            : l10n.speechError,
+                                : state.speechError == 'speech_timeout'
+                                    ? l10n.speechTimeout
+                                    : l10n.speechError,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context).colorScheme.error,
                             ),
                         textAlign: TextAlign.center,
+                      ),
+                    ],
+                    if (!state.isListening && state.spokenWords.isNotEmpty) ...[
+                      SizedBox(height: AppSpacing.sm),
+                      OutlinedButton.icon(
+                        onPressed: state.isRecordingForPlayback
+                            ? cubit.stopPlaybackRecording
+                            : cubit.startPlaybackRecording,
+                        icon: Icon(
+                          state.isRecordingForPlayback
+                              ? Icons.stop_circle_outlined
+                              : Icons.fiber_manual_record_rounded,
+                        ),
+                        label: Text(
+                          state.isRecordingForPlayback
+                              ? l10n.stopRecordForReview
+                              : l10n.recordForReview,
+                        ),
                       ),
                     ],
                     if (state.spokenWords.isNotEmpty) ...[

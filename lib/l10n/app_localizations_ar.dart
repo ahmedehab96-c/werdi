@@ -757,6 +757,15 @@ class AppLocalizationsAr extends AppLocalizations {
       'ميزة التعرف الصوتي غير متاحة على هذا الجهاز/المحاكي';
 
   @override
+  String get speechTimeout => 'انتهى وقت الاستماع، اضغط للمحاولة مرة أخرى';
+
+  @override
+  String get recordForReview => 'سجّل صوتك للاستماع';
+
+  @override
+  String get stopRecordForReview => 'إيقاف التسجيل';
+
+  @override
   String get playAudioTest => 'تشغيل تجربة الصوت';
 
   @override

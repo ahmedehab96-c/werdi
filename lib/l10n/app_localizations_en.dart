@@ -765,6 +765,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Speech recognition is not available on this device/simulator';
 
   @override
+  String get speechTimeout => 'Listening timed out, tap to try again';
+
+  @override
+  String get recordForReview => 'Record your voice to listen';
+
+  @override
+  String get stopRecordForReview => 'Stop recording';
+
+  @override
   String get playAudioTest => 'Play audio test';
 
   @override

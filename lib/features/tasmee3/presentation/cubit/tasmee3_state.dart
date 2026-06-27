@@ -35,6 +35,7 @@ class Tasmee3State extends Equatable {
     this.isPlayingUserRecording = false,
     this.playingReciterAyahNumber,
     this.isReciterAyahPlaying = false,
+    this.isRecordingForPlayback = false,
   });
 
   final Tasmee3FlowStatus status;
@@ -65,6 +66,7 @@ class Tasmee3State extends Equatable {
   final bool isPlayingUserRecording;
   final int? playingReciterAyahNumber;
   final bool isReciterAyahPlaying;
+  final bool isRecordingForPlayback;
   int get selectedSurahVerseCount =>
       availableSurahVerseCounts.isNotEmpty &&
               availableSurahNumbers.contains(selectedSurahNumber)
@@ -122,6 +124,7 @@ class Tasmee3State extends Equatable {
     int? playingReciterAyahNumber,
     bool clearPlayingReciterAyahNumber = false,
     bool? isReciterAyahPlaying,
+    bool? isRecordingForPlayback,
   }) {
     return Tasmee3State(
       status: status ?? this.status,
@@ -158,6 +161,8 @@ class Tasmee3State extends Equatable {
           ? null
           : (playingReciterAyahNumber ?? this.playingReciterAyahNumber),
       isReciterAyahPlaying: isReciterAyahPlaying ?? this.isReciterAyahPlaying,
+      isRecordingForPlayback:
+          isRecordingForPlayback ?? this.isRecordingForPlayback,
     );
   }
 
@@ -191,5 +196,6 @@ class Tasmee3State extends Equatable {
         isPlayingUserRecording,
         playingReciterAyahNumber,
         isReciterAyahPlaying,
+        isRecordingForPlayback,
       ];
 }

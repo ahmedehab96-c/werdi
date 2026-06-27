@@ -1454,6 +1454,24 @@ abstract class AppLocalizations {
   /// **'Speech recognition is not available on this device/simulator'**
   String get speechNotAvailable;
 
+  /// No description provided for @speechTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening timed out, tap to try again'**
+  String get speechTimeout;
+
+  /// No description provided for @recordForReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Record your voice to listen'**
+  String get recordForReview;
+
+  /// No description provided for @stopRecordForReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop recording'**
+  String get stopRecordForReview;
+
   /// No description provided for @playAudioTest.
   ///
   /// In en, this message translates to:
