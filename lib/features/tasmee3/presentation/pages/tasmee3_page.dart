@@ -9,7 +9,6 @@ import 'package:werdi/core/widgets/app_empty_state.dart';
 import 'package:werdi/core/widgets/app_loading_state.dart';
 import 'package:werdi/core/widgets/app_scaffold.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
-import 'package:werdi/core/widgets/quran_ayah_text.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 import 'package:werdi/features/tasmee3/domain/models/tasmee3_result.dart';
 import 'package:werdi/features/tasmee3/presentation/cubit/tasmee3_cubit.dart';
@@ -287,6 +286,7 @@ class _TestingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<Tasmee3Cubit>();
+    final l10n = context.l10n;
     final progress = state.totalAyahs == 0
         ? 0.0
         : state.currentAyahIndex / state.totalAyahs;
@@ -294,11 +294,10 @@ class _TestingScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── شريط التقدم
         Row(
           children: [
             AppText(
-              context.l10n.ayahProgress(
+              l10n.ayahProgress(
                 state.currentAyahIndex + 1,
                 state.totalAyahs,
               ),
@@ -318,266 +317,186 @@ class _TestingScreen extends StatelessWidget {
           minHeight: 6,
         ),
         SizedBox(height: AppSpacing.md),
-
-        // ── بطاقة الآية
         Expanded(
-          child: _AyahCard(state: state, cubit: cubit),
+          child: _AyahCard(state: state),
         ),
+        if (state.speechError != null) ...[
+          SizedBox(height: AppSpacing.sm),
+          AppText(
+            _speechErrorMessage(context, state.speechError),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+            textAlign: TextAlign.center,
+          ),
+        ],
         SizedBox(height: AppSpacing.md),
-
-        // ── أزرار التسميع والتقييم
         if (state.evaluationReady) ...[
           AppButton(
-            label: state.isLastAyah
-                ? context.l10n.testSummary
-                : context.l10n.nextAyah,
+            label: state.isLastAyah ? l10n.testSummary : l10n.nextAyah,
             onPressed: cubit.confirmAndNextAyah,
-            icon: const Icon(Icons.arrow_forward_rounded),
+            icon: Icon(
+              state.isLastAyah
+                  ? Icons.summarize_rounded
+                  : Icons.arrow_forward_rounded,
+            ),
           ),
           SizedBox(height: AppSpacing.sm),
           OutlinedButton.icon(
             onPressed: cubit.startListening,
             icon: const Icon(Icons.replay_rounded),
-            label: Text(context.l10n.retryRecitation),
+            label: Text(l10n.retryRecitation),
           ),
-        ] else if (state.isRevealed) ...[
-          AppText(
-            context.l10n.hiddenAyah,
-            style: Theme.of(context).textTheme.titleSmall,
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: AppSpacing.sm),
-          _GradeButtons(cubit: cubit),
-        ] else
+        ] else if (state.isListening)
           AppButton(
-            label: context.l10n.revealAyah,
-            onPressed: cubit.revealCurrentAyah,
-            icon: const Icon(Icons.visibility_rounded),
+            label: l10n.finishRecitation,
+            onPressed: cubit.finishListeningAndEvaluate,
+            icon: const Icon(Icons.stop_circle_rounded),
+          )
+        else
+          AppButton(
+            label: l10n.startVoiceRecitation,
+            onPressed: state.speechAvailable ? cubit.startListening : null,
+            icon: const Icon(Icons.mic_rounded),
           ),
       ],
     );
   }
+
+  String _speechErrorMessage(BuildContext context, String? code) {
+    final l10n = context.l10n;
+    return switch (code) {
+      'microphone_permission_denied' => l10n.microphonePermissionRequired,
+      'speech_not_available' => l10n.speechNotAvailable,
+      'speech_timeout' => l10n.speechTimeout,
+      'wrong_language' => l10n.wrongLanguage,
+      _ => l10n.speechError,
+    };
+  }
 }
 
 class _AyahCard extends StatelessWidget {
-  const _AyahCard({required this.state, required this.cubit});
+  const _AyahCard({required this.state});
   final Tasmee3State state;
-  final Tasmee3Cubit cubit;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AppSurfaceCard(
       child: Center(
-        child: state.isRevealed
+        child: state.evaluationReady
             ? SingleChildScrollView(
-                child: QuranAyahText(
-                  text: state.currentAyahText ?? '',
-                  fontScale: 1.1,
-                )
-                    .animate()
-                    .fadeIn(duration: 300.ms)
-                    .slideY(begin: 0.05, end: 0),
+                child: Column(
+                  children: [
+                    AppText(
+                      l10n.ayahErrorsInText,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: AppSpacing.sm),
+                    AppText(
+                      l10n.voiceAccuracy(state.spokenAccuracy),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: AppSpacing.md),
+                    AyahDiffText(
+                      words: state.ayahWords,
+                      wordCorrect: state.expectedWordCorrect,
+                      fontScale: 1.05,
+                    ),
+                  ],
+                ),
               )
             : SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 72.w,
-                      height: 72.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primaryContainer
-                            .withValues(alpha: 0.6),
-                      ),
-                      child: Icon(
-                        Icons.visibility_off_rounded,
-                        size: 32.sp,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    Text(
-                      l10n.ayahNumbered(state.currentAyahNumber),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
+                    if (state.isListening) ...[
+                      Container(
+                        width: 88.w,
+                        height: 88.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .errorContainer
+                              .withValues(alpha: 0.5),
+                        ),
+                        child: Icon(
+                          Icons.mic_rounded,
+                          size: 40.sp,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      )
+                          .animate(onPlay: (c) => c.repeat())
+                          .scale(
+                            begin: const Offset(0.92, 0.92),
+                            end: const Offset(1.08, 1.08),
+                            duration: 900.ms,
                           ),
-                    ),
-                    SizedBox(height: 8.h),
-                    AppText(
-                      l10n.speechRecitePrompt,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: AppSpacing.md),
-                    if (state.evaluationReady &&
-                        state.expectedWords.isNotEmpty) ...[
+                      SizedBox(height: 16.h),
                       AppText(
-                        l10n.ayahErrorsInText,
-                        style: Theme.of(context).textTheme.titleSmall,
+                        l10n.autoGradingActive,
+                        style: Theme.of(context).textTheme.bodyMedium,
                         textAlign: TextAlign.center,
                       ),
-                      SizedBox(height: AppSpacing.sm),
-                      AyahDiffText(
-                        words: state.expectedWords,
-                        wordCorrect: state.expectedWordCorrect,
-                      ),
-                      SizedBox(height: AppSpacing.md),
-                      AppText(
-                        l10n.voiceAccuracy(state.spokenAccuracy),
-                        style: Theme.of(context).textTheme.titleMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                    ] else ...[
-                      FilledButton.icon(
-                        onPressed: state.isListening
-                            ? cubit.finishListeningAndEvaluate
-                            : cubit.startListening,
-                        icon: Icon(
-                          state.isListening
-                              ? Icons.check_circle_rounded
-                              : Icons.mic_rounded,
-                        ),
-                        label: Text(
-                          state.isListening
-                              ? l10n.finishRecitation
-                              : l10n.startVoiceRecitation,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      AppText(
-                        l10n.autoGradingHint,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                    if (state.speechError != null) ...[
-                      SizedBox(height: 8.h),
-                      AppText(
-                        _speechErrorMessage(l10n, state.speechError!),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                      if (state.speechError != 'microphone_permission_denied' &&
-                          state.speechError != 'speech_not_available' &&
-                          state.speechError != 'arabic_not_available') ...[
-                        SizedBox(height: 8.h),
-                        OutlinedButton.icon(
-                          onPressed: cubit.startListening,
-                          icon: const Icon(Icons.refresh_rounded),
-                          label: Text(l10n.retryRecitation),
+                      if (state.spokenText.isNotEmpty) ...[
+                        SizedBox(height: AppSpacing.md),
+                        AppText(
+                          state.spokenText,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                          textAlign: TextAlign.center,
                         ),
                       ],
-                    ],
-                    if (state.isListening && state.spokenAccuracy > 0) ...[
-                      SizedBox(height: AppSpacing.md),
-                      AppText(
-                        l10n.voiceAccuracy(state.spokenAccuracy),
-                        style: Theme.of(context).textTheme.titleSmall,
+                    ] else ...[
+                      Container(
+                        width: 72.w,
+                        height: 72.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primaryContainer
+                              .withValues(alpha: 0.6),
+                        ),
+                        child: Icon(
+                          Icons.visibility_off_rounded,
+                          size: 32.sp,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
-                    ],
-                    if (state.currentAyahRecordingPath != null) ...[
+                      SizedBox(height: 16.h),
+                      Text(
+                        l10n.ayahNumbered(state.currentAyahNumber),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      SizedBox(height: 8.h),
+                      AppText(
+                        l10n.speechRecitePrompt,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
                       SizedBox(height: AppSpacing.md),
-                      FilledButton.tonalIcon(
-                        onPressed: cubit.togglePlayUserRecording,
-                        icon: Icon(
-                          state.isPlayingUserRecording
-                              ? Icons.stop_circle_rounded
-                              : Icons.play_circle_rounded,
-                        ),
-                        label: Text(
-                          state.isPlayingUserRecording
-                              ? l10n.stopMyRecording
-                              : l10n.playMyRecording,
-                        ),
+                      Icon(
+                        Icons.mic_none_rounded,
+                        size: 48.sp,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      SizedBox(height: 8.h),
+                      AppText(
+                        l10n.hiddenAyah,
+                        style: Theme.of(context).textTheme.bodySmall,
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ],
                 ),
               ),
-      ),
-    );
-  }
-}
-
-class _GradeButtons extends StatelessWidget {
-  const _GradeButtons({required this.cubit});
-  final Tasmee3Cubit cubit;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Row(
-      children: [
-        Expanded(
-          child: _GradeBtn(
-            label: l10n.iKnowIt,
-            icon: Icons.check_circle_rounded,
-            color: Colors.green,
-            onTap: () => cubit.gradeAyah(AyahGrade.known),
-          ),
-        ),
-        SizedBox(width: 6.w),
-        Expanded(
-          child: _GradeBtn(
-            label: l10n.iHesitated,
-            icon: Icons.warning_amber_rounded,
-            color: Colors.orange,
-            onTap: () => cubit.gradeAyah(AyahGrade.hesitant),
-          ),
-        ),
-        SizedBox(width: 6.w),
-        Expanded(
-          child: _GradeBtn(
-            label: l10n.iForgot,
-            icon: Icons.cancel_rounded,
-            color: Colors.redAccent,
-            onTap: () => cubit.gradeAyah(AyahGrade.unknown),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _GradeBtn extends StatelessWidget {
-  const _GradeBtn({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return FilledButton.tonal(
-      onPressed: onTap,
-      style: FilledButton.styleFrom(
-        backgroundColor: color.withValues(alpha: 0.12),
-        foregroundColor: color,
-        padding: EdgeInsets.symmetric(vertical: 14.h),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: color.withValues(alpha: 0.3)),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 22.sp),
-          SizedBox(height: 4.h),
-          Text(label, style: TextStyle(fontSize: 12.sp)),
-        ],
       ),
     );
   }
@@ -617,7 +536,11 @@ class _SummaryScreen extends StatelessWidget {
                 )
               else ...[
                 ...state.ayahEvaluations.values
-                    .where((e) => e.hasErrors)
+                    .where(
+                      (e) =>
+                          e.hasErrors ||
+                          result.grades[e.ayahNumber] != AyahGrade.known,
+                    )
                     .map(
                       (evaluation) => Padding(
                         padding: EdgeInsets.only(bottom: AppSpacing.md),
@@ -753,15 +676,4 @@ class _HistoryScreen extends StatelessWidget {
       ],
     );
   }
-}
-
-String _speechErrorMessage(dynamic l10n, String code) {
-  return switch (code) {
-    'microphone_permission_denied' => l10n.microphonePermissionRequired,
-    'speech_not_available' => l10n.speechNotAvailable,
-    'arabic_not_available' => l10n.arabicNotAvailable,
-    'speech_timeout' => l10n.speechTimeout,
-    'wrong_language' => l10n.wrongLanguage,
-    _ => l10n.speechError,
-  };
 }

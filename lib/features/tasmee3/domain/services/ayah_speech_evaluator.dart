@@ -1,66 +1,64 @@
-/// Compares recited speech against the expected Quranic ayah text.
+import 'package:werdi/features/tasmee3/domain/services/ayah_text_utils.dart';
+
+export 'package:werdi/features/tasmee3/domain/services/ayah_text_utils.dart'
+    show splitAyahWords, accuracyFromWordMarks;
+
+/// Compares recognized speech against the expected Quranic ayah.
 class AyahSpeechEvaluation {
   const AyahSpeechEvaluation({
     required this.expectedWords,
     required this.expectedWordCorrect,
-    required this.spokenWords,
-    required this.spokenWordMatches,
+    required this.spokenText,
     required this.accuracyPercent,
     required this.isMostlyNonArabic,
   });
 
   final List<String> expectedWords;
   final List<bool> expectedWordCorrect;
-  final List<String> spokenWords;
-  final List<bool> spokenWordMatches;
+  final String spokenText;
   final int accuracyPercent;
   final bool isMostlyNonArabic;
 
-  static AyahSpeechEvaluation empty() => const AyahSpeechEvaluation(
-        expectedWords: [],
-        expectedWordCorrect: [],
-        spokenWords: [],
-        spokenWordMatches: [],
-        accuracyPercent: 0,
-        isMostlyNonArabic: false,
-      );
+  static AyahSpeechEvaluation empty(String expected) {
+    final words = splitAyahWords(expected);
+    return AyahSpeechEvaluation(
+      expectedWords: words,
+      expectedWordCorrect: List<bool>.filled(words.length, false),
+      spokenText: '',
+      accuracyPercent: 0,
+      isMostlyNonArabic: false,
+    );
+  }
 
   static AyahSpeechEvaluation evaluate({
     required String expected,
     required String spoken,
   }) {
-    final expectedWords = _splitWords(expected);
-    final spokenWords = _splitWords(spoken);
-
-    if (expectedWords.isEmpty) return empty();
-
+    final expectedWords = splitAyahWords(expected);
+    if (expectedWords.isEmpty) {
+      return empty(expected);
+    }
     if (spoken.trim().isEmpty) {
       return AyahSpeechEvaluation(
         expectedWords: expectedWords,
-        expectedWordCorrect:
-            List<bool>.filled(expectedWords.length, false),
-        spokenWords: const [],
-        spokenWordMatches: const [],
+        expectedWordCorrect: List<bool>.filled(expectedWords.length, false),
+        spokenText: '',
         accuracyPercent: 0,
         isMostlyNonArabic: false,
       );
     }
-
-    final mostlyNonArabic = _isMostlyNonArabic(spoken);
-    if (mostlyNonArabic) {
+    if (_isMostlyNonArabic(spoken)) {
       return AyahSpeechEvaluation(
         expectedWords: expectedWords,
-        expectedWordCorrect:
-            List<bool>.filled(expectedWords.length, false),
-        spokenWords: spokenWords,
-        spokenWordMatches:
-            List<bool>.filled(spokenWords.length, false),
+        expectedWordCorrect: List<bool>.filled(expectedWords.length, false),
+        spokenText: spoken,
         accuracyPercent: 0,
         isMostlyNonArabic: true,
       );
     }
 
     final normExpected = expectedWords.map(_normalizeArabic).toList();
+    final spokenWords = splitAyahWords(spoken);
     final normSpoken = spokenWords.map(_normalizeArabic).toList();
 
     final matchedExpected = _lcsMatchedExpectedIndexes(
@@ -69,26 +67,15 @@ class AyahSpeechEvaluation {
     );
     final expectedWordCorrect = List<bool>.generate(
       expectedWords.length,
-      (index) => matchedExpected.contains(index),
+      (i) => matchedExpected.contains(i),
     );
-
-    final matchedSpoken = _lcsMatchedSpokenIndexes(
-      spoken: normSpoken,
-      expected: normExpected,
-    );
-    final spokenWordMatches = List<bool>.generate(
-      spokenWords.length,
-      (index) => matchedSpoken.contains(index),
-    );
-
     final correct = matchedExpected.length;
     final accuracy = ((correct / expectedWords.length) * 100).round();
 
     return AyahSpeechEvaluation(
       expectedWords: expectedWords,
       expectedWordCorrect: expectedWordCorrect,
-      spokenWords: spokenWords,
-      spokenWordMatches: spokenWordMatches,
+      spokenText: spoken,
       accuracyPercent: accuracy,
       isMostlyNonArabic: false,
     );
@@ -97,16 +84,10 @@ class AyahSpeechEvaluation {
   static bool _isMostlyNonArabic(String text) {
     final chars = text.replaceAll(RegExp(r'\s'), '');
     if (chars.isEmpty) return false;
-    final arabicCount =
+    final arabic =
         RegExp(r'[\u0600-\u06FF]').allMatches(chars).length;
-    return arabicCount / chars.length < 0.4;
+    return arabic / chars.length < 0.4;
   }
-
-  static List<String> _splitWords(String text) => text
-      .split(RegExp(r'\s+'))
-      .map((w) => w.trim())
-      .where((w) => w.isNotEmpty)
-      .toList();
 
   static String _normalizeArabic(String text) {
     return text
@@ -123,7 +104,6 @@ class AyahSpeechEvaluation {
         .replaceAll('ئ', 'ي')
         .replaceAll('ٱ', 'ا')
         .replaceAll('ـ', '')
-        .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
 
@@ -134,7 +114,6 @@ class AyahSpeechEvaluation {
     final m = spoken.length;
     final n = expected.length;
     final dp = List.generate(m + 1, (_) => List.filled(n + 1, 0));
-
     for (var i = 1; i <= m; i++) {
       for (var j = 1; j <= n; j++) {
         if (spoken[i - 1].isNotEmpty && spoken[i - 1] == expected[j - 1]) {
@@ -144,48 +123,12 @@ class AyahSpeechEvaluation {
         }
       }
     }
-
     final matched = <int>{};
     var i = m;
     var j = n;
     while (i > 0 && j > 0) {
       if (spoken[i - 1].isNotEmpty && spoken[i - 1] == expected[j - 1]) {
         matched.add(j - 1);
-        i -= 1;
-        j -= 1;
-      } else if (dp[i - 1][j] >= dp[i][j - 1]) {
-        i -= 1;
-      } else {
-        j -= 1;
-      }
-    }
-    return matched;
-  }
-
-  static Set<int> _lcsMatchedSpokenIndexes({
-    required List<String> spoken,
-    required List<String> expected,
-  }) {
-    final m = spoken.length;
-    final n = expected.length;
-    final dp = List.generate(m + 1, (_) => List.filled(n + 1, 0));
-
-    for (var i = 1; i <= m; i++) {
-      for (var j = 1; j <= n; j++) {
-        if (spoken[i - 1].isNotEmpty && spoken[i - 1] == expected[j - 1]) {
-          dp[i][j] = dp[i - 1][j - 1] + 1;
-        } else {
-          dp[i][j] = dp[i - 1][j] > dp[i][j - 1] ? dp[i - 1][j] : dp[i][j - 1];
-        }
-      }
-    }
-
-    final matched = <int>{};
-    var i = m;
-    var j = n;
-    while (i > 0 && j > 0) {
-      if (spoken[i - 1].isNotEmpty && spoken[i - 1] == expected[j - 1]) {
-        matched.add(i - 1);
         i -= 1;
         j -= 1;
       } else if (dp[i - 1][j] >= dp[i][j - 1]) {

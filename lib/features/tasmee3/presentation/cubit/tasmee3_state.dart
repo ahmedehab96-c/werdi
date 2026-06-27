@@ -17,30 +17,24 @@ class Tasmee3State extends Equatable {
     this.availableSurahVerseCounts = const [],
     this.ayahTexts = const [],
     this.currentAyahIndex = 0,
-    this.isRevealed = false,
     this.grades = const {},
     this.result,
     this.history = const [],
     this.historyFilter = 'الكل',
     this.isLoading = false,
     this.isListening = false,
-    this.speechAvailable = false,
+    this.speechAvailable = true,
     this.speechError,
     this.spokenText = '',
-    this.spokenWords = const [],
-    this.spokenWordMatches = const [],
     this.spokenAccuracy = 0,
-    this.expectedWords = const [],
+    this.ayahWords = const [],
     this.expectedWordCorrect = const [],
     this.evaluationReady = false,
     this.ayahEvaluations = const {},
     this.isAudioTestPlaying = false,
     this.audioTestError,
-    this.ayahRecordingPaths = const {},
-    this.isPlayingUserRecording = false,
     this.playingReciterAyahNumber,
     this.isReciterAyahPlaying = false,
-    this.isRecordingForPlayback = false,
   });
 
   final Tasmee3FlowStatus status;
@@ -52,7 +46,6 @@ class Tasmee3State extends Equatable {
   final List<int> availableSurahVerseCounts;
   final List<String> ayahTexts;
   final int currentAyahIndex;
-  final bool isRevealed;
   final Map<int, AyahGrade> grades;
   final Tasmee3Result? result;
   final List<Tasmee3Session> history;
@@ -62,20 +55,16 @@ class Tasmee3State extends Equatable {
   final bool speechAvailable;
   final String? speechError;
   final String spokenText;
-  final List<String> spokenWords;
-  final List<bool> spokenWordMatches;
   final int spokenAccuracy;
-  final List<String> expectedWords;
+  final List<String> ayahWords;
   final List<bool> expectedWordCorrect;
   final bool evaluationReady;
   final Map<int, AyahEvaluationSnapshot> ayahEvaluations;
   final bool isAudioTestPlaying;
   final String? audioTestError;
-  final Map<int, String> ayahRecordingPaths;
-  final bool isPlayingUserRecording;
   final int? playingReciterAyahNumber;
   final bool isReciterAyahPlaying;
-  final bool isRecordingForPlayback;
+
   int get selectedSurahVerseCount =>
       availableSurahVerseCounts.isNotEmpty &&
               availableSurahNumbers.contains(selectedSurahNumber)
@@ -90,8 +79,6 @@ class Tasmee3State extends Equatable {
       ayahTexts.isNotEmpty && currentAyahIndex < ayahTexts.length
           ? ayahTexts[currentAyahIndex]
           : null;
-
-  String? get currentAyahRecordingPath => ayahRecordingPaths[currentAyahNumber];
 
   List<Tasmee3Session> get filteredHistory {
     if (historyFilter == 'الكل') return history;
@@ -110,7 +97,6 @@ class Tasmee3State extends Equatable {
     List<int>? availableSurahVerseCounts,
     List<String>? ayahTexts,
     int? currentAyahIndex,
-    bool? isRevealed,
     Map<int, AyahGrade>? grades,
     Tasmee3Result? result,
     bool clearResult = false,
@@ -122,22 +108,17 @@ class Tasmee3State extends Equatable {
     String? speechError,
     bool clearSpeechError = false,
     String? spokenText,
-    List<String>? spokenWords,
-    List<bool>? spokenWordMatches,
     int? spokenAccuracy,
-    List<String>? expectedWords,
+    List<String>? ayahWords,
     List<bool>? expectedWordCorrect,
     bool? evaluationReady,
     Map<int, AyahEvaluationSnapshot>? ayahEvaluations,
     bool? isAudioTestPlaying,
     String? audioTestError,
     bool clearAudioTestError = false,
-    Map<int, String>? ayahRecordingPaths,
-    bool? isPlayingUserRecording,
     int? playingReciterAyahNumber,
     bool clearPlayingReciterAyahNumber = false,
     bool? isReciterAyahPlaying,
-    bool? isRecordingForPlayback,
   }) {
     return Tasmee3State(
       status: status ?? this.status,
@@ -151,7 +132,6 @@ class Tasmee3State extends Equatable {
           availableSurahVerseCounts ?? this.availableSurahVerseCounts,
       ayahTexts: ayahTexts ?? this.ayahTexts,
       currentAyahIndex: currentAyahIndex ?? this.currentAyahIndex,
-      isRevealed: isRevealed ?? this.isRevealed,
       grades: grades ?? this.grades,
       result: clearResult ? null : (result ?? this.result),
       history: history ?? this.history,
@@ -161,25 +141,18 @@ class Tasmee3State extends Equatable {
       speechAvailable: speechAvailable ?? this.speechAvailable,
       speechError: clearSpeechError ? null : (speechError ?? this.speechError),
       spokenText: spokenText ?? this.spokenText,
-      spokenWords: spokenWords ?? this.spokenWords,
-      spokenWordMatches: spokenWordMatches ?? this.spokenWordMatches,
       spokenAccuracy: spokenAccuracy ?? this.spokenAccuracy,
-      expectedWords: expectedWords ?? this.expectedWords,
+      ayahWords: ayahWords ?? this.ayahWords,
       expectedWordCorrect: expectedWordCorrect ?? this.expectedWordCorrect,
       evaluationReady: evaluationReady ?? this.evaluationReady,
       ayahEvaluations: ayahEvaluations ?? this.ayahEvaluations,
       isAudioTestPlaying: isAudioTestPlaying ?? this.isAudioTestPlaying,
       audioTestError:
           clearAudioTestError ? null : (audioTestError ?? this.audioTestError),
-      ayahRecordingPaths: ayahRecordingPaths ?? this.ayahRecordingPaths,
-      isPlayingUserRecording:
-          isPlayingUserRecording ?? this.isPlayingUserRecording,
       playingReciterAyahNumber: clearPlayingReciterAyahNumber
           ? null
           : (playingReciterAyahNumber ?? this.playingReciterAyahNumber),
       isReciterAyahPlaying: isReciterAyahPlaying ?? this.isReciterAyahPlaying,
-      isRecordingForPlayback:
-          isRecordingForPlayback ?? this.isRecordingForPlayback,
     );
   }
 
@@ -194,7 +167,6 @@ class Tasmee3State extends Equatable {
         availableSurahVerseCounts,
         ayahTexts,
         currentAyahIndex,
-        isRevealed,
         grades,
         result,
         history,
@@ -204,19 +176,14 @@ class Tasmee3State extends Equatable {
         speechAvailable,
         speechError,
         spokenText,
-        spokenWords,
-        spokenWordMatches,
         spokenAccuracy,
-        expectedWords,
+        ayahWords,
         expectedWordCorrect,
         evaluationReady,
         ayahEvaluations,
         isAudioTestPlaying,
         audioTestError,
-        ayahRecordingPaths,
-        isPlayingUserRecording,
         playingReciterAyahNumber,
         isReciterAyahPlaying,
-        isRecordingForPlayback,
       ];
 }

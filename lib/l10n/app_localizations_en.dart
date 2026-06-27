@@ -741,14 +741,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tasmee3Description =>
-      'Choose a surah and range, then test your memorization ayah by ayah';
+      'Choose a surah and range, then recite via microphone — the app corrects you automatically';
 
   @override
   String get speechRecitePrompt =>
-      'Recite the ayah by voice, mistakes will be highlighted in red';
+      'Recite the ayah from memory into the microphone, then tap «Finish recitation and evaluate»';
 
   @override
   String get startVoiceRecitation => 'Start voice recitation';
+
+  @override
+  String get finishedReciting => 'Finished reciting';
+
+  @override
+  String get tapWrongWordsHint => 'Tap words you got wrong (red = mistake)';
 
   @override
   String get stopListening => 'Stop listening';
@@ -838,7 +844,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get revealAyah => 'Reveal ayah';
 
   @override
-  String get hiddenAyah => 'Ayah hidden — do you know it?';
+  String get hiddenAyah => 'Ayah hidden — start reciting with the microphone';
 
   @override
   String get iKnowIt => 'I know it';

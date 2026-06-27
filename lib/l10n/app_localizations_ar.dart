@@ -733,14 +733,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tasmee3Description =>
-      'اختر السورة والنطاق، ثم اختبر حفظك آية بآية';
+      'اختر السورة والنطاق، ثم سمّع الآيات بالمايكروفون وسيُصحّح لك التطبيق تلقائيًا';
 
   @override
   String get speechRecitePrompt =>
-      'ردّد الآية بصوتك، وسيتم تلوين الخطأ بالأحمر';
+      'اقرأ الآية من حفظك في المايكروفون، ثم اضغط «إنهاء التسميع وتقييم الآية»';
 
   @override
   String get startVoiceRecitation => 'ابدأ التسميع الصوتي';
+
+  @override
+  String get finishedReciting => 'انتهيت من التسميع';
+
+  @override
+  String get tapWrongWordsHint =>
+      'اضغط على الكلمات التي أخطأت فيها (الأحمر = خطأ)';
 
   @override
   String get stopListening => 'إيقاف الاستماع';
@@ -830,7 +837,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get revealAyah => 'كشف الآية';
 
   @override
-  String get hiddenAyah => 'الآية مخفية — هل تحفظها؟';
+  String get hiddenAyah => 'الآية مخفية — ابدأ التسميع بالمايكروفون';
 
   @override
   String get iKnowIt => 'أحفظها';

@@ -1415,13 +1415,13 @@ abstract class AppLocalizations {
   /// No description provided for @tasmee3Description.
   ///
   /// In en, this message translates to:
-  /// **'Choose a surah and range, then test your memorization ayah by ayah'**
+  /// **'Choose a surah and range, then recite via microphone — the app corrects you automatically'**
   String get tasmee3Description;
 
   /// No description provided for @speechRecitePrompt.
   ///
   /// In en, this message translates to:
-  /// **'Recite the ayah by voice, mistakes will be highlighted in red'**
+  /// **'Recite the ayah from memory into the microphone, then tap «Finish recitation and evaluate»'**
   String get speechRecitePrompt;
 
   /// No description provided for @startVoiceRecitation.
@@ -1429,6 +1429,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start voice recitation'**
   String get startVoiceRecitation;
+
+  /// No description provided for @finishedReciting.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished reciting'**
+  String get finishedReciting;
+
+  /// No description provided for @tapWrongWordsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap words you got wrong (red = mistake)'**
+  String get tapWrongWordsHint;
 
   /// No description provided for @stopListening.
   ///
@@ -1589,7 +1601,7 @@ abstract class AppLocalizations {
   /// No description provided for @hiddenAyah.
   ///
   /// In en, this message translates to:
-  /// **'Ayah hidden — do you know it?'**
+  /// **'Ayah hidden — start reciting with the microphone'**
   String get hiddenAyah;
 
   /// No description provided for @iKnowIt.
