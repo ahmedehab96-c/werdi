@@ -760,6 +760,26 @@ class AppLocalizationsAr extends AppLocalizations {
   String get speechTimeout => 'انتهى وقت الاستماع، اضغط للمحاولة مرة أخرى';
 
   @override
+  String get wrongLanguage =>
+      'لم يُتعرّف على العربية. ثبّت لغة العربية في إعدادات الجهاز وجرب مرة أخرى';
+
+  @override
+  String get arabicNotAvailable =>
+      'لغة العربية غير متوفرة للتعرف الصوتي على هذا الجهاز';
+
+  @override
+  String get finishRecitation => 'إنهاء التسميع وتقييم الآية';
+
+  @override
+  String get nextAyah => 'التالي';
+
+  @override
+  String get retryRecitation => 'إعادة التسميع';
+
+  @override
+  String get ayahErrorsInText => 'الأخطاء في الآية (الأحمر = خطأ أو نسيان)';
+
+  @override
   String get recordForReview => 'سجّل صوتك للاستماع';
 
   @override

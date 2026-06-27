@@ -1460,6 +1460,42 @@ abstract class AppLocalizations {
   /// **'Listening timed out, tap to try again'**
   String get speechTimeout;
 
+  /// No description provided for @wrongLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic was not recognized. Set Arabic in device language settings and try again'**
+  String get wrongLanguage;
+
+  /// No description provided for @arabicNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic speech recognition is not available on this device'**
+  String get arabicNotAvailable;
+
+  /// No description provided for @finishRecitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish recitation and evaluate'**
+  String get finishRecitation;
+
+  /// No description provided for @nextAyah.
+  ///
+  /// In en, this message translates to:
+  /// **'Next ayah'**
+  String get nextAyah;
+
+  /// No description provided for @retryRecitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry recitation'**
+  String get retryRecitation;
+
+  /// No description provided for @ayahErrorsInText.
+  ///
+  /// In en, this message translates to:
+  /// **'Errors in the ayah (red = mistake or missed)'**
+  String get ayahErrorsInText;
+
   /// No description provided for @recordForReview.
   ///
   /// In en, this message translates to:

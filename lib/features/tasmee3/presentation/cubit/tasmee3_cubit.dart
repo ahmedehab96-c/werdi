@@ -12,10 +12,12 @@ import 'package:werdi/core/services/app_preferences.dart';
 import 'package:werdi/core/services/reciter_preferences.dart';
 import 'package:werdi/features/quran/domain/models/quran_audio_reciter.dart';
 import 'package:werdi/features/quran/domain/repositories/quran_repository.dart';
+import 'package:werdi/features/tasmee3/domain/models/ayah_evaluation_snapshot.dart';
 import 'package:werdi/features/tasmee3/domain/models/ayah_range.dart';
 import 'package:werdi/features/tasmee3/domain/models/tasmee3_result.dart';
 import 'package:werdi/features/tasmee3/domain/models/tasmee3_session.dart';
 import 'package:werdi/features/tasmee3/domain/repositories/tasmee3_repository.dart';
+import 'package:werdi/features/tasmee3/domain/services/ayah_speech_evaluator.dart';
 import 'package:werdi/features/tasmee3/presentation/cubit/tasmee3_state.dart';
 import 'package:werdi/shared/repositories/audio_repository.dart';
 
@@ -51,7 +53,6 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
   final AudioPlayer _userRecordingPlayer = AudioPlayer();
   StreamSubscription<PlayerState>? _userRecordingSubscription;
   bool _speechInitialized = false;
-  bool _isAutoGrading = false;
   QuranAudioReciter? _selectedReciter;
   String? _speechLocaleId;
 
@@ -137,6 +138,10 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       spokenWords: const [],
       spokenWordMatches: const [],
       spokenAccuracy: 0,
+      expectedWords: const [],
+      expectedWordCorrect: const [],
+      evaluationReady: false,
+      ayahEvaluations: const {},
       isListening: false,
       clearSpeechError: true,
       ayahRecordingPaths: const {},
@@ -144,16 +149,36 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       isLoading: false,
     ));
     await _ensureSpeechReady();
-    if (state.speechAvailable) {
-      unawaited(startListening());
-    }
   }
 
   void revealCurrentAyah() => emit(state.copyWith(isRevealed: true));
 
+  Future<void> confirmAndNextAyah() async {
+    if (!state.evaluationReady) return;
+    final grade = _gradeFromAccuracy(state.spokenAccuracy);
+    await _advanceWithGrade(grade);
+  }
+
   Future<void> gradeAyah(AyahGrade grade) async {
+    await _advanceWithGrade(grade);
+  }
+
+  Future<void> _advanceWithGrade(AyahGrade grade) async {
     await stopListening();
     await stopUserRecordingPlayback();
+
+    final snapshot = AyahEvaluationSnapshot(
+      ayahNumber: state.currentAyahNumber,
+      expectedText: state.currentAyahText ?? '',
+      spokenText: state.spokenText,
+      expectedWords: state.expectedWords,
+      expectedWordCorrect: state.expectedWordCorrect,
+      accuracyPercent: state.spokenAccuracy,
+      gradeLabel: grade.label,
+    );
+    final evaluations = Map<int, AyahEvaluationSnapshot>.from(state.ayahEvaluations)
+      ..[state.currentAyahNumber] = snapshot;
+
     final newGrades = Map<int, AyahGrade>.from(state.grades)
       ..[state.currentAyahNumber] = grade;
 
@@ -173,20 +198,24 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
         grades: newGrades,
         result: result,
         history: history,
+        ayahEvaluations: evaluations,
       ));
     } else {
       emit(state.copyWith(
         grades: newGrades,
+        ayahEvaluations: evaluations,
         currentAyahIndex: state.currentAyahIndex + 1,
         isRevealed: false,
         spokenText: '',
         spokenWords: const [],
         spokenWordMatches: const [],
         spokenAccuracy: 0,
+        expectedWords: const [],
+        expectedWordCorrect: const [],
+        evaluationReady: false,
         isListening: false,
         clearSpeechError: true,
       ));
-      unawaited(_startListeningForNextAyah());
     }
   }
 
@@ -204,12 +233,15 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       spokenWords: const [],
       spokenWordMatches: const [],
       spokenAccuracy: 0,
+      expectedWords: const [],
+      expectedWordCorrect: const [],
+      evaluationReady: false,
+      ayahEvaluations: const {},
       isListening: false,
       clearSpeechError: true,
       ayahRecordingPaths: const {},
       isPlayingUserRecording: false,
     ));
-    unawaited(startListening());
   }
 
   Future<void> backToSetup() async {
@@ -227,6 +259,10 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       spokenWords: const [],
       spokenWordMatches: const [],
       spokenAccuracy: 0,
+      expectedWords: const [],
+      expectedWordCorrect: const [],
+      evaluationReady: false,
+      ayahEvaluations: const {},
       isListening: false,
       clearSpeechError: true,
       isAudioTestPlaying: false,
@@ -246,18 +282,27 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
 
   Future<void> startListening() async {
     if (state.status != Tasmee3FlowStatus.testing) return;
+    if (state.evaluationReady) return;
     await _ensureSpeechReady();
     if (!state.speechAvailable) return;
 
     final ayahText = state.currentAyahText ?? '';
     if (ayahText.isEmpty) return;
 
-    // Release mic from any prior clip recorder so speech_to_text can use it.
     await _voiceRecorder.cancel();
     emit(state.copyWith(isRecordingForPlayback: false));
 
     if (_speech.isListening) {
       await _speech.stop();
+    }
+
+    final localeId = _speechLocaleId;
+    if (localeId == null) {
+      emit(state.copyWith(
+        speechAvailable: false,
+        speechError: 'arabic_not_available',
+      ));
+      return;
     }
 
     emit(state.copyWith(
@@ -267,10 +312,12 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       spokenWords: const [],
       spokenWordMatches: const [],
       spokenAccuracy: 0,
+      expectedWords: const [],
+      expectedWordCorrect: const [],
+      evaluationReady: false,
       isPlayingUserRecording: false,
     ));
 
-    final localeId = _speechLocaleId ?? 'ar_SA';
     try {
       await _speech.listen(
         listenOptions: stt.SpeechListenOptions(
@@ -278,26 +325,17 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
           listenMode: stt.ListenMode.dictation,
           partialResults: true,
           cancelOnError: false,
-          listenFor: const Duration(seconds: 90),
-          pauseFor: const Duration(seconds: 4),
+          listenFor: const Duration(minutes: 3),
+          pauseFor: const Duration(seconds: 15),
         ),
         onResult: (result) {
           if (state.status != Tasmee3FlowStatus.testing) return;
           final spoken = result.recognizedWords.trim();
-          final evaluation = _evaluateSpeech(
-            expected: ayahText,
-            spoken: spoken,
-          );
-          emit(state.copyWith(
-            spokenText: spoken,
-            spokenWords: evaluation.words,
-            spokenWordMatches: evaluation.matches,
-            spokenAccuracy: evaluation.accuracyPercent,
-            isListening: !result.finalResult,
-          ));
-          if (result.finalResult && spoken.isNotEmpty) {
-            final autoGrade = _gradeFromAccuracy(evaluation.accuracyPercent);
-            unawaited(_autoGradeCurrentAyah(autoGrade));
+          if (spoken.isEmpty) return;
+          _applySpeechResult(expected: ayahText, spoken: spoken);
+          emit(state.copyWith(isListening: !result.finalResult));
+          if (result.finalResult) {
+            unawaited(_finalizeListening());
           }
         },
       );
@@ -309,7 +347,11 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     }
   }
 
-  Future<void> stopListening() async {
+  Future<void> finishListeningAndEvaluate() async {
+    await _finalizeListening();
+  }
+
+  Future<void> _finalizeListening() async {
     if (_speech.isListening) {
       await _speech.stop();
     }
@@ -317,9 +359,68 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       await _saveVoiceRecording();
       emit(state.copyWith(isRecordingForPlayback: false));
     }
-    if (state.isListening) {
-      emit(state.copyWith(isListening: false));
+
+    final ayahText = state.currentAyahText ?? '';
+    final spoken = state.spokenText.trim();
+
+    if (spoken.isEmpty) {
+      emit(state.copyWith(
+        isListening: false,
+        evaluationReady: false,
+        speechError: 'speech_timeout',
+      ));
+      return;
     }
+
+    final evaluation = AyahSpeechEvaluation.evaluate(
+      expected: ayahText,
+      spoken: spoken,
+    );
+
+    if (evaluation.isMostlyNonArabic) {
+      emit(state.copyWith(
+        isListening: false,
+        evaluationReady: false,
+        speechError: 'wrong_language',
+        expectedWords: evaluation.expectedWords,
+        expectedWordCorrect: evaluation.expectedWordCorrect,
+      ));
+      return;
+    }
+
+    emit(state.copyWith(
+      isListening: false,
+      evaluationReady: true,
+      clearSpeechError: true,
+      spokenWords: evaluation.spokenWords,
+      spokenWordMatches: evaluation.spokenWordMatches,
+      spokenAccuracy: evaluation.accuracyPercent,
+      expectedWords: evaluation.expectedWords,
+      expectedWordCorrect: evaluation.expectedWordCorrect,
+    ));
+  }
+
+  void _applySpeechResult({
+    required String expected,
+    required String spoken,
+  }) {
+    final evaluation = AyahSpeechEvaluation.evaluate(
+      expected: expected,
+      spoken: spoken,
+    );
+    if (evaluation.isMostlyNonArabic) return;
+    emit(state.copyWith(
+      spokenText: spoken,
+      spokenWords: evaluation.spokenWords,
+      spokenWordMatches: evaluation.spokenWordMatches,
+      spokenAccuracy: evaluation.accuracyPercent,
+      expectedWords: evaluation.expectedWords,
+      expectedWordCorrect: evaluation.expectedWordCorrect,
+    ));
+  }
+
+  Future<void> stopListening() async {
+    await _finalizeListening();
   }
 
   /// Records a short clip for self-review (does not run during speech recognition).
@@ -387,9 +488,13 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       if (available) {
         _speechLocaleId = await _resolveSpeechLocale();
       }
+      final hasArabic = _speechLocaleId != null;
       emit(state.copyWith(
-        speechAvailable: available,
-        speechError: available ? null : 'speech_not_available',
+        speechAvailable: available && hasArabic,
+        speechError: !available
+            ? 'speech_not_available'
+            : (!hasArabic ? 'arabic_not_available' : null),
+        clearSpeechError: available && hasArabic,
       ));
       return;
     }
@@ -397,11 +502,11 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     // Mic permission granted after a prior failed attempt.
     try {
       _speechLocaleId ??= await _resolveSpeechLocale();
-      final locales = await _speech.locales();
+      final hasArabic = _speechLocaleId != null;
       emit(state.copyWith(
-        speechAvailable: locales.isNotEmpty,
-        speechError: locales.isEmpty ? 'speech_not_available' : null,
-        clearSpeechError: locales.isNotEmpty,
+        speechAvailable: hasArabic,
+        speechError: hasArabic ? null : 'arabic_not_available',
+        clearSpeechError: hasArabic,
       ));
     } catch (_) {
       emit(state.copyWith(
@@ -415,11 +520,14 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     if (state.status != Tasmee3FlowStatus.testing) return;
     final msg = error.errorMsg.toLowerCase();
     if (msg.contains('no_match') || msg.contains('no match')) {
-      emit(state.copyWith(isListening: false, clearSpeechError: true));
       return;
     }
     if (msg.contains('timeout')) {
-      emit(state.copyWith(isListening: false, speechError: 'speech_timeout'));
+      if (state.spokenText.trim().isNotEmpty) {
+        unawaited(_finalizeListening());
+      } else {
+        emit(state.copyWith(isListening: false, speechError: 'speech_timeout'));
+      }
       return;
     }
     emit(state.copyWith(
@@ -432,7 +540,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
   Future<String?> _resolveSpeechLocale() async {
     try {
       final locales = await _speech.locales();
-      if (locales.isEmpty) return 'ar_SA';
+      if (locales.isEmpty) return null;
       const preferred = [
         'ar_SA',
         'ar-SA',
@@ -452,11 +560,13 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
         }
       }
       for (final locale in locales) {
-        if (locale.localeId.startsWith('ar')) return locale.localeId;
+        if (locale.localeId.toLowerCase().startsWith('ar')) {
+          return locale.localeId;
+        }
       }
-      return locales.first.localeId;
+      return null;
     } catch (_) {
-      return 'ar_SA';
+      return null;
     }
   }
 
@@ -596,105 +706,12 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     emit(state.copyWith(ayahRecordingPaths: paths));
   }
 
-  _SpeechEvaluation _evaluateSpeech({
-    required String expected,
-    required String spoken,
-  }) {
-    final spokenWords = _splitWords(spoken);
-    final expectedWords = _splitWords(expected);
-
-    if (spokenWords.isEmpty || expectedWords.isEmpty) {
-      return const _SpeechEvaluation(
-        words: [],
-        matches: [],
-        accuracyPercent: 0,
-      );
-    }
-
-    final normalizedSpoken = spokenWords.map(_normalizeArabic).toList();
-    final normalizedExpected = expectedWords.map(_normalizeArabic).toList();
-    final lcsMatchIndexes = _lcsMatchedSpokenIndexes(
-      spoken: normalizedSpoken,
-      expected: normalizedExpected,
-    );
-    final matches = List<bool>.generate(
-      spokenWords.length,
-      (index) => lcsMatchIndexes.contains(index),
-    );
-    final correct = lcsMatchIndexes.length;
-    final denominator = expectedWords.length;
-    final accuracy = denominator == 0 ? 0 : ((correct / denominator) * 100).round();
-
-    return _SpeechEvaluation(
-      words: spokenWords,
-      matches: matches,
-      accuracyPercent: accuracy,
-    );
-  }
-
-  List<String> _splitWords(String text) => text
-      .split(RegExp(r'\s+'))
-      .map((w) => w.trim())
-      .where((w) => w.isNotEmpty)
-      .toList();
-
-  String _normalizeArabic(String text) {
-    return text
-        .replaceAll(RegExp(r'[\u0640]'), '')
-        .replaceAll(RegExp(r'[\u064B-\u065F\u0670\u06D6-\u06ED]'), '')
-        .replaceAll(RegExp(r'[\u06DD\u06DE\u06E9]'), '')
-        .replaceAll(RegExp(r'[^\u0621-\u063A\u0641-\u064A0-9 ]'), '')
-        .replaceAll('أ', 'ا')
-        .replaceAll('إ', 'ا')
-        .replaceAll('آ', 'ا')
-        .replaceAll('ى', 'ي')
-        .replaceAll('ة', 'ه')
-        .replaceAll('ؤ', 'و')
-        .replaceAll('ئ', 'ي')
-        .replaceAll('ٱ', 'ا')
-        .replaceAll('ـ', '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-  }
-
-  Set<int> _lcsMatchedSpokenIndexes({
-    required List<String> spoken,
-    required List<String> expected,
-  }) {
-    final m = spoken.length;
-    final n = expected.length;
-    final dp = List.generate(m + 1, (_) => List.filled(n + 1, 0));
-
-    for (var i = 1; i <= m; i++) {
-      for (var j = 1; j <= n; j++) {
-        if (spoken[i - 1].isNotEmpty && spoken[i - 1] == expected[j - 1]) {
-          dp[i][j] = dp[i - 1][j - 1] + 1;
-        } else {
-          dp[i][j] = dp[i - 1][j] > dp[i][j - 1] ? dp[i - 1][j] : dp[i][j - 1];
-        }
-      }
-    }
-
-    final matchedSpokenIndexes = <int>{};
-    var i = m;
-    var j = n;
-    while (i > 0 && j > 0) {
-      if (spoken[i - 1].isNotEmpty && spoken[i - 1] == expected[j - 1]) {
-        matchedSpokenIndexes.add(i - 1);
-        i -= 1;
-        j -= 1;
-      } else if (dp[i - 1][j] >= dp[i][j - 1]) {
-        i -= 1;
-      } else {
-        j -= 1;
-      }
-    }
-    return matchedSpokenIndexes;
-  }
-
   @override
   Future<void> close() async {
-    await stopListening();
+    if (_speech.isListening) {
+      await _speech.stop();
+    }
+    await _voiceRecorder.cancel();
     await stopAudioTest();
     await stopReciterAyah();
     await stopUserRecordingPlayback();
@@ -709,34 +726,4 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     if (accuracy >= 60) return AyahGrade.hesitant;
     return AyahGrade.unknown;
   }
-
-  Future<void> _autoGradeCurrentAyah(AyahGrade grade) async {
-    if (_isAutoGrading) return;
-    if (state.status != Tasmee3FlowStatus.testing) return;
-    _isAutoGrading = true;
-    try {
-      await gradeAyah(grade);
-    } finally {
-      _isAutoGrading = false;
-    }
-  }
-
-  Future<void> _startListeningForNextAyah() async {
-    // Small delay for smoother UI transition between ayahs.
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-    if (state.status != Tasmee3FlowStatus.testing) return;
-    await startListening();
-  }
-}
-
-class _SpeechEvaluation {
-  const _SpeechEvaluation({
-    required this.words,
-    required this.matches,
-    required this.accuracyPercent,
-  });
-
-  final List<String> words;
-  final List<bool> matches;
-  final int accuracyPercent;
 }

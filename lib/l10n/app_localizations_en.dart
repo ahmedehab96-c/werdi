@@ -768,6 +768,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get speechTimeout => 'Listening timed out, tap to try again';
 
   @override
+  String get wrongLanguage =>
+      'Arabic was not recognized. Set Arabic in device language settings and try again';
+
+  @override
+  String get arabicNotAvailable =>
+      'Arabic speech recognition is not available on this device';
+
+  @override
+  String get finishRecitation => 'Finish recitation and evaluate';
+
+  @override
+  String get nextAyah => 'Next ayah';
+
+  @override
+  String get retryRecitation => 'Retry recitation';
+
+  @override
+  String get ayahErrorsInText => 'Errors in the ayah (red = mistake or missed)';
+
+  @override
   String get recordForReview => 'Record your voice to listen';
 
   @override

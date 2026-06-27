@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:werdi/features/tasmee3/domain/models/ayah_evaluation_snapshot.dart';
 import 'package:werdi/features/tasmee3/domain/models/ayah_range.dart';
 import 'package:werdi/features/tasmee3/domain/models/tasmee3_result.dart';
 import 'package:werdi/features/tasmee3/domain/models/tasmee3_session.dart';
@@ -29,6 +30,10 @@ class Tasmee3State extends Equatable {
     this.spokenWords = const [],
     this.spokenWordMatches = const [],
     this.spokenAccuracy = 0,
+    this.expectedWords = const [],
+    this.expectedWordCorrect = const [],
+    this.evaluationReady = false,
+    this.ayahEvaluations = const {},
     this.isAudioTestPlaying = false,
     this.audioTestError,
     this.ayahRecordingPaths = const {},
@@ -60,6 +65,10 @@ class Tasmee3State extends Equatable {
   final List<String> spokenWords;
   final List<bool> spokenWordMatches;
   final int spokenAccuracy;
+  final List<String> expectedWords;
+  final List<bool> expectedWordCorrect;
+  final bool evaluationReady;
+  final Map<int, AyahEvaluationSnapshot> ayahEvaluations;
   final bool isAudioTestPlaying;
   final String? audioTestError;
   final Map<int, String> ayahRecordingPaths;
@@ -116,6 +125,10 @@ class Tasmee3State extends Equatable {
     List<String>? spokenWords,
     List<bool>? spokenWordMatches,
     int? spokenAccuracy,
+    List<String>? expectedWords,
+    List<bool>? expectedWordCorrect,
+    bool? evaluationReady,
+    Map<int, AyahEvaluationSnapshot>? ayahEvaluations,
     bool? isAudioTestPlaying,
     String? audioTestError,
     bool clearAudioTestError = false,
@@ -151,6 +164,10 @@ class Tasmee3State extends Equatable {
       spokenWords: spokenWords ?? this.spokenWords,
       spokenWordMatches: spokenWordMatches ?? this.spokenWordMatches,
       spokenAccuracy: spokenAccuracy ?? this.spokenAccuracy,
+      expectedWords: expectedWords ?? this.expectedWords,
+      expectedWordCorrect: expectedWordCorrect ?? this.expectedWordCorrect,
+      evaluationReady: evaluationReady ?? this.evaluationReady,
+      ayahEvaluations: ayahEvaluations ?? this.ayahEvaluations,
       isAudioTestPlaying: isAudioTestPlaying ?? this.isAudioTestPlaying,
       audioTestError:
           clearAudioTestError ? null : (audioTestError ?? this.audioTestError),
@@ -190,6 +207,10 @@ class Tasmee3State extends Equatable {
         spokenWords,
         spokenWordMatches,
         spokenAccuracy,
+        expectedWords,
+        expectedWordCorrect,
+        evaluationReady,
+        ayahEvaluations,
         isAudioTestPlaying,
         audioTestError,
         ayahRecordingPaths,
