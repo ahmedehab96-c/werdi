@@ -22,12 +22,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => HomeCubit(
-        progressRepository: AppInjector.userProgressGateway,
-        reviewRepository: AppInjector.localReviewRepository,
-        achievementsRepository: AppInjector.achievementsRepository,
-        tasmee3Repository: AppInjector.tasmee3Gateway,
-        database: AppInjector.appDatabase,
-        preferences: AppInjector.appPreferences,
+        dashboardService: AppInjector.homeDashboardService,
       )..initialize(),
       child: const _HomeView(),
     );

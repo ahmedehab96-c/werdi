@@ -7,6 +7,7 @@ import 'package:werdi/core/services/offline_sync_service.dart';
 import 'package:werdi/core/services/reminder_service.dart';
 import 'package:werdi/features/achievements/data/repositories/supabase_achievements_repository.dart';
 import 'package:werdi/features/achievements/domain/repositories/achievements_repository.dart';
+import 'package:werdi/features/home/domain/services/home_dashboard_service.dart';
 import 'package:werdi/features/memorization/data/repositories/quran_memorization_repository.dart';
 import 'package:werdi/features/memorization/domain/repositories/memorization_repository.dart';
 import 'package:werdi/features/quran/data/repositories/quran_repository_impl.dart';
@@ -22,7 +23,6 @@ import 'package:werdi/features/quran/data/services/trusted_quran_remote_service.
 import 'package:werdi/features/quran/domain/repositories/bookmark_repository.dart';
 import 'package:werdi/features/quran/domain/repositories/quran_repository.dart';
 import 'package:werdi/features/quran/domain/repositories/quran_tafsir_repository.dart';
-import 'package:werdi/features/review/data/repositories/review_repository_impl.dart';
 import 'package:werdi/features/review/data/repositories/drift_review_repository.dart';
 import 'package:werdi/features/review/domain/repositories/review_repository.dart';
 import 'package:werdi/features/tasmee3/data/repositories/tasmee3_repository_impl.dart';
@@ -87,11 +87,10 @@ final class AppInjector {
   static MemorizationRepository get memorizationGateway =>
       memorizationRepository;
 
-  static final LocalReviewRepository localReviewRepository =
-      LocalReviewRepository();
-  static final DriftReviewRepository driftReviewRepository =
+  static final ReviewRepository reviewRepository =
       DriftReviewRepository(database: appDatabase);
-  static ReviewRepository get reviewGateway => driftReviewRepository;
+  /// Alias kept for existing call sites.
+  static ReviewRepository get reviewGateway => reviewRepository;
 
   static final Tasmee3Repository _tasmee3Repository =
       LocalTasmee3Repository();
@@ -101,6 +100,15 @@ final class AppInjector {
 
   static final AchievementsRepository achievementsRepository =
       SupabaseAchievementsRepository(preferences: appPreferences);
+
+  static final HomeDashboardService homeDashboardService = HomeDashboardService(
+    progressRepository: userProgressGateway,
+    reviewRepository: reviewRepository,
+    achievementsRepository: achievementsRepository,
+    tasmee3Repository: tasmee3Gateway,
+    database: appDatabase,
+    preferences: appPreferences,
+  );
 
   static final ReminderService reminderService =
       LocalNotificationReminderService.instance;

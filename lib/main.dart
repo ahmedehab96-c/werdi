@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:werdi/app.dart';
 import 'package:werdi/core/services/bootstrap_service.dart';
 
@@ -29,8 +28,7 @@ Future<void> main() async {
     if (kDebugMode) {
       debugPrint('Bootstrap failed: $error\n$stack');
     }
-    // Continue startup so the app can still open in local mode.
   }
 
-  runApp(const ProviderScope(child: WerdiApp()));
+  runApp(const WerdiApp());
 }
