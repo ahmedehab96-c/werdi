@@ -6,6 +6,9 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
 
+# Play Core (optional — referenced by Flutter deferred components)
+-dontwarn com.google.android.play.core.**
+
 # Supabase / OkHttp
 -dontwarn okhttp3.**
 -dontwarn okio.**
