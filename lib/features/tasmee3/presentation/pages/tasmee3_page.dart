@@ -74,9 +74,9 @@ class _Tasmee3View extends StatelessWidget {
                           Tasmee3FlowStatus.setup =>
                             _SetupScreen(state: state),
                           Tasmee3FlowStatus.testing =>
-                            _TestingScreen(state: state),
+                            Tasmee3TestingScreen(state: state),
                           Tasmee3FlowStatus.summary =>
-                            _SummaryScreen(state: state),
+                            Tasmee3SummaryScreen(state: state),
                           Tasmee3FlowStatus.history =>
                             _HistoryScreen(state: state),
                         },
@@ -290,17 +290,14 @@ class _RangeDropdown extends StatelessWidget {
 
 // ─── شاشة الاختبار ───────────────────────────────────────────────────────────
 
-class _TestingScreen extends StatelessWidget {
-  const _TestingScreen({required this.state});
+class Tasmee3TestingScreen extends StatelessWidget {
+  const Tasmee3TestingScreen({required this.state, super.key});
   final Tasmee3State state;
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<Tasmee3Cubit>();
     final l10n = context.l10n;
-    final progress = state.totalAyahs == 0
-        ? 0.0
-        : state.currentAyahIndex / state.totalAyahs;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -308,24 +305,17 @@ class _TestingScreen extends StatelessWidget {
         Row(
           children: [
             AppText(
-              l10n.ayahProgress(
-                state.currentAyahIndex + 1,
-                state.totalAyahs,
-              ),
+              l10n.ayahCount(state.totalAyahs),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const Spacer(),
             AppText(
               '${state.selectedSurah}  ${state.selectedRange.label}',
               style: Theme.of(context).textTheme.bodySmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
-        ),
-        SizedBox(height: 6.h),
-        LinearProgressIndicator(
-          value: progress,
-          borderRadius: BorderRadius.circular(8),
-          minHeight: 6,
         ),
         SizedBox(height: AppSpacing.md),
         Expanded(
@@ -344,13 +334,9 @@ class _TestingScreen extends StatelessWidget {
         SizedBox(height: AppSpacing.md),
         if (state.evaluationReady) ...[
           AppButton(
-            label: state.isLastAyah ? l10n.testSummary : l10n.nextAyah,
+            label: l10n.testSummary,
             onPressed: cubit.confirmAndNextAyah,
-            icon: Icon(
-              state.isLastAyah
-                  ? Icons.summarize_rounded
-                  : Icons.arrow_forward_rounded,
-            ),
+            icon: const Icon(Icons.summarize_rounded),
           ),
           SizedBox(height: AppSpacing.sm),
           OutlinedButton.icon(
@@ -394,34 +380,53 @@ class _AyahCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AppSurfaceCard(
-      child: Center(
-        child: state.evaluationReady
-            ? SingleChildScrollView(
-                child: Column(
-                  children: [
-                    AppText(
-                      l10n.ayahErrorsInText,
-                      style: Theme.of(context).textTheme.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: AppSpacing.sm),
-                    AppText(
-                      l10n.voiceAccuracy(state.spokenAccuracy),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
+      child: state.evaluationReady
+          ? SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppText(
+                    l10n.ayahErrorsInText,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: AppSpacing.sm),
+                  AppText(
+                    l10n.voiceAccuracy(state.spokenAccuracy),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  ...state.ayahEvaluations.values.map(
+                    (evaluation) => Padding(
+                      padding: EdgeInsets.only(bottom: AppSpacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AppText(
+                            l10n.ayahNumbered(evaluation.ayahNumber),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
                           ),
-                      textAlign: TextAlign.center,
+                          SizedBox(height: AppSpacing.sm),
+                          AyahDiffText(
+                            words: evaluation.expectedWords,
+                            wordCorrect: evaluation.expectedWordCorrect,
+                            fontScale: 0.95,
+                          ),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: AppSpacing.md),
-                    AyahDiffText(
-                      words: state.ayahWords,
-                      wordCorrect: state.expectedWordCorrect,
-                      fontScale: 1.05,
-                    ),
-                  ],
-                ),
-              )
-            : SingleChildScrollView(
+                  ),
+                ],
+              ),
+            )
+          : Center(
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -481,14 +486,15 @@ class _AyahCard extends StatelessWidget {
                       ),
                       SizedBox(height: 16.h),
                       Text(
-                        l10n.ayahNumbered(state.currentAyahNumber),
+                        '${state.selectedRange.label} • ${l10n.ayahCount(state.totalAyahs)}',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
+                        textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 8.h),
                       AppText(
-                        l10n.speechRecitePrompt,
+                        l10n.blockRecitePrompt,
                         style: Theme.of(context).textTheme.bodyMedium,
                         textAlign: TextAlign.center,
                       ),
@@ -498,25 +504,19 @@ class _AyahCard extends StatelessWidget {
                         size: 48.sp,
                         color: Theme.of(context).colorScheme.primary,
                       ),
-                      SizedBox(height: 8.h),
-                      AppText(
-                        l10n.hiddenAyah,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
                     ],
                   ],
                 ),
               ),
-      ),
+            ),
     );
   }
 }
 
 // ─── شاشة النتيجة ────────────────────────────────────────────────────────────
 
-class _SummaryScreen extends StatelessWidget {
-  const _SummaryScreen({required this.state});
+class Tasmee3SummaryScreen extends StatelessWidget {
+  const Tasmee3SummaryScreen({required this.state, super.key});
   final Tasmee3State state;
 
   @override

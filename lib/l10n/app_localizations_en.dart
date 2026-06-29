@@ -107,6 +107,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memorizeSubtitle => 'Today\'s plan';
 
   @override
+  String get memorizeAndTestSubtitle => 'Memorize and test in one place';
+
+  @override
   String get reviewAction => 'Review';
 
   @override
@@ -857,6 +860,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hiddenAyah => 'Ayah hidden — start reciting with the microphone';
+
+  @override
+  String get blockRecitePrompt =>
+      'Recite all selected ayahs together into the microphone';
 
   @override
   String get iKnowIt => 'I know it';

@@ -36,7 +36,7 @@ final class AppRouter {
         name: AppRoutes.home,
         path: AppRoutes.homePath,
         pageBuilder: (context, state) =>
-            AppPageTransitions.homeReveal(state, const HomePage()),
+            AppPageTransitions.standard(state, const HomePage()),
       ),
       GoRoute(
         name: AppRoutes.quran,

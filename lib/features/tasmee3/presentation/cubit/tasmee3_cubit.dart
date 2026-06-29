@@ -154,12 +154,10 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
 
   Future<void> startListening() async {
     if (state.status != Tasmee3FlowStatus.testing) return;
+    if (state.ayahTexts.isEmpty) return;
 
     final ready = await _ensureSpeechReady();
     if (!ready) return;
-
-    final ayahText = state.currentAyahText ?? '';
-    if (ayahText.isEmpty) return;
 
     if (_speech.isListening) await _speech.stop();
 
@@ -180,23 +178,15 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
           listenMode: stt.ListenMode.dictation,
           partialResults: true,
           cancelOnError: false,
-          listenFor: const Duration(minutes: 3),
-          pauseFor: const Duration(seconds: 20),
+          listenFor: const Duration(minutes: 5),
+          pauseFor: const Duration(seconds: 25),
         ),
         onResult: (result) {
           if (state.status != Tasmee3FlowStatus.testing) return;
           final spoken = result.recognizedWords.trim();
           if (spoken.isEmpty) return;
-          final evaluation = AyahSpeechEvaluation.evaluate(
-            expected: ayahText,
-            spoken: spoken,
-          );
-          if (evaluation.isMostlyNonArabic) return;
           emit(state.copyWith(
             spokenText: spoken,
-            spokenAccuracy: evaluation.accuracyPercent,
-            ayahWords: evaluation.expectedWords,
-            expectedWordCorrect: evaluation.expectedWordCorrect,
             isListening: !result.finalResult,
           ));
         },
@@ -212,9 +202,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
   Future<void> finishListeningAndEvaluate() async {
     if (_speech.isListening) await _speech.stop();
 
-    final ayahText = state.currentAyahText ?? '';
     final spoken = state.spokenText.trim();
-
     if (spoken.isEmpty) {
       emit(state.copyWith(
         isListening: false,
@@ -223,12 +211,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       return;
     }
 
-    final evaluation = AyahSpeechEvaluation.evaluate(
-      expected: ayahText,
-      spoken: spoken,
-    );
-
-    if (evaluation.isMostlyNonArabic) {
+    if (_isMostlyNonArabicSpoken(spoken)) {
       if (_localeAttempt < _arabicLocaleFallbacks.length - 1) {
         _localeAttempt += 1;
         _speechLocaleId = _arabicLocaleFallbacks[_localeAttempt];
@@ -247,74 +230,91 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       return;
     }
 
+    final evaluations = <int, AyahEvaluationSnapshot>{};
+    final grades = <int, AyahGrade>{};
+    var accuracySum = 0;
+
+    for (var i = 0; i < state.ayahTexts.length; i++) {
+      final ayahNum = state.selectedRange.start + i;
+      final evaluation = AyahSpeechEvaluation.evaluate(
+        expected: state.ayahTexts[i],
+        spoken: spoken,
+      );
+      final grade = _gradeFromAccuracy(evaluation.accuracyPercent);
+      accuracySum += evaluation.accuracyPercent;
+      grades[ayahNum] = grade;
+      evaluations[ayahNum] = AyahEvaluationSnapshot(
+        ayahNumber: ayahNum,
+        expectedText: state.ayahTexts[i],
+        spokenText: spoken,
+        expectedWords: evaluation.expectedWords,
+        expectedWordCorrect: evaluation.expectedWordCorrect,
+        accuracyPercent: evaluation.accuracyPercent,
+        gradeLabel: grade.label,
+      );
+    }
+
+    final avgAccuracy = state.ayahTexts.isEmpty
+        ? 0
+        : (accuracySum / state.ayahTexts.length).round();
+
     emit(state.copyWith(
       isListening: false,
       evaluationReady: true,
       clearSpeechError: true,
-      spokenText: evaluation.spokenText,
-      spokenAccuracy: evaluation.accuracyPercent,
-      ayahWords: evaluation.expectedWords,
-      expectedWordCorrect: evaluation.expectedWordCorrect,
+      spokenText: spoken,
+      spokenAccuracy: avgAccuracy,
+      ayahEvaluations: evaluations,
+      grades: grades,
+      ayahWords: const [],
+      expectedWordCorrect: const [],
     ));
+  }
+
+  bool _isMostlyNonArabicSpoken(String text) {
+    final chars = text.replaceAll(RegExp(r'\s'), '');
+    if (chars.isEmpty) return false;
+    final arabic =
+        RegExp(r'[\u0600-\u06FF]').allMatches(chars).length;
+    return arabic / chars.length < 0.4;
   }
 
   Future<void> confirmAndNextAyah() async {
     if (!state.evaluationReady) return;
-    final grade = _gradeFromAccuracy(state.spokenAccuracy);
-    await _advanceWithGrade(grade);
+    await _finishBlockTest();
   }
 
-  Future<void> _advanceWithGrade(AyahGrade grade) async {
+  Future<void> _finishBlockTest() async {
     await _stopSpeech();
-
-    final snapshot = AyahEvaluationSnapshot(
-      ayahNumber: state.currentAyahNumber,
-      expectedText: state.currentAyahText ?? '',
-      spokenText: state.spokenText,
-      expectedWords: state.ayahWords,
-      expectedWordCorrect: state.expectedWordCorrect,
-      accuracyPercent: state.spokenAccuracy,
-      gradeLabel: grade.label,
+    final result = Tasmee3Result(grades: state.grades);
+    final session = Tasmee3Session(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      surahName: state.selectedSurah,
+      ayahRange: state.selectedRange,
+      date: DateTime.now(),
+      result: result,
     );
-    final evaluations = Map<int, AyahEvaluationSnapshot>.from(state.ayahEvaluations)
-      ..[state.currentAyahNumber] = snapshot;
+    await _repository.saveSession(session);
+    await _progressRepository.recordActivity(userId: AppConstants.localUserId);
+    final history = await _repository.getHistory();
+    emit(state.copyWith(
+      status: Tasmee3FlowStatus.summary,
+      result: result,
+      history: history,
+    ));
+  }
 
-    final newGrades = Map<int, AyahGrade>.from(state.grades)
-      ..[state.currentAyahNumber] = grade;
-
-    if (state.isLastAyah) {
-      final result = Tasmee3Result(grades: newGrades);
-      final session = Tasmee3Session(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        surahName: state.selectedSurah,
-        ayahRange: state.selectedRange,
-        date: DateTime.now(),
-        result: result,
-      );
-      await _repository.saveSession(session);
-      await _progressRepository.recordActivity(userId: AppConstants.localUserId);
-      final history = await _repository.getHistory();
-      emit(state.copyWith(
-        status: Tasmee3FlowStatus.summary,
-        grades: newGrades,
-        result: result,
-        history: history,
-        ayahEvaluations: evaluations,
-      ));
-    } else {
-      emit(state.copyWith(
-        grades: newGrades,
-        ayahEvaluations: evaluations,
-        currentAyahIndex: state.currentAyahIndex + 1,
-        spokenText: '',
-        spokenAccuracy: 0,
-        ayahWords: const [],
-        expectedWordCorrect: const [],
-        evaluationReady: false,
-        isListening: false,
-        clearSpeechError: true,
-      ));
-    }
+  void syncSelection({
+    required String surahName,
+    required int surahNumber,
+    required int ayahStart,
+    required int ayahEnd,
+  }) {
+    emit(state.copyWith(
+      selectedSurah: surahName,
+      selectedSurahNumber: surahNumber,
+      selectedRange: AyahRange(start: ayahStart, end: ayahEnd),
+    ));
   }
 
   Future<void> retryTest() async {

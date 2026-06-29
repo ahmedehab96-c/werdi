@@ -16,7 +16,10 @@ final class BootstrapService {
 
     await AppInjector.appDatabase.ensureInitialized();
     await SupabaseService.initialize();
-    unawaited(AppInjector.quranContentSeedService.warmUpInBackground());
+    // Defer heavy Quran seed so the home dashboard can load first.
+    Future<void>.delayed(const Duration(seconds: 4), () {
+      unawaited(AppInjector.quranContentSeedService.warmUpInBackground());
+    });
     unawaited(AppInjector.localQuranCacheService.clearExpired());
     unawaited(AppInjector.offlineSyncService.flushPending());
     _connectivity.onConnectivityChanged.listen((results) {

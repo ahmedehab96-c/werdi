@@ -112,6 +112,10 @@ class MemorizationCubit extends Cubit<MemorizationState> {
     emit(state.copyWith(phase: MemorizationPhase.setup, isPlaying: false));
   }
 
+  void startTestSession() {
+    emit(state.copyWith(phase: MemorizationPhase.testSession));
+  }
+
   Future<void> togglePlay() async {
     if (state.isPlaying) {
       await _audio.pause();

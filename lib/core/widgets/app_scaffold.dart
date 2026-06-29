@@ -35,14 +35,22 @@ class AppScaffold extends StatelessWidget {
           horizontal: Responsive.horizontalPadding(context),
         );
 
-    final content = Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: resolvedMaxWidth),
-        child: Padding(
-          padding: resolvedPadding,
-          child: body,
-        ),
-      ),
+    final content = LayoutBuilder(
+      builder: (context, constraints) {
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: resolvedMaxWidth,
+              minHeight: constraints.maxHeight,
+            ),
+            child: Padding(
+              padding: resolvedPadding,
+              child: body,
+            ),
+          ),
+        );
+      },
     );
 
     return Directionality(

@@ -1,237 +1,90 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:werdi/core/animations/app_animations.dart';
 import 'package:werdi/core/constants/app_assets.dart';
+import 'package:werdi/core/di/app_injector.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
-import 'package:werdi/core/theme/app_durations.dart';
 import 'package:werdi/core/theme/app_radius.dart';
 import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_button.dart';
 import 'package:werdi/core/widgets/app_scaffold.dart';
-import 'package:werdi/core/widgets/app_spacing.dart';
 import 'package:werdi/core/widgets/app_text.dart';
-import 'package:werdi/features/onboarding/presentation/cubit/onboarding_cubit.dart';
-import 'package:werdi/features/onboarding/presentation/models/onboarding_item.dart';
 import 'package:werdi/routes/app_routes.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
 
+  static const _completedKey = 'onboarding_completed';
+
+  static Future<bool> isCompleted() async {
+    final value = await AppInjector.appPreferences.getString(_completedKey);
+    return value == '1';
+  }
+
+  static Future<void> markCompleted() async {
+    await AppInjector.appPreferences.setString(_completedKey, '1');
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final items = <OnboardingItem>[
-      OnboardingItem(
-        title: l10n.onboardingTitle1,
-        subtitle: l10n.onboardingSubtitle1,
-      ),
-      OnboardingItem(
-        title: l10n.onboardingTitle2,
-        subtitle: l10n.onboardingSubtitle2,
-      ),
-      OnboardingItem(
-        title: l10n.onboardingTitle3,
-        subtitle: l10n.onboardingSubtitle3,
-      ),
-      OnboardingItem(
-        title: l10n.onboardingTitle4,
-        subtitle: l10n.onboardingSubtitle4,
-      ),
-    ];
-    return BlocProvider(
-      create: (_) => OnboardingCubit(totalPages: items.length),
-      child: _OnboardingView(items: items),
-    );
-  }
-}
+    final theme = Theme.of(context);
+    final logoSize =
+        (MediaQuery.sizeOf(context).width * 0.38).clamp(120.0, 180.0);
 
-class _OnboardingView extends StatefulWidget {
-  const _OnboardingView({required this.items});
-
-  final List<OnboardingItem> items;
-
-  @override
-  State<_OnboardingView> createState() => _OnboardingViewState();
-}
-
-class _OnboardingViewState extends State<_OnboardingView> {
-  late final PageController _pageController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _animateToPage(int index) async {
-    await _pageController.animateToPage(
-      index,
-      duration: AppDurations.slow,
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<OnboardingCubit, int>(
-      builder: (context, currentPage) {
-        final cubit = context.read<OnboardingCubit>();
-        final isLast = cubit.isLast;
-
-        return AppScaffold(
-          body: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
-            ),
-            child: Column(
-              children: [
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: TextButton(
-                    onPressed: () async {
-                      cubit.skip();
-                      await _animateToPage(widget.items.length - 1);
-                    },
-                    child: AppText(context.l10n.skip),
-                  ),
-                ).entranceStagger(0),
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: widget.items.length,
-                    onPageChanged: cubit.setPage,
-                    itemBuilder: (context, index) {
-                      return _OnboardingCard(
-                        key: ValueKey('onboarding_$index'),
-                        item: widget.items[index],
-                        pageIndex: index,
-                      );
-                    },
+    return AppScaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            children: [
+              const Spacer(),
+              Container(
+                width: logoSize + 40,
+                height: logoSize + 40,
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.card,
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primaryContainer,
+                      theme.colorScheme.surfaceContainerHighest,
+                    ],
                   ),
                 ),
-                _PageDots(count: widget.items.length, current: currentPage),
-                AppVSpace.of(AppSpacing.lg),
-                AppButton(
-                  label: isLast ? context.l10n.startNow : context.l10n.next,
-                  onPressed: () async {
-                    if (isLast) {
-                      context.goNamed(AppRoutes.home);
-                      return;
-                    }
-                    cubit.next();
-                    await _animateToPage(currentPage + 1);
-                  },
-                  icon: Icon(
-                    isLast
-                        ? Icons.play_arrow_rounded
-                        : Icons.arrow_back_rounded,
-                  ),
-                ).slideUpEntrance(delay: const Duration(milliseconds: 120)),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _OnboardingCard extends StatelessWidget {
-  const _OnboardingCard({
-    required this.item,
-    required this.pageIndex,
-    super.key,
-  });
-
-  final OnboardingItem item;
-  final int pageIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final side = (MediaQuery.sizeOf(context).width * 0.62).clamp(180.0, 260.0);
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: side,
-          height: side,
-          padding: const EdgeInsets.all(26),
-          decoration: BoxDecoration(
-            borderRadius: AppRadius.card,
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                theme.colorScheme.primaryContainer,
-                theme.colorScheme.surfaceContainerHighest,
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
+                child: Image.asset(AppAssets.logo),
+              ).popIn().floatLoop(),
+              SizedBox(height: AppSpacing.xl),
+              AppText(
+                l10n.authWelcomeTitle,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ).slideUpEntrance(),
+              SizedBox(height: AppSpacing.sm),
+              AppText(
+                l10n.onboardingSubtitle1,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyLarge,
+              ).slideUpEntrance(
+                delay: const Duration(milliseconds: 120),
+              ),
+              const Spacer(flex: 2),
+              AppButton(
+                label: l10n.startNow,
+                onPressed: () async {
+                  await markCompleted();
+                  if (context.mounted) context.goNamed(AppRoutes.home);
+                },
+                icon: const Icon(Icons.arrow_back_rounded),
+              ).slideUpEntrance(
+                delay: const Duration(milliseconds: 200),
               ),
             ],
           ),
-          child: Image.asset(AppAssets.logo),
-        )
-            .popIn()
-            .floatLoop(),
-        AppVSpace.of(AppSpacing.xl),
-        AppText(
-          item.title,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.titleLarge,
-        ).slideUpEntrance(delay: const Duration(milliseconds: 120)),
-        AppVSpace.of(AppSpacing.sm),
-        AppText(
-          item.subtitle,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium,
-        ).slideUpEntrance(delay: const Duration(milliseconds: 220)),
-      ],
+        ),
+      ),
     );
-  }
-}
-
-class _PageDots extends StatelessWidget {
-  const _PageDots({required this.count, required this.current});
-
-  final int count;
-  final int current;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(count, (index) {
-        final active = current == index;
-        return AnimatedContainer(
-          duration: AppDurations.normal,
-          curve: Curves.easeOutBack,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          height: active ? 10 : 8,
-          width: active ? 28 : 8,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            color: active
-                ? colorScheme.primary
-                : colorScheme.onSurface.withValues(alpha: 0.18),
-          ),
-        );
-      }),
-    ).entranceStagger(1);
   }
 }

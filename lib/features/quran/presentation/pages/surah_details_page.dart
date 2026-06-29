@@ -13,7 +13,7 @@ import 'package:werdi/core/widgets/app_scaffold.dart';
 import 'package:werdi/core/widgets/app_section_header.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
 import 'package:werdi/core/widgets/app_text.dart';
-import 'package:werdi/core/widgets/quran_ayah_text.dart';
+import 'package:werdi/core/widgets/mushaf_continuous_text.dart';
 import 'package:werdi/features/memorization/presentation/pages/memorization_page.dart';
 import 'package:werdi/features/quran/domain/models/surah_item.dart';
 import 'package:werdi/features/quran/presentation/cubit/quran_cubit.dart';
@@ -46,7 +46,7 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
   int? _playingAyah;
   late final List<QuranVerse> _fallbackVerses;
   final ScrollController _scrollController = ScrollController();
-  final Map<int, GlobalKey> _ayahKeys = <int, GlobalKey>{};
+  final GlobalKey _mushafSectionKey = GlobalKey(debugLabel: 'mushaf_section');
   int? _highlightedAyah;
   Timer? _highlightTimer;
   bool _didJumpToInitialAyah = false;
@@ -182,110 +182,23 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
                   ),
                 )
               else
-                ...verses.map(
-                  (verse) {
-                    final isHighlighted = _highlightedAyah == verse.ayahNumber;
-                    return AnimatedContainer(
-                      key: _keyForAyah(verse.ayahNumber),
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOutCubic,
-                      margin: EdgeInsets.only(bottom: 10.h),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isHighlighted ? 8.w : 0,
-                        vertical: isHighlighted ? 4.h : 0,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isHighlighted
-                            ? Theme.of(context)
-                                .colorScheme
-                                .primaryContainer
-                                .withValues(alpha: 0.45)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          IconButton(
-                            onPressed: () async {
-                              final cubit = context.read<QuranCubit>();
-                              try {
-                                if (_playingAyah == verse.ayahNumber) {
-                                  await AppInjector.audioRepository.stop();
-                                  if (!mounted) return;
-                                  setState(() => _playingAyah = null);
-                                  return;
-                                }
-                                await AppInjector.audioRepository.stop();
-                                final urls = cubit.getAudioAyahUrls(
-                                  surahNumber: widget.surah.number,
-                                  ayahNumber: verse.ayahNumber,
-                                );
-                                if (urls.isEmpty) {
-                                  if (!mounted) return;
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(l10n.chooseReciterBelow),
-                                    ),
-                                  );
-                                  return;
-                                }
-                                await playAudioUrlsWithFallback(
-                                  AppInjector.audioRepository,
-                                  urls: urls,
-                                );
-                                if (!mounted) return;
-                                setState(
-                                  () => _playingAyah = verse.ayahNumber,
-                                );
-                              } catch (_) {
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(this.context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(l10n.cannotPlayAyah),
-                                  ),
-                                );
-                              }
-                            },
-                            icon: Icon(
-                              _playingAyah == verse.ayahNumber
-                                  ? Icons.stop_circle_rounded
-                                  : Icons.play_circle_fill_rounded,
-                            ),
+                KeyedSubtree(
+                  key: _mushafSectionKey,
+                  child: MushafContinuousText(
+                    ayahs: verses
+                        .map(
+                          (verse) => MushafAyahSegment(
+                            ayahNumber: verse.ayahNumber,
+                            text: _stripAyahEndSymbol(verse.text),
                           ),
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsets.only(top: 8.h),
-                              child: _HighlightedVerseText(
-                                text: verse.text,
-                                query: widget.initialSearchQuery,
-                                enabled: isHighlighted,
-                                fontScale: _focusFontScale,
-                                lineHeight: _focusLineHeight,
-                                sepiaEnabled: _focusSepia,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: 32.w,
-                            height: 32.w,
-                            alignment: Alignment.center,
-                            margin: EdgeInsets.only(top: 8.h),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
-                            ),
-                            child: Text(
-                              '${verse.ayahNumber}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                        )
+                        .toList(),
+                    fontScale: _focusFontScale,
+                    lineHeight: _focusLineHeight,
+                    sepiaEnabled: _focusSepia,
+                    highlightAyahNumber: _highlightedAyah,
+                    onAyahTap: (ayahNumber) => _onAyahTapped(ayahNumber),
+                  ),
                 ),
             ],
           ),
@@ -420,9 +333,8 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
     if (targetAyah == null) return;
     final exists = verses.any((v) => v.ayahNumber == targetAyah);
     if (!exists) return;
-    final key = _keyForAyah(targetAyah);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final context = key.currentContext;
+      final context = _mushafSectionKey.currentContext;
       if (!mounted || context == null) return;
       _didJumpToInitialAyah = true;
       await Scrollable.ensureVisible(
@@ -441,11 +353,51 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
     });
   }
 
-  GlobalKey _keyForAyah(int ayahNumber) {
-    return _ayahKeys.putIfAbsent(
-      ayahNumber,
-      () => GlobalKey(debugLabel: 'ayah_$ayahNumber'),
-    );
+  Future<void> _onAyahTapped(int ayahNumber) async {
+    final l10n = context.l10n;
+    final cubit = context.read<QuranCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _highlightedAyah = ayahNumber);
+    _highlightTimer?.cancel();
+    _highlightTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      setState(() => _highlightedAyah = null);
+    });
+    try {
+      if (_playingAyah == ayahNumber) {
+        await AppInjector.audioRepository.stop();
+        if (!mounted) return;
+        setState(() => _playingAyah = null);
+        return;
+      }
+      await AppInjector.audioRepository.stop();
+      final urls = cubit.getAudioAyahUrls(
+        surahNumber: widget.surah.number,
+        ayahNumber: ayahNumber,
+      );
+      if (urls.isEmpty) {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.chooseReciterBelow)),
+        );
+        return;
+      }
+      await playAudioUrlsWithFallback(
+        AppInjector.audioRepository,
+        urls: urls,
+      );
+      if (!mounted) return;
+      setState(() => _playingAyah = ayahNumber);
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.cannotPlayAyah)),
+      );
+    }
+  }
+
+  static String _stripAyahEndSymbol(String text) {
+    return text.replaceAll(RegExp(r'[\uFD3E\uFD3F\u06DD]'), '').trim();
   }
 
   @override
@@ -551,38 +503,6 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
       _useUnifiedReadingPrefs ? baseKey : _perSurahKey(baseKey);
 
   String _perSurahKey(String baseKey) => '${baseKey}_surah_${widget.surah.number}';
-}
-
-class _HighlightedVerseText extends StatelessWidget {
-  const _HighlightedVerseText({
-    required this.text,
-    required this.query,
-    required this.enabled,
-    required this.fontScale,
-    required this.lineHeight,
-    required this.sepiaEnabled,
-  });
-
-  final String text;
-  final String? query;
-  final bool enabled;
-  final double fontScale;
-  final double lineHeight;
-  final bool sepiaEnabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return QuranAyahText(
-      text: text,
-      textAlign: TextAlign.right,
-      fontScale: fontScale,
-      lineHeight: lineHeight,
-      sepiaEnabled: sepiaEnabled,
-      highlightQuery: query,
-      highlightEnabled: enabled,
-      showFrame: false,
-    );
-  }
 }
 
 class _FocusReadingToolbar extends StatelessWidget {

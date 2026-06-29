@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:werdi/features/memorization/domain/models/memorization_ayah.dart';
 import 'package:werdi/features/quran/domain/models/surah_item.dart';
 
-enum MemorizationPhase { loading, setup, session }
+enum MemorizationPhase { loading, setup, session, testSession }
 
 class MemorizationState extends Equatable {
   const MemorizationState({

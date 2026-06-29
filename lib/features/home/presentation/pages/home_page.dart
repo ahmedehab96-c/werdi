@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:werdi/core/animations/app_animations.dart';
 import 'package:werdi/core/di/app_injector.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
 import 'package:werdi/core/responsive/responsive.dart';
 import 'package:werdi/core/theme/app_spacing.dart';
-import 'package:werdi/core/widgets/app_loading_state.dart';
 import 'package:werdi/core/widgets/app_scaffold.dart';
 import 'package:werdi/core/widgets/app_spacing.dart';
 import 'package:werdi/features/home/presentation/cubit/home_cubit.dart';
@@ -15,115 +13,105 @@ import 'package:werdi/features/home/presentation/widgets/home_greeting_section.d
 import 'package:werdi/features/home/presentation/widgets/home_quick_actions_grid.dart';
 import 'package:werdi/features/home/presentation/widgets/home_section_title.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => HomeCubit(
-        dashboardService: AppInjector.homeDashboardService,
-      )..initialize(),
-      child: const _HomeView(),
-    );
-  }
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _HomeView extends StatefulWidget {
-  const _HomeView();
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+  late final HomeCubit _cubit;
 
-  @override
-  State<_HomeView> createState() => _HomeViewState();
-}
-
-class _HomeViewState extends State<_HomeView> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _cubit = HomeCubit(dashboardService: AppInjector.homeDashboardService)
+      ..initialize();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _cubit.close();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      context.read<HomeCubit>().refresh();
+      _cubit.refresh();
     }
   }
 
-  Future<void> _onRefresh() => context.read<HomeCubit>().refresh();
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: _cubit,
+      child: const _HomeView(),
+    );
+  }
+}
+
+class _HomeView extends StatelessWidget {
+  const _HomeView();
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
       body: BlocBuilder<HomeCubit, HomeState>(
+        buildWhen: (previous, current) =>
+            previous.isRefreshing != current.isRefreshing ||
+            previous.userName != current.userName ||
+            previous.motivationSubtitle != current.motivationSubtitle ||
+            previous.dailyCompletedAyahs != current.dailyCompletedAyahs ||
+            previous.dailyTargetAyahs != current.dailyTargetAyahs ||
+            previous.currentSurahName != current.currentSurahName ||
+            previous.totalMemorizationProgress !=
+                current.totalMemorizationProgress ||
+            previous.currentSurahProgress != current.currentSurahProgress ||
+            previous.weeklyMemorizedAyahs != current.weeklyMemorizedAyahs ||
+            previous.weeklyProgress != current.weeklyProgress ||
+            previous.streakDays != current.streakDays ||
+            previous.badges != current.badges ||
+            previous.currentMilestoneAyahs != current.currentMilestoneAyahs ||
+            previous.nextMilestoneAyahs != current.nextMilestoneAyahs ||
+            previous.nextBadgeTitle != current.nextBadgeTitle,
         builder: (context, state) {
-          if (state.isLoading) {
-            return AppLoadingState(message: context.l10n.preparingDashboard);
-          }
           return RefreshIndicator(
-            onRefresh: _onRefresh,
-            child: CustomScrollView(
+            onRefresh: () => context.read<HomeCubit>().refresh(),
+            child: ListView(
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-              slivers: [
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              children: [
                 if (state.isRefreshing)
-                  const SliverToBoxAdapter(
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
                     child: LinearProgressIndicator(minHeight: 2),
                   ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                      vertical: AppSpacing.md,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        HomeGreetingSection(state: state).entranceStagger(0),
-                        AppVSpace.of(AppSpacing.lg),
-                        DailyGoalCard(state: state).entranceStagger(1),
-                        AppVSpace.of(AppSpacing.lg),
-                        ProgressOverviewCard(state: state).entranceStagger(2),
-                        AppVSpace.of(AppSpacing.lg),
-                        HomeSectionTitle(
-                          title: context.l10n.quickActionsTitle,
-                        ).entranceStagger(3),
-                        AppVSpace.of(AppSpacing.sm),
-                        const HomeQuickActionsGrid().entranceStagger(4),
-                        AppVSpace.of(AppSpacing.lg),
-                        _responsiveInfoCards(context, state).entranceStagger(5),
-                        AppVSpace.of(AppSpacing.lg),
-                        ReviewReminderCard(state: state).entranceStagger(6),
-                        AppVSpace.of(AppSpacing.lg),
-                        WeeklyInsightsCard(state: state).entranceStagger(7),
-                        AppVSpace.of(AppSpacing.lg),
-                        _responsiveBottomCards(context, state).entranceStagger(8),
-                        AppVSpace.of(AppSpacing.lg),
-                        RecommendedPlanCard(state: state).entranceStagger(9),
-                        AppVSpace.of(AppSpacing.xl),
-                      ],
-                    ),
-                  ),
-                ),
+                HomeGreetingSection(state: state),
+                AppVSpace.of(AppSpacing.lg),
+                DailyGoalCard(state: state),
+                AppVSpace.of(AppSpacing.lg),
+                ProgressOverviewCard(state: state),
+                AppVSpace.of(AppSpacing.lg),
+                HomeSectionTitle(title: context.l10n.quickActionsTitle),
+                AppVSpace.of(AppSpacing.sm),
+                const HomeQuickActionsGrid(),
+                AppVSpace.of(AppSpacing.lg),
+                _responsiveBottomCards(context, state),
+                AppVSpace.of(AppSpacing.xl),
               ],
             ),
           );
         },
       ),
-    );
-  }
-
-  Widget _responsiveInfoCards(BuildContext context, HomeState state) {
-    return _responsivePair(
-      LastMemorizedSurahCard(state: state),
-      DailyMotivationCard(state: state),
     );
   }
 

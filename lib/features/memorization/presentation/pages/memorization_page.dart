@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:werdi/core/di/app_injector.dart';
+import 'package:werdi/core/extensions/context_extensions.dart';
 import 'package:werdi/core/responsive/responsive.dart';
 import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_button.dart';
@@ -11,7 +12,7 @@ import 'package:werdi/core/widgets/quran_ayah_text.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 import 'package:werdi/features/memorization/presentation/cubit/memorization_cubit.dart';
 import 'package:werdi/features/memorization/presentation/cubit/memorization_state.dart';
-import 'package:werdi/core/extensions/context_extensions.dart';
+import 'package:werdi/features/memorization/presentation/widgets/memorization_test_session.dart';
 
 class MemorizationPage extends StatelessWidget {
   const MemorizationPage({this.initialSurahNumber, super.key});
@@ -47,7 +48,7 @@ class _MemorizationView extends StatelessWidget {
             title: Text(state.phase == MemorizationPhase.session
                 ? '${context.l10n.memorizationTitle} • ${state.selectedSurahName}'
                 : context.l10n.memorizationTitle),
-            leading: state.phase == MemorizationPhase.session
+            leading: state.phase != MemorizationPhase.setup
                 ? IconButton(
                     icon: const Icon(Icons.arrow_back_rounded),
                     onPressed: () =>
@@ -76,6 +77,8 @@ class _MemorizationView extends StatelessWidget {
               AppLoadingState(message: context.l10n.preparingSession),
             MemorizationPhase.setup => _SetupScreen(state: state),
             MemorizationPhase.session => _SessionScreen(state: state),
+            MemorizationPhase.testSession =>
+              MemorizationTestSession(memState: state),
           },
         );
       },
@@ -169,7 +172,14 @@ class _SetupScreen extends StatelessWidget {
           AppButton(
             label: l10n.startSession,
             onPressed: cubit.startSession,
-            icon: const Icon(Icons.play_arrow_rounded),
+            icon: const Icon(Icons.menu_book_rounded),
+          ),
+          SizedBox(height: AppSpacing.sm),
+          AppButton(
+            label: l10n.startVoiceRecitation,
+            onPressed: cubit.startTestSession,
+            icon: const Icon(Icons.mic_rounded),
+            variant: AppButtonVariant.outlined,
           ),
         ],
       ),

@@ -284,6 +284,12 @@ abstract class AppLocalizations {
   /// **'Today\'s plan'**
   String get memorizeSubtitle;
 
+  /// No description provided for @memorizeAndTestSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Memorize and test in one place'**
+  String get memorizeAndTestSubtitle;
+
   /// No description provided for @reviewAction.
   ///
   /// In en, this message translates to:
@@ -1621,6 +1627,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ayah hidden — start reciting with the microphone'**
   String get hiddenAyah;
+
+  /// No description provided for @blockRecitePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Recite all selected ayahs together into the microphone'**
+  String get blockRecitePrompt;
 
   /// No description provided for @iKnowIt.
   ///

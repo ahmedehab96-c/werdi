@@ -37,6 +37,8 @@ class _HomeCardHeader extends StatelessWidget {
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         ?trailing,
@@ -53,52 +55,106 @@ class DailyGoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return AppSurfaceCard(
-      color: Theme.of(context).colorScheme.primaryContainer,
+    final scheme = Theme.of(context).colorScheme;
+    final progress = (state.dailyProgress * 100).round();
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+          colors: [
+            scheme.primary,
+            scheme.primary.withValues(alpha: 0.82),
+            scheme.tertiary.withValues(alpha: 0.9),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: scheme.primary.withValues(alpha: 0.28),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(18.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _HomeCardHeader(icon: Icons.flag_rounded, title: l10n.dailyGoal),
-          SizedBox(height: 10.h),
+          Row(
+            children: [
+              Container(
+                width: 40.w,
+                height: 40.w,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.flag_rounded,
+                  color: Colors.white,
+                  size: 22.sp,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: AppText(
+                  l10n.dailyGoal,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: AppText(
+                  '$progress%',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
           AppText(
             l10n.dailyGoalDescription(
               state.dailyTargetAyahs,
               state.currentSurahName,
             ),
-            style: Theme.of(context).textTheme.bodyLarge,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  height: 1.45,
+                ),
           ),
           SizedBox(height: 14.h),
-          Column(
-            children: [
-              AppAnimatedProgress(
-                value: state.dailyProgress,
-                minHeight: 8,
-                backgroundColor: Colors.white.withValues(alpha: 0.45),
-                borderRadius: 40,
-              ),
-              SizedBox(height: 8.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  AppText(
-                    '${(state.dailyProgress * 100).round()}%',
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                  AppText(
-                    l10n.ayahsFraction(
-                      state.dailyCompletedAyahs,
-                      state.dailyTargetAyahs,
-                    ),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ],
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: LinearProgressIndicator(
+              value: state.dailyProgress,
+              minHeight: 8.h,
+              backgroundColor: Colors.white.withValues(alpha: 0.28),
+              color: Colors.white,
+            ),
           ),
-          SizedBox(height: 12.h),
-          AppButton(
-            label: l10n.continueMemorizing,
-            onPressed: () => context.pushNamed(AppRoutes.memorization),
+          SizedBox(height: 8.h),
+          AppText(
+            l10n.ayahsFraction(
+              state.dailyCompletedAyahs,
+              state.dailyTargetAyahs,
+            ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.85),
+                ),
           ),
         ],
       ),
@@ -124,6 +180,7 @@ class ProgressOverviewCard extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: AppMetricTile(
@@ -131,14 +188,14 @@ class ProgressOverviewCard extends StatelessWidget {
                   value: '${(state.totalMemorizationProgress * 100).round()}%',
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: 6.w),
               Expanded(
                 child: AppMetricTile(
                   title: l10n.currentSurah,
                   value: '${(state.currentSurahProgress * 100).round()}%',
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: 6.w),
               Expanded(
                 child: AppMetricTile(
                   title: l10n.thisWeek,
@@ -273,11 +330,23 @@ class StreakCard extends StatelessWidget {
       onTap: () => context.pushNamed(AppRoutes.achievements),
       child: Row(
         children: [
-          AppIconContainer(
-            icon: Icons.local_fire_department_rounded,
-            size: 52.w,
-            background: Colors.orange.withValues(alpha: 0.15),
-            foreground: Colors.orange,
+          Container(
+            width: 52.w,
+            height: 52.w,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.orange.withValues(alpha: 0.25),
+                  Colors.deepOrange.withValues(alpha: 0.12),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              Icons.local_fire_department_rounded,
+              color: Colors.orange.shade700,
+              size: 28.sp,
+            ),
           ),
           SizedBox(width: 12.w),
           Expanded(

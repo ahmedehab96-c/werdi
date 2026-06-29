@@ -56,11 +56,17 @@ class _AppButtonState extends State<AppButton> {
           )
         : Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               if (widget.icon != null) ...[widget.icon!, SizedBox(width: 8.w)],
-              AppText(
-                widget.label,
-                style: Theme.of(context).textTheme.labelLarge,
+              Flexible(
+                child: AppText(
+                  widget.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
               ),
             ],
           );

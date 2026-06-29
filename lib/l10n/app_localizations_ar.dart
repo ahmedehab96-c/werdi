@@ -105,6 +105,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get memorizeSubtitle => 'خطة اليوم';
 
   @override
+  String get memorizeAndTestSubtitle => 'حفظ وتسميع في صفحة واحدة';
+
+  @override
   String get reviewAction => 'مراجعة';
 
   @override
@@ -850,6 +853,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get hiddenAyah => 'الآية مخفية — ابدأ التسميع بالمايكروفون';
+
+  @override
+  String get blockRecitePrompt =>
+      'ردّد كل الآيات المختارة دفعة واحدة في المايكروفون';
 
   @override
   String get iKnowIt => 'أحفظها';

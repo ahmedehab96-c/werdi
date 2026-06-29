@@ -46,10 +46,37 @@ class HomeDashboardService {
   ];
 
   Future<HomeDashboardSnapshot> load({required int dailyTargetAyahs}) async {
-    final reviewItems = await _reviewRepository.getReviewItems();
-    final lastReadSurah = await _preferences.getString(_lastReadKey);
-    final userName = await _preferences.getString(_userNameKey);
-    final tasmee3History = await _tasmee3Repository.getHistory();
+    final reviewItemsFuture = _reviewRepository.getReviewItems();
+    final lastReadFuture = _preferences.getString(_lastReadKey);
+    final userNameFuture = _preferences.getString(_userNameKey);
+    final tasmee3Future = _tasmee3Repository.getHistory();
+    final progressFuture = _progressRepository.getProgress(
+      userId: AppConstants.localUserId,
+    );
+    final dailyCountsFuture = _database.memorizationCountsByDay(
+      userId: AppConstants.localUserId,
+    );
+    final weeklySessionsFuture = _database.countActiveDaysThisWeek(
+      userId: AppConstants.localUserId,
+    );
+    final todayAyahsFuture = _database.countMemorizationToday(
+      userId: AppConstants.localUserId,
+    );
+    final weeklyMemorizedFuture = _database.countMemorizationThisWeek(
+      userId: AppConstants.localUserId,
+    );
+    final weeklyReviewedFuture = _database.countReviewsThisWeek();
+
+    final reviewItems = await reviewItemsFuture;
+    final lastReadSurah = await lastReadFuture;
+    final userName = await userNameFuture;
+    final tasmee3History = await tasmee3Future;
+    final snapshot = await progressFuture;
+    final dailyCounts = await dailyCountsFuture;
+    final weeklySessions = await weeklySessionsFuture;
+    final todayAyahs = await todayAyahsFuture;
+    final weeklyMemorized = await weeklyMemorizedFuture;
+    final weeklyReviewed = await weeklyReviewedFuture;
 
     final pendingCount = reviewItems.where((i) => !i.reviewed).length;
     final overdueCount = reviewItems.where((i) => i.difficult).length;
@@ -59,10 +86,6 @@ class HomeDashboardService {
         lastReadSurah?.replaceFirst('سورة ', '') ?? 'الملك';
     final lastContext = lastReadSurah ?? '—';
 
-    final snapshot = await _progressRepository.getProgress(
-      userId: AppConstants.localUserId,
-    );
-
     final achievements = await _achievementsRepository.evaluateFromMetrics(
       memorizedAyahCount: snapshot.memorizedAyahCount,
       reviewedItemsCount: snapshot.reviewedItemsCount,
@@ -70,25 +93,11 @@ class HomeDashboardService {
       tasmee3Sessions: tasmee3History.length,
     );
 
-    final dailyCounts = await _database.memorizationCountsByDay(
-      userId: AppConstants.localUserId,
-    );
     final maxDaily = dailyCounts.isEmpty
         ? 1
         : dailyCounts.reduce((a, b) => a > b ? a : b).clamp(1, 999);
     final weeklyProgress =
         dailyCounts.map((c) => (c / maxDaily).clamp(0.0, 1.0)).toList();
-
-    final weeklySessions = await _database.countActiveDaysThisWeek(
-      userId: AppConstants.localUserId,
-    );
-    final todayAyahs = await _database.countMemorizationToday(
-      userId: AppConstants.localUserId,
-    );
-    final weeklyMemorized = await _database.countMemorizationThisWeek(
-      userId: AppConstants.localUserId,
-    );
-    final weeklyReviewed = await _database.countReviewsThisWeek();
 
     final plan = _recommendedPlan(
       pendingReviews: pendingCount,
@@ -230,4 +239,31 @@ class HomeDashboardSnapshot {
   final String dailyQuote;
   final String recommendedNextStep;
   final HomePlanAction recommendedPlanAction;
+
+  factory HomeDashboardSnapshot.fallback() {
+    return const HomeDashboardSnapshot(
+      userName: '',
+      motivationSubtitle: 'ابدأ جلسة اليوم لبناء سلسلة إنجازك',
+      reviewDueCount: 0,
+      overdueReviewCount: 0,
+      currentSurahName: 'الملك',
+      lastMemorizedContext: '—',
+      lastReviewContext: '—',
+      dailyCompletedAyahs: 0,
+      totalMemorizationProgress: 0,
+      currentSurahProgress: 0,
+      currentMilestoneAyahs: 0,
+      nextMilestoneAyahs: 100,
+      streakDays: 0,
+      weeklyMemorizedAyahs: 0,
+      weeklyReviewedAyahs: 0,
+      weeklySessions: 0,
+      weeklyProgress: [0, 0, 0, 0, 0, 0, 0],
+      badges: [],
+      nextBadgeTitle: '',
+      dailyQuote: 'وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا',
+      recommendedNextStep: 'ابدأ جلسة حفظ أو مراجعة اليوم',
+      recommendedPlanAction: HomePlanAction.memorize,
+    );
+  }
 }

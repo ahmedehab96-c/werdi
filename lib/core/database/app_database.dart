@@ -1,5 +1,6 @@
-import 'dart:io';
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
@@ -11,6 +12,7 @@ class AppDatabase extends GeneratedDatabase {
   AppDatabase() : super(_openConnection());
 
   bool _initialized = false;
+  Completer<void>? _initCompleter;
 
   @override
   int get schemaVersion => 1;
@@ -23,8 +25,18 @@ class AppDatabase extends GeneratedDatabase {
 
   Future<void> ensureInitialized() async {
     if (_initialized) return;
-    await _createSchemaIfNeeded();
-    _initialized = true;
+    if (_initCompleter != null) return _initCompleter!.future;
+
+    _initCompleter = Completer<void>();
+    try {
+      await _createSchemaIfNeeded();
+      _initialized = true;
+      _initCompleter!.complete();
+    } catch (error, stackTrace) {
+      _initCompleter!.completeError(error, stackTrace);
+      _initCompleter = null;
+      rethrow;
+    }
   }
 
   Future<void> _createSchemaIfNeeded() async {
