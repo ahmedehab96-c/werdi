@@ -22,25 +22,30 @@ class AchievementsCubit extends Cubit<AchievementsState> {
   Future<void> load() async {
     emit(state.copyWith(status: AchievementsStatus.loading));
     try {
-      var result = await _repository.getAchievements();
-      if (result.earned.isEmpty && result.upcoming.isEmpty) {
-        final progress = await _progressRepository.getProgress(
-          userId: AppConstants.localUserId,
-        );
-        final sessions = await _tasmee3Repository.getHistory();
-        result = await _repository.evaluateFromMetrics(
-          memorizedAyahCount: progress.memorizedAyahCount,
-          reviewedItemsCount: progress.reviewedItemsCount,
-          streakDays: progress.streakDays,
-          tasmee3Sessions: sessions.length,
-        );
-      }
+      final progress = await _progressRepository.getProgress(
+        userId: AppConstants.localUserId,
+      );
+      if (isClosed) return;
+      final sessions = await _tasmee3Repository.getHistory();
+      if (isClosed) return;
+      final result = await _repository.evaluateFromMetrics(
+        memorizedAyahCount: progress.memorizedAyahCount,
+        reviewedItemsCount: progress.reviewedItemsCount,
+        streakDays: progress.streakDays,
+        tasmee3Sessions: sessions.length,
+      );
+      // Best-effort remote sync/award using live metrics.
+      try {
+        await _repository.getAchievements();
+      } catch (_) {}
+      if (isClosed) return;
       emit(state.copyWith(
         status: AchievementsStatus.loaded,
         earned: result.earned,
         upcoming: result.upcoming,
       ));
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(
         status: AchievementsStatus.error,
         errorMessage: 'تعذّر تحميل الإنجازات',

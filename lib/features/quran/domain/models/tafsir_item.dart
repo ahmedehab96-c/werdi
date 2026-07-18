@@ -7,6 +7,7 @@ class TafsirItem extends Equatable {
     required this.ayahEnd,
     required this.source,
     required this.text,
+    this.isOfflineFallback = false,
   });
 
   final int surahNumber;
@@ -14,7 +15,9 @@ class TafsirItem extends Equatable {
   final int ayahEnd;
   final String source;
   final String text;
+  final bool isOfflineFallback;
 
   @override
-  List<Object> get props => [surahNumber, ayahStart, ayahEnd, source, text];
+  List<Object> get props =>
+      [surahNumber, ayahStart, ayahEnd, source, text, isOfflineFallback];
 }

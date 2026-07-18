@@ -8,6 +8,7 @@ import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:werdi/core/constants/app_constants.dart';
 import 'package:werdi/core/audio/audio_playback.dart';
+import 'package:werdi/core/audio/quran_audio_session.dart';
 import 'package:werdi/core/services/app_preferences.dart';
 import 'package:werdi/core/services/reciter_preferences.dart';
 import 'package:werdi/features/quran/domain/models/quran_audio_reciter.dart';
@@ -58,30 +59,36 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
 
   Future<void> initialize() async {
     emit(state.copyWith(isLoading: true));
-    final results = await Future.wait([
-      _repository.getHistory(),
-      _quranRepository.getSurahs(),
-    ]);
-    final history = results[0] as List<dynamic>;
-    final surahs = results[1] as List<dynamic>;
-    final names = surahs.map((s) => s.nameArabic as String).toList();
-    final numbers = surahs.map((s) => s.number as int).toList();
-    final verseCounts = surahs.map((s) => s.verseCount as int).toList();
-    final initialVerseCount = verseCounts.isNotEmpty ? verseCounts.first : 5;
-    emit(state.copyWith(
-      isLoading: false,
-      availableSurahs: names,
-      availableSurahNumbers: numbers,
-      availableSurahVerseCounts: verseCounts,
-      selectedSurah: names.isNotEmpty ? names.first : state.selectedSurah,
-      selectedSurahNumber:
-          numbers.isNotEmpty ? numbers.first : state.selectedSurahNumber,
-      selectedRange: AyahRange(
-        start: 1,
-        end: initialVerseCount < 5 ? initialVerseCount : 5,
-      ),
-      history: List.from(history),
-    ));
+    try {
+      final results = await Future.wait([
+        _repository.getHistory(),
+        _quranRepository.getSurahs(),
+      ]);
+      if (isClosed) return;
+      final history = results[0] as List<dynamic>;
+      final surahs = results[1] as List<dynamic>;
+      final names = surahs.map((s) => s.nameArabic as String).toList();
+      final numbers = surahs.map((s) => s.number as int).toList();
+      final verseCounts = surahs.map((s) => s.verseCount as int).toList();
+      final initialVerseCount = verseCounts.isNotEmpty ? verseCounts.first : 5;
+      emit(state.copyWith(
+        isLoading: false,
+        availableSurahs: names,
+        availableSurahNumbers: numbers,
+        availableSurahVerseCounts: verseCounts,
+        selectedSurah: names.isNotEmpty ? names.first : state.selectedSurah,
+        selectedSurahNumber:
+            numbers.isNotEmpty ? numbers.first : state.selectedSurahNumber,
+        selectedRange: AyahRange(
+          start: 1,
+          end: initialVerseCount < 5 ? initialVerseCount : 5,
+        ),
+        history: List.from(history),
+      ));
+    } catch (_) {
+      if (isClosed) return;
+      emit(state.copyWith(isLoading: false));
+    }
   }
 
   void selectSurah(int index) {
@@ -157,9 +164,10 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     if (state.ayahTexts.isEmpty) return;
 
     final ready = await _ensureSpeechReady();
-    if (!ready) return;
+    if (isClosed || !ready) return;
 
     if (_speech.isListening) await _speech.stop();
+    if (isClosed) return;
 
     emit(state.copyWith(
       isListening: true,
@@ -179,19 +187,27 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
           partialResults: true,
           cancelOnError: false,
           listenFor: const Duration(minutes: 5),
-          pauseFor: const Duration(seconds: 25),
+          // Longer pause so natural ayah pauses do not end recognition early.
+          pauseFor: const Duration(seconds: 45),
         ),
         onResult: (result) {
+          if (isClosed) return;
           if (state.status != Tasmee3FlowStatus.testing) return;
           final spoken = result.recognizedWords.trim();
           if (spoken.isEmpty) return;
+
+          // Keep listening until the user taps Finish. Engine "final" results
+          // often fire mid-recitation and previously hid the Finish button.
+          final merged = _mergeSpokenTranscript(state.spokenText, spoken);
           emit(state.copyWith(
-            spokenText: spoken,
-            isListening: !result.finalResult,
+            spokenText: merged,
+            isListening: true,
+            clearSpeechError: true,
           ));
         },
       );
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(
         isListening: false,
         speechError: 'speech_recognition_error',
@@ -199,8 +215,24 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     }
   }
 
+  /// Prefer the longer transcript; if STT resets to a new phrase, append it.
+  String _mergeSpokenTranscript(String previous, String incoming) {
+    final prev = previous.trim();
+    final next = incoming.trim();
+    if (prev.isEmpty) return next;
+    if (next.isEmpty) return prev;
+    if (next.startsWith(prev) || next.contains(prev)) return next;
+    if (prev.contains(next)) return prev;
+    return '$prev $next';
+  }
+
   Future<void> finishListeningAndEvaluate() async {
     if (_speech.isListening) await _speech.stop();
+    if (isClosed) return;
+
+    // Give the engine a brief moment to deliver a last final result.
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    if (isClosed) return;
 
     final spoken = state.spokenText.trim();
     if (spoken.isEmpty) {
@@ -230,16 +262,23 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       return;
     }
 
+    final blockEvaluations = AyahSpeechEvaluation.evaluateBlock(
+      expectedAyahs: state.ayahTexts,
+      spoken: spoken,
+    );
+
     final evaluations = <int, AyahEvaluationSnapshot>{};
     final grades = <int, AyahGrade>{};
     var accuracySum = 0;
 
     for (var i = 0; i < state.ayahTexts.length; i++) {
       final ayahNum = state.selectedRange.start + i;
-      final evaluation = AyahSpeechEvaluation.evaluate(
-        expected: state.ayahTexts[i],
-        spoken: spoken,
-      );
+      final evaluation = i < blockEvaluations.length
+          ? blockEvaluations[i]
+          : AyahSpeechEvaluation.evaluate(
+              expected: state.ayahTexts[i],
+              spoken: spoken,
+            );
       final grade = _gradeFromAccuracy(evaluation.accuracyPercent);
       accuracySum += evaluation.accuracyPercent;
       grades[ayahNum] = grade;
@@ -286,6 +325,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
 
   Future<void> _finishBlockTest() async {
     await _stopSpeech();
+    if (isClosed) return;
     final result = Tasmee3Result(grades: state.grades);
     final session = Tasmee3Session(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -295,8 +335,11 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       result: result,
     );
     await _repository.saveSession(session);
+    if (isClosed) return;
     await _progressRepository.recordActivity(userId: AppConstants.localUserId);
+    if (isClosed) return;
     final history = await _repository.getHistory();
+    if (isClosed) return;
     emit(state.copyWith(
       status: Tasmee3FlowStatus.summary,
       result: result,
@@ -371,6 +414,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
 
   Future<bool> _ensureSpeechReady() async {
     final mic = await Permission.microphone.request();
+    if (isClosed) return false;
     if (!mic.isGranted) {
       emit(state.copyWith(
         speechAvailable: false,
@@ -380,6 +424,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     }
     if (Platform.isIOS) {
       final speech = await Permission.speech.request();
+      if (isClosed) return false;
       if (!speech.isGranted) {
         emit(state.copyWith(
           speechAvailable: false,
@@ -390,6 +435,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
     }
     if (!_speechInitialized) {
       final ok = await _speech.initialize(onError: _handleSpeechError);
+      if (isClosed) return false;
       _speechInitialized = true;
       if (!ok) {
         emit(state.copyWith(
@@ -399,6 +445,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
         return false;
       }
       _speechLocaleId = await _resolveBestLocale();
+      if (isClosed) return false;
     }
     emit(state.copyWith(speechAvailable: true, clearSpeechError: true));
     return true;
@@ -422,6 +469,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
   }
 
   void _handleSpeechError(SpeechRecognitionError error) {
+    if (isClosed) return;
     if (state.status != Tasmee3FlowStatus.testing) return;
     final msg = error.errorMsg.toLowerCase();
     if (msg.contains('no_match')) return;
@@ -442,8 +490,9 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
   }
 
   AyahGrade _gradeFromAccuracy(int accuracy) {
-    if (accuracy >= 85) return AyahGrade.known;
-    if (accuracy >= 60) return AyahGrade.hesitant;
+    // Softer thresholds: STT on Quranic Arabic is imperfect.
+    if (accuracy >= 70) return AyahGrade.known;
+    if (accuracy >= 45) return AyahGrade.hesitant;
     return AyahGrade.unknown;
   }
 
@@ -458,6 +507,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
   Future<void> playAudioTest() async {
     try {
       _selectedReciter ??= await ReciterPreferences.loadSelected(_preferences);
+      if (isClosed) return;
       final reciter = _selectedReciter;
       if (reciter == null) {
         emit(state.copyWith(
@@ -479,12 +529,24 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
         return;
       }
       await _audio.stop();
-      await playAudioUrlsWithFallback(_audio, urls: urls);
+      if (isClosed) return;
+      await playAudioUrlsWithFallback(
+        _audio,
+        urls: urls,
+        metadata: AyahPlaybackMetadata(
+          surahNumber: state.selectedSurahNumber,
+          surahNameArabic: state.selectedSurah,
+          ayahNumber: state.selectedRange.start,
+          reciterName: reciter.name,
+        ),
+      );
+      if (isClosed) return;
       emit(state.copyWith(
         isAudioTestPlaying: true,
         clearAudioTestError: true,
       ));
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(
         isAudioTestPlaying: false,
         audioTestError: 'audio_test_failed',
@@ -495,6 +557,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
   Future<void> stopAudioTest() async {
     if (!state.isAudioTestPlaying) return;
     await _audio.stop();
+    if (isClosed) return;
     emit(state.copyWith(isAudioTestPlaying: false));
   }
 
@@ -505,8 +568,10 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       return;
     }
     await stopReciterAyah();
+    if (isClosed) return;
     try {
       _selectedReciter ??= await ReciterPreferences.loadSelected(_preferences);
+      if (isClosed) return;
       final reciter = _selectedReciter;
       if (reciter == null) return;
       final urls = _quranRepository.getAudioAyahUrls(
@@ -519,8 +584,40 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
         playingReciterAyahNumber: ayahNumber,
         isReciterAyahPlaying: true,
       ));
-      await playAudioUrlsWithFallback(_audio, urls: urls);
-      await _audio.onPlaybackCompleted.first;
+      final verseCount = quran_pkg.getVerseCount(state.selectedSurahNumber);
+      await playAudioUrlsWithFallback(
+        _audio,
+        urls: urls,
+        metadata: AyahPlaybackMetadata(
+          surahNumber: state.selectedSurahNumber,
+          surahNameArabic: state.selectedSurah,
+          ayahNumber: ayahNumber,
+          reciterName: reciter.name,
+        ),
+        onSkipNext: ayahNumber < verseCount
+            ? () {
+                if (isClosed) return;
+                unawaited(toggleReciterAyah(ayahNumber + 1));
+              }
+            : null,
+        onSkipPrevious: ayahNumber > 1
+            ? () {
+                if (isClosed) return;
+                unawaited(toggleReciterAyah(ayahNumber - 1));
+              }
+            : null,
+      );
+      if (isClosed) return;
+      try {
+        await _audio.onPlaybackCompleted.first.timeout(
+          const Duration(minutes: 10),
+        );
+      } on TimeoutException {
+        // Playback stopped or stalled — clear UI state below.
+      } on StateError {
+        // Stream closed without event (e.g. stop()) — clear UI state below.
+      }
+      if (isClosed) return;
       if (state.playingReciterAyahNumber == ayahNumber &&
           state.isReciterAyahPlaying) {
         emit(state.copyWith(
@@ -529,6 +626,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
         ));
       }
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(
         isReciterAyahPlaying: false,
         clearPlayingReciterAyahNumber: true,
@@ -541,6 +639,7 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
       return;
     }
     await _audio.stop();
+    if (isClosed) return;
     emit(state.copyWith(
       isReciterAyahPlaying: false,
       clearPlayingReciterAyahNumber: true,
@@ -549,7 +648,11 @@ class Tasmee3Cubit extends Cubit<Tasmee3State> {
 
   @override
   Future<void> close() async {
-    if (_speech.isListening) await _speech.stop();
+    try {
+      await _speech.cancel();
+    } catch (_) {
+      if (_speech.isListening) await _speech.stop();
+    }
     await stopAudioTest();
     await stopReciterAyah();
     return super.close();

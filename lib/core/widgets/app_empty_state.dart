@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:werdi/core/responsive/responsive_utils.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 
@@ -21,17 +21,24 @@ class AppEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppSurfaceCard(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 36.sp),
-          SizedBox(height: 8.h),
+          Icon(
+            icon,
+            size: ResponsiveUtils.responsiveIconSize(context, 36),
+          ),
+          SizedBox(height: ResponsiveUtils.responsiveSpacing(context, 8)),
           AppText(title, style: Theme.of(context).textTheme.titleSmall),
-          SizedBox(height: 4.h),
+          SizedBox(height: ResponsiveUtils.responsiveSpacing(context, 4)),
           AppText(
             subtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          if (action != null) ...[SizedBox(height: 10.h), action!],
+          if (action != null) ...[
+            SizedBox(height: ResponsiveUtils.responsiveSpacing(context, 10)),
+            action!,
+          ],
         ],
       ),
     );

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:werdi/core/responsive/responsive_utils.dart';
+import 'package:werdi/core/widgets/app_text.dart';
 
-/// Compact stat tile — scales text down to keep labels on one line.
+/// Compact stat tile — height adapts to label length.
 class AppMetricTile extends StatelessWidget {
   const AppMetricTile({required this.title, required this.value, super.key});
 
@@ -12,50 +13,38 @@ class AppMetricTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveUtils.responsivePadding(context, 6),
+        vertical: ResponsiveUtils.responsivePadding(context, 10),
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(
+          ResponsiveUtils.responsiveRadius(context, 12),
+        ),
         color: theme.colorScheme.surfaceContainerHighest,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _ScaledLine(
-            text: value,
+          AppText(
+            value,
+            textAlign: TextAlign.center,
+            maxLines: 1,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
-          SizedBox(height: 4.h),
-          _ScaledLine(
-            text: title,
+          SizedBox(height: ResponsiveUtils.responsiveSpacing(context, 4)),
+          AppText(
+            title,
+            textAlign: TextAlign.center,
+            maxLines: 2,
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ScaledLine extends StatelessWidget {
-  const _ScaledLine({required this.text, this.style});
-
-  final String text;
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.center,
-      child: Text(
-        text,
-        maxLines: 1,
-        textAlign: TextAlign.center,
-        style: style,
       ),
     );
   }

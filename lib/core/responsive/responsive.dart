@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:werdi/core/responsive/responsive_helper.dart';
 
-/// Screen-size buckets for adaptive layouts (phones small → large, tablets).
+export 'responsive_helper.dart';
+export 'responsive_utils.dart';
+
+/// Density / content buckets aligned with [ResponsiveHelper] breakpoints.
 enum ScreenSize { compact, medium, expanded, wide }
 
+/// Layout helpers for content density (ayah scale, column counts, etc.).
 abstract final class Responsive {
   static double widthOf(BuildContext context) =>
-      MediaQuery.sizeOf(context).width;
+      ResponsiveHelper.screenWidth(context);
 
   static double heightOf(BuildContext context) =>
-      MediaQuery.sizeOf(context).height;
+      ResponsiveHelper.screenHeight(context);
 
   static ScreenSize sizeOf(BuildContext context) {
     final width = widthOf(context);
     if (width < 360) return ScreenSize.compact;
-    if (width < 600) return ScreenSize.medium;
-    if (width < 900) return ScreenSize.expanded;
+    if (width < ResponsiveHelper.mobileBreakpoint) return ScreenSize.medium;
+    if (width < ResponsiveHelper.desktopBreakpoint) return ScreenSize.expanded;
     return ScreenSize.wide;
   }
 
@@ -24,36 +29,27 @@ abstract final class Responsive {
   static bool isWide(BuildContext context) =>
       sizeOf(context) == ScreenSize.wide;
 
-  static double horizontalPadding(BuildContext context) {
-    return switch (sizeOf(context)) {
-      ScreenSize.compact => 12,
-      ScreenSize.medium => 16,
-      ScreenSize.expanded => 20,
-      ScreenSize.wide => 24,
-    };
-  }
+  static double contentMaxWidth(BuildContext context) =>
+      ResponsiveHelper.contentMaxWidth(context);
 
-  static double contentMaxWidth(BuildContext context) {
-    final width = widthOf(context);
-    if (width >= 900) return 840;
-    if (width >= 600) return 560;
-    return width;
-  }
+  static double horizontalPadding(BuildContext context) =>
+      ResponsiveHelper.adaptivePadding(context);
 
   static double ayahFontScale(BuildContext context) {
     final width = widthOf(context);
     if (width < 320) return 0.82;
     if (width < 360) return 0.9;
-    if (width > 430) return 1.06;
+    if (width > 430 && width < ResponsiveHelper.mobileBreakpoint) return 1.06;
+    if (ResponsiveHelper.isTablet(context)) return 1.12;
+    if (ResponsiveHelper.isDesktop(context)) return 1.18;
     return 1.0;
   }
 
   static double logoWatermarkSize(BuildContext context) {
-    return switch (sizeOf(context)) {
-      ScreenSize.compact => 140,
-      ScreenSize.medium => 180,
-      ScreenSize.expanded => 220,
-      ScreenSize.wide => 260,
+    return switch (ResponsiveHelper.deviceTypeOf(context)) {
+      DeviceType.mobile => isCompact(context) ? 140.0 : 180.0,
+      DeviceType.tablet => 220.0,
+      DeviceType.desktop => 260.0,
     };
   }
 
@@ -62,7 +58,7 @@ abstract final class Responsive {
     int compact = 2,
     int medium = 2,
     int expanded = 3,
-    int wide = 4,
+    int wide = 5,
   }) {
     return switch (sizeOf(context)) {
       ScreenSize.compact => compact,
@@ -72,12 +68,12 @@ abstract final class Responsive {
     };
   }
 
-  static double valueFor(
+  static T valueFor<T>(
     BuildContext context, {
-    required double compact,
-    required double medium,
-    double? expanded,
-    double? wide,
+    required T compact,
+    required T medium,
+    T? expanded,
+    T? wide,
   }) {
     return switch (sizeOf(context)) {
       ScreenSize.compact => compact,

@@ -4,11 +4,13 @@ import 'package:werdi/core/services/app_preferences.dart';
 import 'package:werdi/core/services/reciter_preferences.dart';
 import 'package:werdi/features/quran/domain/repositories/bookmark_repository.dart';
 import 'package:werdi/features/quran/domain/models/quran_filter.dart';
+import 'package:werdi/features/quran/data/services/cached_quran_tafsir_service.dart';
 import 'package:werdi/features/quran/data/services/mp3quran_reciters_api.dart';
 import 'package:werdi/features/quran/domain/models/quran_audio_reciter.dart';
 import 'package:werdi/features/quran/domain/models/quran_translation_language.dart';
 import 'package:werdi/features/quran/domain/repositories/quran_repository.dart';
 import 'package:werdi/features/quran/domain/repositories/quran_tafsir_repository.dart';
+import 'package:werdi/features/quran/domain/constants/tafsir_sources.dart';
 import 'package:werdi/features/quran/presentation/cubit/quran_state.dart';
 
 class QuranCubit extends Cubit<QuranState> {
@@ -35,16 +37,8 @@ class QuranCubit extends Cubit<QuranState> {
   static const _reciterKey = 'quran_selected_reciter';
   static const _lastReadKey = 'quran_last_read_surah';
   static const _searchFocusModeKey = 'settings_search_focus_mode';
-  static const _preferredTafsirSourceIds = [
-    'ar.waseet',
-    'ar.muyassar',
-  ];
-  static const _preferredEgyptianTafsirHints = [
-    'مصر',
-    'الأزهر',
-    'مصري',
-  ];
   Timer? _searchDebounce;
+  bool _cancelTafsirDownload = false;
 
   Future<void> initialize() async {
     final surahs = await _repository.getSurahs();
@@ -84,6 +78,36 @@ class QuranCubit extends Cubit<QuranState> {
       savedSource: await _preferences.getString(_tafsirSourceKey),
       savedReciter: savedReciter,
     ));
+    unawaited(refreshOfflineTafsirRegistry());
+  }
+
+  Future<void> refreshOfflineTafsirRegistry() async {
+    final keys = await _tafsirRepository.getOfflineReadyTafsirKeys();
+    if (isClosed) return;
+    emit(state.copyWith(offlineReadyTafsirKeys: keys));
+  }
+
+  Future<void> refreshSurahTafsirOfflineStatus({
+    required int surahNumber,
+    required int verseCount,
+    String? source,
+  }) async {
+    final selected = source ?? state.selectedTafsirSource;
+    if (selected.isEmpty || verseCount <= 0) return;
+    final ready = await _tafsirRepository.isSurahTafsirOfflineReady(
+      surahNumber: surahNumber,
+      verseCount: verseCount,
+      source: selected,
+    );
+    if (isClosed) return;
+    final key = '$surahNumber|$selected';
+    final updated = Set<String>.from(state.offlineReadyTafsirKeys);
+    if (ready) {
+      updated.add(key);
+    } else {
+      updated.remove(key);
+    }
+    emit(state.copyWith(offlineReadyTafsirKeys: updated));
   }
 
   Future<void> _loadSecondaryData({
@@ -143,17 +167,17 @@ class QuranCubit extends Cubit<QuranState> {
     required String? savedSource,
   }) {
     if (sources.isEmpty) return '';
-    if (savedSource != null && sources.contains(savedSource)) {
-      return savedSource;
-    }
-    for (final preferredId in _preferredTafsirSourceIds) {
-      if (sources.contains(preferredId)) return preferredId;
-    }
-    for (final source in sources) {
-      final lower = source.toLowerCase();
-      if (_preferredEgyptianTafsirHints.any(lower.contains)) {
-        return source;
+    if (savedSource != null) {
+      if (sources.contains(savedSource)) return savedSource;
+      for (final id in sources) {
+        if (savedSource.contains(id) ||
+            TafsirSources.labelFor(id).contains(savedSource)) {
+          return id;
+        }
       }
+    }
+    for (final preferredId in TafsirSources.preferredOrder) {
+      if (sources.contains(preferredId)) return preferredId;
     }
     return sources.first;
   }
@@ -170,6 +194,7 @@ class QuranCubit extends Cubit<QuranState> {
     }
     _searchDebounce = Timer(const Duration(milliseconds: 250), () async {
       final hits = await _repository.searchAyahs(query: trimmed, limit: 40);
+      if (isClosed) return;
       final mapped = hits.map((hit) {
         final surah = state.surahByNumber(hit.surahNumber);
         return AyahSearchResult(
@@ -281,20 +306,94 @@ class QuranCubit extends Cubit<QuranState> {
     final selected = source ?? state.selectedTafsirSource;
     if (selected.isEmpty) return;
     emit(state.copyWith(isLoadingTafsir: true, selectedTafsirSource: selected));
-    await _preferences.setString(_tafsirSourceKey, selected);
-    final tafsir = await _tafsirRepository.getTafsir(
-      surahNumber: surahNumber,
-      ayahStart: ayahStart,
-      ayahEnd: ayahEnd,
-      source: selected,
-    );
+    try {
+      await _preferences.setString(_tafsirSourceKey, selected);
+      final tafsir = await _tafsirRepository.getTafsir(
+        surahNumber: surahNumber,
+        ayahStart: ayahStart,
+        ayahEnd: ayahEnd,
+        source: selected,
+      );
+      if (isClosed) return;
+      emit(
+        state.copyWith(
+          isLoadingTafsir: false,
+          selectedTafsirSource: selected,
+          currentTafsir: tafsir,
+        ),
+      );
+    } catch (_) {
+      if (isClosed) return;
+      emit(state.copyWith(isLoadingTafsir: false));
+    }
+  }
+
+  Future<bool> downloadTafsirOfflineForSurah({
+    required int surahNumber,
+    required int verseCount,
+    String? source,
+  }) async {
+    final selected = source ?? state.selectedTafsirSource;
+    if (selected.isEmpty || verseCount <= 0) return false;
+
+    _cancelTafsirDownload = false;
     emit(
       state.copyWith(
-        isLoadingTafsir: false,
-        selectedTafsirSource: selected,
-        currentTafsir: tafsir,
+        isDownloadingTafsirOffline: true,
+        tafsirDownloadCurrentAyah: 0,
+        tafsirDownloadTotalAyahs: verseCount,
       ),
     );
+
+    const chunkSize = CachedQuranTafsirService.tafsirChunkSize;
+    var completed = false;
+    try {
+      for (var start = 1; start <= verseCount; start += chunkSize) {
+        if (_cancelTafsirDownload || isClosed) break;
+        final end = (start + chunkSize - 1).clamp(1, verseCount);
+        await _tafsirRepository.getTafsir(
+          surahNumber: surahNumber,
+          ayahStart: start,
+          ayahEnd: end,
+          source: selected,
+        );
+        if (_cancelTafsirDownload || isClosed) break;
+        emit(
+          state.copyWith(
+            isDownloadingTafsirOffline: true,
+            tafsirDownloadCurrentAyah: end,
+            tafsirDownloadTotalAyahs: verseCount,
+          ),
+        );
+      }
+
+      completed = !_cancelTafsirDownload && !isClosed;
+      if (completed) {
+        await _tafsirRepository.markSurahTafsirOfflineReady(
+          surahNumber: surahNumber,
+          source: selected,
+        );
+        if (isClosed) return false;
+        final key = '$surahNumber|$selected';
+        final updated = Set<String>.from(state.offlineReadyTafsirKeys)..add(key);
+        emit(state.copyWith(offlineReadyTafsirKeys: updated));
+      }
+    } finally {
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            isDownloadingTafsirOffline: false,
+            tafsirDownloadCurrentAyah: completed ? verseCount : 0,
+            tafsirDownloadTotalAyahs: verseCount,
+          ),
+        );
+      }
+    }
+    return completed;
+  }
+
+  void cancelTafsirOfflineDownload() {
+    _cancelTafsirDownload = true;
   }
 
   Future<void> loadTranslations({
@@ -308,20 +407,27 @@ class QuranCubit extends Cubit<QuranState> {
       _translationLanguageKey,
       selectedLanguage.name,
     );
+    if (isClosed) return;
     emit(state.copyWith(isLoadingTranslations: true));
-    final lines = await _repository.getVerseTranslations(
-      surahNumber: surahNumber,
-      ayahStart: ayahStart,
-      ayahEnd: ayahEnd,
-      language: selectedLanguage,
-    );
-    emit(
-      state.copyWith(
-        isLoadingTranslations: false,
-        translationLines: lines,
-        selectedTranslationLanguage: selectedLanguage,
-      ),
-    );
+    try {
+      final lines = await _repository.getVerseTranslations(
+        surahNumber: surahNumber,
+        ayahStart: ayahStart,
+        ayahEnd: ayahEnd,
+        language: selectedLanguage,
+      );
+      if (isClosed) return;
+      emit(
+        state.copyWith(
+          isLoadingTranslations: false,
+          translationLines: lines,
+          selectedTranslationLanguage: selectedLanguage,
+        ),
+      );
+    } catch (_) {
+      if (isClosed) return;
+      emit(state.copyWith(isLoadingTranslations: false));
+    }
   }
 
   Future<void> setSelectedAudioReciter(QuranAudioReciter reciter) async {
@@ -390,6 +496,8 @@ class QuranCubit extends Cubit<QuranState> {
           isLoadingSurahVerses: false,
           currentSurahVerses: verses,
           lastReadPlaceholder: lastRead ?? state.lastReadPlaceholder,
+          clearTafsir: true,
+          clearTranslations: true,
         ),
       );
     } catch (_) {

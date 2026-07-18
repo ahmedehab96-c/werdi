@@ -123,6 +123,16 @@ class _SettingsView extends StatelessWidget {
               ),
               SizedBox(height: AppSpacing.sm),
               AppSettingTile(
+                title: l10n.offlineRecitationsTitle,
+                subtitle: l10n.offlineRecitationsSubtitle,
+                leading: const Icon(Icons.download_for_offline_rounded),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  context.pushNamed(AppRoutes.offlineRecitations);
+                },
+              ),
+              SizedBox(height: AppSpacing.sm),
+              AppSettingTile(
                 title: l10n.searchFocusModeTitle,
                 subtitle: l10n.searchFocusModeSubtitle,
                 leading: const Icon(Icons.fullscreen_rounded),

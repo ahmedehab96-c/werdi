@@ -29,6 +29,8 @@ class HomeState extends Equatable {
     this.recommendedNextStep = '—',
     this.recommendedPlanAction = HomePlanAction.memorize,
     this.nextBadgeTitle = '',
+    this.memorizationGoalAyahs = 300,
+    this.reviewSessionsGoal = 15,
   });
 
   final bool isLoading;
@@ -56,6 +58,8 @@ class HomeState extends Equatable {
   final String recommendedNextStep;
   final HomePlanAction recommendedPlanAction;
   final String nextBadgeTitle;
+  final int memorizationGoalAyahs;
+  final int reviewSessionsGoal;
 
   int get dailyRemainingAyahs =>
       (dailyTargetAyahs - dailyCompletedAyahs).clamp(0, 999);
@@ -91,6 +95,8 @@ class HomeState extends Equatable {
     String? recommendedNextStep,
     HomePlanAction? recommendedPlanAction,
     String? nextBadgeTitle,
+    int? memorizationGoalAyahs,
+    int? reviewSessionsGoal,
   }) {
     return HomeState(
       isLoading: isLoading ?? this.isLoading,
@@ -119,6 +125,9 @@ class HomeState extends Equatable {
       recommendedPlanAction:
           recommendedPlanAction ?? this.recommendedPlanAction,
       nextBadgeTitle: nextBadgeTitle ?? this.nextBadgeTitle,
+      memorizationGoalAyahs:
+          memorizationGoalAyahs ?? this.memorizationGoalAyahs,
+      reviewSessionsGoal: reviewSessionsGoal ?? this.reviewSessionsGoal,
     );
   }
 
@@ -149,5 +158,7 @@ class HomeState extends Equatable {
     recommendedNextStep,
     recommendedPlanAction,
     nextBadgeTitle,
+    memorizationGoalAyahs,
+    reviewSessionsGoal,
   ];
 }

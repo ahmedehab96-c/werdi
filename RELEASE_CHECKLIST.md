@@ -1,31 +1,49 @@
 # Werdi Release Checklist (Android + iOS)
 
-This project now builds successfully for release on both platforms.
+## Build Validation
 
-## Build Validation Status
+Run before every store upload:
 
-- `flutter analyze`: PASS
-- `flutter test`: PASS
-- Android release bundle: `build/app/outputs/bundle/release/app-release.aab`
-- Android release apk (for QA): `build/app/outputs/flutter-apk/app-release.apk`
-- iOS release archive (unsigned): `build/ios/archive/Runner.xcarchive`
+```bash
+cd werdi
+flutter clean && flutter pub get
+flutter analyze
+flutter test
+flutter build appbundle --release
+flutter build apk --release   # optional QA sideload
+```
+
+Expected Android outputs:
+
+- AAB: `build/app/outputs/bundle/release/app-release.aab`
+- APK: `build/app/outputs/flutter-apk/app-release.apk`
 
 ## Completed in Codebase
 
-- App icons generated for Android and iOS from `assets/images/logo.png`.
-- iOS launch image assets populated to pass asset validation.
-- Sensitive Android permissions removed:
-  - `android.permission.RECORD_AUDIO`
-  - `android.permission.WRITE_EXTERNAL_STORAGE`
-  - `android.permission.SCHEDULE_EXACT_ALARM`
-- Default tafsir source now prefers Egyptian source labels.
+- App icons from `assets/images/logo.png`
+- Package `com.werdi.app`, version `1.0.1+11`
+- Release minify + shrink resources
+- Privacy policy: `PRIVACY.md` (public GitHub URL in app settings)
+- Play listing copy: `docs/PLAY_STORE_LISTING.md`
+- Play Console steps: `docs/PLAY_CONSOLE_CHECKLIST.md`
+- **All-in-one remote release pack:** `docs/REMOTE_RELEASE.md` (نصوص المتجر + Data safety + Supabase + أوامر البناء)
 
-## Manual Steps Before Store Submission
+## Permissions (current)
 
-## 1) Android Play Store
+Declared and intentional:
 
-- Create upload keystore (one-time) and keep it safe.
-- Create `android/key.properties` (do not commit):
+- `INTERNET` — audio, tafsir, optional sync
+- `RECORD_AUDIO` — optional Tasmee3 only
+- `POST_NOTIFICATIONS` — optional reminders
+- `FOREGROUND_SERVICE` / `MEDIA_PLAYBACK` — background audio
+- `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED` — notifications / audio reliability
+
+Not used: broad storage write, exact alarm (unless re-added later).
+
+## Android Play Store
+
+1. Keep upload keystore safe; never commit `*.jks` or `key.properties`.
+2. Example `android/key.properties` (from `key.properties.example`):
 
 ```properties
 storeFile=/absolute/path/to/your-upload-keystore.jks
@@ -34,56 +52,37 @@ keyAlias=YOUR_KEY_ALIAS
 keyPassword=YOUR_KEY_PASSWORD
 ```
 
-- Build signed AAB:
-  - `flutter build appbundle --release`
-- Upload `app-release.aab` to Play Console internal testing first.
-- Fill Play Console metadata:
-  - App description
-  - Screenshots (phone/tablet)
-  - Privacy Policy URL
-  - Data safety form
-  - Content rating
-  - Target audience
+3. Build signed AAB (must use release keystore, not debug).
+4. Upload to **Internal testing** first.
+5. Complete listing, Data safety, content rating — follow `docs/PLAY_CONSOLE_CHECKLIST.md`.
 
-## 2) iOS App Store / TestFlight
-
-- Open `ios/Runner.xcworkspace` in Xcode.
-- In Signing & Capabilities:
-  - Select your Apple Team
-  - Confirm Bundle ID: `com.werdi.app` (or your production ID)
-  - Enable Automatic Signing
-- Build/archive from Xcode and upload to App Store Connect, or use:
-  - `flutter build ipa --release` (with signing configured)
-- In App Store Connect, complete:
-  - App Privacy section
-  - Screenshots (iPhone + iPad if supported)
-  - App description, keywords, support URL, marketing URL
-  - Age rating
-
-## 3) Pre-Release QA Gate (Recommended)
-
-- Smoke test login/register/guest flow.
-- Quran browsing/search/tafsir/audio.
-- Memorization/review/tasmee3 sessions.
-- Notifications scheduling and delivery.
-- Theme and language switching.
-- RTL/LTR layout checks.
-- Cold start + resume behavior.
-
-## Store-Ready Command Set
+### Optional Supabase build
 
 ```bash
-flutter clean
-flutter pub get
-flutter analyze
-flutter test
-flutter build appbundle --release
-flutter build apk --release
-flutter build ipa --release --no-codesign
+flutter build appbundle --release \
+  --dart-define=SUPABASE_URL=https://YOUR.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY
 ```
+
+If you ship with Supabase, Data safety must declare account data. Local-only builds omit that.
+
+## iOS App Store / TestFlight
+
+- Bundle ID: `com.werdi.app`
+- Privacy: align with `PRIVACY.md`
+- Screenshots + App Privacy questionnaire in App Store Connect
+- `flutter build ipa --release` (with signing) or archive from Xcode
+
+## Pre-Release QA Gate
+
+- Quran browse / search / tafsir / audio (foreground + background)
+- Memorization / smart review / tasmee3 (mic allow + deny)
+- Offline recitation + offline tafsir download/cancel
+- Notifications, theme, language (AR/EN), RTL/LTR
+- Cold start + resume
+- Auth only if that build includes Supabase
 
 ## Notes
 
-- iOS release without code signing is already verified in this repository.
-- Final App Store upload requires valid Apple certificates/profiles and App Store Connect setup.
-- Final Play Store upload requires your upload keystore and Play Console release track setup.
+- Prefer Internal testing → Closed → Production with staged rollout.
+- Privacy policy last updated: **July 12, 2026**.

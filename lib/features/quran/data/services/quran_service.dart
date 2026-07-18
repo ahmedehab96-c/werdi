@@ -107,7 +107,11 @@ class QuranPackageService implements QuranService {
     int verseNumber,
     QuranReciter reciter,
   ) {
-    return getAudioURLsByVerse(surahNumber, verseNumber, reciter).first;
+    final urls = getAudioURLsByVerse(surahNumber, verseNumber, reciter);
+    if (urls.isEmpty) {
+      throw StateError('No audio URLs for $reciter');
+    }
+    return urls.first;
   }
 
   @override
@@ -116,76 +120,73 @@ class QuranPackageService implements QuranService {
     int verseNumber,
     QuranReciter reciter,
   ) {
-    final defaultUrl = quran.getAudioURLByVerse(
-      surahNumber,
-      verseNumber,
-      reciter: _mapReciter(reciter),
-    );
+    final urls = <String>[
+      for (final folder in _everyAyahFoldersFor(reciter))
+        _everyAyahUrl(
+          surahNumber: surahNumber,
+          verseNumber: verseNumber,
+          readerFolder: folder,
+        ),
+    ];
+
+    final packageReciter = _mapReciter(reciter);
+    if (packageReciter != null) {
+      final packageUrl = quran.getAudioURLByVerse(
+        surahNumber,
+        verseNumber,
+        reciter: packageReciter,
+      );
+      if (packageUrl.isNotEmpty && !urls.contains(packageUrl)) {
+        urls.add(packageUrl);
+      }
+    }
+    return urls;
+  }
+
+  /// Verified everyayah.com folders (tested HTTP 200).
+  List<String> _everyAyahFoldersFor(QuranReciter reciter) {
     switch (reciter) {
+      case QuranReciter.alafasy:
+        return const ['Alafasy_128kbps', 'Alafasy_64kbps'];
       case QuranReciter.abdulBasit:
-        return [
-          _cdnAyahUrl(
-            surahNumber: surahNumber,
-            verseNumber: verseNumber,
-            reciterCode: 'ar.abdulbasitmurattal',
-            bitrate: 192,
-          ),
-          _cdnAyahUrl(
-            surahNumber: surahNumber,
-            verseNumber: verseNumber,
-            reciterCode: 'ar.abdulbasitmurattal',
-          ),
+        return const [
+          'Abdul_Basit_Murattal_192kbps',
+          'Abdul_Basit_Murattal_64kbps',
         ];
       case QuranReciter.shuraim:
-        return [
-          _cdnAyahUrl(
-            surahNumber: surahNumber,
-            verseNumber: verseNumber,
-            reciterCode: 'ar.saoodshuraym',
-            bitrate: 64,
-          ),
-          _cdnAyahUrl(
-            surahNumber: surahNumber,
-            verseNumber: verseNumber,
-            reciterCode: 'ar.saoodshuraym',
-          ),
+        return const [
+          'Saood bin Ibraaheem Ash-Shuraym_128kbps',
+          'Saood_ash-Shuraym_64kbps',
         ];
       case QuranReciter.sudais:
-        return [
-          _cdnAyahUrl(
-            surahNumber: surahNumber,
-            verseNumber: verseNumber,
-            reciterCode: 'ar.abdurrahmaansudais',
-            bitrate: 192,
-          ),
-          _everyAyahUrl(
-            surahNumber: surahNumber,
-            verseNumber: verseNumber,
-            readerFolder: 'Abdurrahmaan_As-Sudais_192kbps',
-          ),
-          _everyAyahUrl(
-            surahNumber: surahNumber,
-            verseNumber: verseNumber,
-            readerFolder: 'Abdurrahmaan_As-Sudais_64kbps',
-          ),
-          defaultUrl,
+        return const [
+          'Abdurrahmaan_As-Sudais_192kbps',
+          'Abdurrahmaan_As-Sudais_64kbps',
         ];
+      case QuranReciter.husary:
+        return const ['Husary_128kbps', 'Husary_64kbps'];
+      case QuranReciter.ahmedAjamy:
+        return const [
+          'Ahmed_ibn_Ali_al-Ajamy_128kbps_ketaballah.net',
+          'Ahmed_ibn_Ali_al-Ajamy_64kbps_QuranExplorer.Com',
+        ];
+      case QuranReciter.hudhaify:
+        return const ['Hudhaify_128kbps', 'Hudhaify_64kbps'];
+      case QuranReciter.maherMuaiqly:
+        return const ['MaherAlMuaiqly128kbps', 'Maher_AlMuaiqly_64kbps'];
+      case QuranReciter.muhammadAyyoub:
+        return const ['Muhammad_Ayyoub_128kbps', 'Muhammad_Ayyoub_64kbps'];
+      case QuranReciter.muhammadJibreel:
+        return const ['Muhammad_Jibreel_128kbps', 'Muhammad_Jibreel_64kbps'];
+      case QuranReciter.minshawi:
+        return const [
+          'Minshawy_Murattal_128kbps',
+          'Minshawy_Mujawwad_64kbps',
+        ];
+      case QuranReciter.shaatree:
+        return const ['Abu_Bakr_Ash-Shaatree_128kbps'];
       case QuranReciter.nureenMohamedSiddiq:
-        return [
-          _everyAyahUrl(
-            surahNumber: surahNumber,
-            verseNumber: verseNumber,
-            readerFolder: 'Noreen_Mohamed_Siddiq_128kbps',
-          ),
-          _everyAyahUrl(
-            surahNumber: surahNumber,
-            verseNumber: verseNumber,
-            readerFolder: 'Noreen_Mohamed_Siddiq_64kbps',
-          ),
-          defaultUrl,
-        ];
-      default:
-        return [defaultUrl];
+        return const [];
     }
   }
 
@@ -196,32 +197,52 @@ class QuranPackageService implements QuranService {
     QuranAudioReciter reciter, {
     bool ayahOnly = false,
   }) {
-    if (reciter.packageReciter == null) {
-      return const [];
-    }
-    final urls = List<String>.from(
-      getAudioURLsByVerse(
-        surahNumber,
-        verseNumber,
-        reciter.packageReciter!,
-      ),
-    );
-    if (ayahOnly) {
+    if (reciter.packageReciter != null) {
+      final urls = List<String>.from(
+        getAudioURLsByVerse(
+          surahNumber,
+          verseNumber,
+          reciter.packageReciter!,
+        ),
+      );
+      if (ayahOnly) {
+        return urls;
+      }
+      final surahPadded = surahNumber.toString().padLeft(3, '0');
+      final wholeSurah = '${reciter.serverBaseUrl}$surahPadded.mp3';
+      if (!urls.contains(wholeSurah)) {
+        urls.add(wholeSurah);
+      }
       return urls;
     }
-    final surahPadded = surahNumber.toString().padLeft(3, '0');
-    final wholeSurah = '${reciter.serverBaseUrl}$surahPadded.mp3';
-    if (!urls.contains(wholeSurah)) {
-      urls.add(wholeSurah);
+
+    if (reciter.everyAyahFolder != null) {
+      final urls = [
+        _everyAyahUrl(
+          surahNumber: surahNumber,
+          verseNumber: verseNumber,
+          readerFolder: reciter.everyAyahFolder!,
+        ),
+      ];
+      if (ayahOnly) {
+        return urls;
+      }
+      final surahPadded = surahNumber.toString().padLeft(3, '0');
+      final wholeSurah = '${reciter.serverBaseUrl}$surahPadded.mp3';
+      if (!urls.contains(wholeSurah)) {
+        urls.add(wholeSurah);
+      }
+      return urls;
     }
-    return urls;
+
+    return const [];
   }
 
   @override
   String getVerseURL(int surahNumber, int verseNumber) =>
       quran.getVerseURL(surahNumber, verseNumber);
 
-  quran.Reciter _mapReciter(QuranReciter reciter) {
+  quran.Reciter? _mapReciter(QuranReciter reciter) {
     switch (reciter) {
       case QuranReciter.alafasy:
         return quran.Reciter.arAlafasy;
@@ -229,7 +250,7 @@ class QuranPackageService implements QuranService {
       case QuranReciter.shuraim:
       case QuranReciter.sudais:
       case QuranReciter.nureenMohamedSiddiq:
-        return quran.Reciter.arAlafasy;
+        return null;
       case QuranReciter.husary:
         return quran.Reciter.arHusary;
       case QuranReciter.ahmedAjamy:
@@ -256,24 +277,7 @@ class QuranPackageService implements QuranService {
   }) {
     final surah = surahNumber.toString().padLeft(3, '0');
     final ayah = verseNumber.toString().padLeft(3, '0');
-    return 'https://everyayah.com/data/$readerFolder/$surah$ayah.mp3';
-  }
-
-  int _absoluteVerseNumber(int surahNumber, int verseNumber) {
-    var verseNum = 0;
-    for (var i = 1; i < surahNumber; i++) {
-      verseNum += quran.getVerseCount(i);
-    }
-    return verseNum + verseNumber;
-  }
-
-  String _cdnAyahUrl({
-    required int surahNumber,
-    required int verseNumber,
-    required String reciterCode,
-    int bitrate = 128,
-  }) {
-    final absolute = _absoluteVerseNumber(surahNumber, verseNumber);
-    return 'https://cdn.islamic.network/quran/audio/$bitrate/$reciterCode/$absolute.mp3';
+    final encodedFolder = readerFolder.replaceAll(' ', '%20');
+    return 'https://everyayah.com/data/$encodedFolder/$surah$ayah.mp3';
   }
 }

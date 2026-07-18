@@ -12,10 +12,14 @@ class AppScaffold extends StatelessWidget {
     this.padding,
     this.maxContentWidth,
     this.brandedBackground = true,
+    this.resizeToAvoidBottomInset = true,
+    /// When true (default), applies horizontal page inset only.
+    /// Pages should add their own vertical / list padding.
+    this.applyHorizontalInset = true,
   });
 
   /// Default cap for the content column on large screens.
-  static const double defaultMaxContentWidth = 1040;
+  static const double defaultMaxContentWidth = 1200;
 
   final Widget body;
   final PreferredSizeWidget? appBar;
@@ -24,16 +28,20 @@ class AppScaffold extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final double? maxContentWidth;
   final bool brandedBackground;
+  final bool resizeToAvoidBottomInset;
+  final bool applyHorizontalInset;
 
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final resolvedMaxWidth =
-        maxContentWidth ?? Responsive.contentMaxWidth(context);
+        maxContentWidth ?? ResponsiveHelper.contentMaxWidth(context);
     final resolvedPadding = padding ??
-        EdgeInsets.symmetric(
-          horizontal: Responsive.horizontalPadding(context),
-        );
+        (applyHorizontalInset
+            ? EdgeInsets.symmetric(
+                horizontal: ResponsiveHelper.adaptivePadding(context),
+              )
+            : EdgeInsets.zero);
 
     final content = LayoutBuilder(
       builder: (context, constraints) {
@@ -59,6 +67,7 @@ class AppScaffold extends StatelessWidget {
         appBar: appBar,
         floatingActionButton: floatingActionButton,
         bottomNavigationBar: bottomNavigationBar,
+        resizeToAvoidBottomInset: resizeToAvoidBottomInset,
         body: SafeArea(
           child: brandedBackground
               ? AppBrandedBackground(child: content)

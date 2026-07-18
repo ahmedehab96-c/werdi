@@ -1,4 +1,5 @@
 import 'package:quran/quran.dart' as quran_pkg;
+import 'package:werdi/features/quran/domain/constants/tafsir_sources.dart';
 import 'package:werdi/features/quran/domain/models/tafsir_item.dart';
 import 'package:werdi/features/quran/domain/services/quran_tafsir_service.dart';
 
@@ -7,7 +8,7 @@ class OfflineQuranTafsirService implements QuranTafsirService {
 
   @override
   Future<List<String>> getAvailableSources() async {
-    return const ['النص العربي (احتياطي بدون إنترنت)'];
+    return const [TafsirSources.offlineSourceId];
   }
 
   @override
@@ -29,8 +30,9 @@ class OfflineQuranTafsirService implements QuranTafsirService {
       surahNumber: surahNumber,
       ayahStart: ayahStart,
       ayahEnd: ayahEnd,
-      source: source,
+      source: TafsirSources.labelFor(TafsirSources.offlineSourceId),
       text: buffer.toString(),
+      isOfflineFallback: true,
     );
   }
 }

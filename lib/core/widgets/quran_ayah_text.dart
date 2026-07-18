@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:werdi/core/responsive/responsive.dart';
 import 'package:werdi/core/theme/app_colors.dart';
-import 'package:werdi/core/utils/arabic_text_normalizer.dart';
+import 'package:werdi/core/widgets/arabic_search_highlight_text.dart';
 
 /// Mushaf-style Uthmani ayah text (Amiri, RTL, ornamental frame).
 class QuranAyahText extends StatelessWidget {
@@ -61,7 +61,9 @@ class QuranAyahText extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: paperColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(
+          ResponsiveUtils.responsiveRadius(context, 14),
+        ),
         border: Border.all(
           color: AppColors.brandSecondary.withValues(alpha: 0.35),
           width: 1.2,
@@ -105,41 +107,15 @@ class QuranAyahText extends StatelessWidget {
       );
     }
 
-    final normalizedQuery = ArabicTextNormalizer.normalize(rawQuery);
-    if (normalizedQuery.isEmpty) {
-      return Text(
-        text,
-        textAlign: textAlign,
-        textDirection: TextDirection.rtl,
-        style: baseStyle,
-      );
-    }
-
-    final tokens = text.split(RegExp(r'\s+'));
-    final highlightStyle = baseStyle.copyWith(
-      color: Theme.of(context).colorScheme.primary,
-      fontWeight: FontWeight.w700,
-    );
-    final spans = <InlineSpan>[];
-    for (var i = 0; i < tokens.length; i++) {
-      final token = tokens[i];
-      final isMatch = ArabicTextNormalizer.normalize(token)
-          .contains(normalizedQuery);
-      spans.add(
-        TextSpan(
-          text: token,
-          style: isMatch ? highlightStyle : baseStyle,
-        ),
-      );
-      if (i != tokens.length - 1) {
-        spans.add(TextSpan(text: ' ', style: baseStyle));
-      }
-    }
-
-    return Text.rich(
-      TextSpan(children: spans),
+    return ArabicSearchHighlightText(
+      text: text,
+      query: rawQuery,
+      style: baseStyle,
+      highlightStyle: baseStyle.copyWith(
+        color: Theme.of(context).colorScheme.primary,
+        fontWeight: FontWeight.w700,
+      ),
       textAlign: textAlign,
-      textDirection: TextDirection.rtl,
     );
   }
 }

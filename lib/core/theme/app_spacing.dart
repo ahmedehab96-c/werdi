@@ -1,26 +1,24 @@
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+/// Logical spacing tokens (density-independent). Prefer these over ScreenUtil.
 final class AppSpacing {
   const AppSpacing._();
 
-  // 4pt base grid scale
-  static double get s1 => 4.w;
-  static double get s2 => 8.w;
-  static double get s3 => 12.w;
-  static double get s4 => 16.w;
-  static double get s5 => 20.w;
-  static double get s6 => 24.w;
-  static double get s8 => 32.w;
-  static double get s10 => 40.w;
-  static double get s12 => 48.w;
-  static double get s16 => 64.w;
+  // 4pt base grid
+  static const double s1 = 4;
+  static const double s2 = 8;
+  static const double s3 = 12;
+  static const double s4 = 16;
+  static const double s5 = 20;
+  static const double s6 = 24;
+  static const double s8 = 32;
+  static const double s10 = 40;
+  static const double s12 = 48;
+  static const double s16 = 64;
 
-  // Semantic aliases
-  static double get xxs => s1;
-  static double get xs => s2;
-  static double get sm => s3;
-  static double get md => s4;
-  static double get lg => s6;
-  static double get xl => s8;
-  static double get xxl => s10;
+  static const double xxs = s1;
+  static const double xs = s2;
+  static const double sm = s3;
+  static const double md = s4;
+  static const double lg = s6;
+  static const double xl = s8;
+  static const double xxl = s10;
 }

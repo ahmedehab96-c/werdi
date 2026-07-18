@@ -8,7 +8,7 @@ extension ContextX on BuildContext {
   ColorScheme get colors => Theme.of(this).colorScheme;
 
   /// Localized strings for the current locale.
-  AppLocalizations get l10n => AppLocalizations.of(this)!;
+  AppLocalizations get l10n => AppLocalizations.of(this);
 
   /// Current screen-size bucket for adaptive layouts.
   ScreenSize get screenSize => Responsive.sizeOf(this);

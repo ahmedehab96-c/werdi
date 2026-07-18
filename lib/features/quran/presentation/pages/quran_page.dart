@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:quran/quran.dart' as quran_pkg;
 import 'package:werdi/core/di/app_injector.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
+import 'package:werdi/core/responsive/responsive_utils.dart';
 import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_empty_state.dart';
 import 'package:werdi/core/widgets/app_loading_state.dart';
@@ -42,11 +42,14 @@ class _QuranView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return AppScaffold(
       appBar: AppBar(
-        title: Text(context.l10n.quranTitle),
+        title: Text(l10n.quranTitle),
         actions: [
           IconButton(
+            tooltip: l10n.searchQuranTitle,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
@@ -61,128 +64,85 @@ class _QuranView extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: EdgeInsets.all(AppSpacing.md),
-        child: BlocBuilder<QuranCubit, QuranState>(
-          builder: (context, state) {
-            final cubit = context.read<QuranCubit>();
-            if (state.surahs.isEmpty) {
-              return AppLoadingState(message: context.l10n.loadingQuran);
-            }
-            return Column(
-              children: [
-                _LastReadAndBookmarksCard(state: state),
-                SizedBox(height: AppSpacing.md),
-                TextField(
-                  onChanged: cubit.setQuery,
-                  decoration: InputDecoration(
-                    hintText: context.l10n.searchSurahOrJuzHint,
-                    prefixIcon: const Icon(Icons.search_rounded),
-                  ),
-                ),
+      body: BlocBuilder<QuranCubit, QuranState>(
+        builder: (context, state) {
+          final cubit = context.read<QuranCubit>();
+          if (state.surahs.isEmpty) {
+            return AppLoadingState(message: l10n.loadingQuran);
+          }
+
+          final compact = ResponsiveHelper.isSmallPhone(context);
+
+          return Column(
+            children: [
+              SizedBox(height: AppSpacing.sm),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final button = SegmentedButton<int>(
+                    segments: [
+                      ButtonSegment(
+                        value: 0,
+                        label: Text(l10n.surahTab),
+                        icon: compact
+                            ? const Icon(Icons.menu_book_outlined, size: 18)
+                            : null,
+                      ),
+                      ButtonSegment(
+                        value: 1,
+                        label: Text(l10n.juzTab),
+                        icon: compact
+                            ? const Icon(Icons.view_day_outlined, size: 18)
+                            : null,
+                      ),
+                      ButtonSegment(
+                        value: 2,
+                        label: Text(l10n.bookmarks),
+                        icon: compact
+                            ? const Icon(Icons.bookmark_outline, size: 18)
+                            : null,
+                      ),
+                    ],
+                    selected: {state.selectedTab},
+                    onSelectionChanged: (v) => cubit.setSelectedTab(v.first),
+                    showSelectedIcon: false,
+                  );
+                  if (constraints.maxWidth < 340) {
+                    return FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: SizedBox(width: 340, child: button),
+                    );
+                  }
+                  return button;
+                },
+              ),
+              if (state.selectedTab == 0) ...[
                 SizedBox(height: AppSpacing.sm),
                 QuranFilterChips(
                   selected: state.filter,
                   onChanged: cubit.setFilter,
                 ),
-                SizedBox(height: AppSpacing.sm),
-                _SegmentedTabs(
-                  selected: state.selectedTab,
-                  onChanged: cubit.setSelectedTab,
-                ),
-                SizedBox(height: AppSpacing.sm),
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 260),
-                    child: switch (state.selectedTab) {
-                      0 => _SurahList(state: state),
-                      1 => _JuzList(state: state),
-                      _ => _BookmarksTab(state: state),
-                    },
-                  ),
-                ),
               ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _LastReadAndBookmarksCard extends StatelessWidget {
-  const _LastReadAndBookmarksCard({required this.state});
-
-  final QuranState state;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return AppSurfaceCard(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.md + 4,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(
-                  context.l10n.lastRead,
-                  style: Theme.of(context).textTheme.titleSmall,
+              SizedBox(height: AppSpacing.sm),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: switch (state.selectedTab) {
+                    0 => _SurahList(key: const ValueKey(0), state: state),
+                    1 => _JuzList(key: const ValueKey(1), state: state),
+                    _ => _BookmarksTab(key: const ValueKey(2), state: state),
+                  },
                 ),
-                SizedBox(height: 6.h),
-                AppText(
-                  state.lastReadPlaceholder.isEmpty
-                      ? '—'
-                      : state.lastReadPlaceholder,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: AppSpacing.sm),
-          Container(
-            constraints: BoxConstraints(minWidth: 88.w),
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: scheme.primaryContainer,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.bookmark_rounded,
-                  size: 20.sp,
-                  color: scheme.onPrimaryContainer,
-                ),
-                SizedBox(height: 4.h),
-                AppText(
-                  context.l10n.bookmarksCount(state.bookmarkedSurahIds.length),
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: scheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
 class _SurahList extends StatelessWidget {
-  const _SurahList({required this.state});
+  const _SurahList({required this.state, super.key});
 
   final QuranState state;
 
@@ -197,9 +157,8 @@ class _SurahList extends StatelessWidget {
       );
     }
     return ListView.separated(
-      key: const ValueKey<String>('surahList'),
       itemCount: filteredSurahs.length,
-      separatorBuilder: (_, _) => SizedBox(height: AppSpacing.sm),
+      separatorBuilder: (_, _) => SizedBox(height: AppSpacing.xs),
       itemBuilder: (context, index) {
         final item = filteredSurahs[index];
         return SurahListTile(
@@ -224,9 +183,23 @@ class _SurahList extends StatelessWidget {
 }
 
 class _JuzList extends StatelessWidget {
-  const _JuzList({required this.state});
+  const _JuzList({required this.state, super.key});
 
   final QuranState state;
+
+  void _openJuz(BuildContext context, int juzNumber) {
+    final juzSurahs = quran_pkg.getSurahAndVersesFromJuz(juzNumber);
+    final surah = state.surahByNumber(juzSurahs.keys.first);
+    if (surah == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BlocProvider.value(
+          value: context.read<QuranCubit>(),
+          child: SurahDetailsPage(surah: surah),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -239,63 +212,24 @@ class _JuzList extends StatelessWidget {
       );
     }
     return LayoutBuilder(
-      key: const ValueKey<String>('juzList'),
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 700;
-        if (!isWide) {
+        if (constraints.maxWidth <= 700) {
           return ListView.separated(
             itemCount: filteredJuz.length,
-            separatorBuilder: (_, _) => SizedBox(height: AppSpacing.sm),
-            itemBuilder: (context, index) =>
-                JuzListTile(
-                  item: filteredJuz[index],
-                  onOpenTap: () {
-                    final juzSurahs = quran_pkg.getSurahAndVersesFromJuz(
-                      filteredJuz[index].number,
-                    );
-                    final firstSurahNumber = juzSurahs.keys.first;
-                    final surah = state.surahByNumber(firstSurahNumber);
-                    if (surah == null) return;
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => BlocProvider.value(
-                          value: context.read<QuranCubit>(),
-                          child: SurahDetailsPage(surah: surah),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+            separatorBuilder: (_, _) => SizedBox(height: AppSpacing.xs),
+            itemBuilder: (context, index) => JuzListTile(
+              item: filteredJuz[index],
+              onOpenTap: () => _openJuz(context, filteredJuz[index].number),
+            ),
           );
         }
         return GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: constraints.maxWidth > 1100 ? 3 : 2,
-            crossAxisSpacing: 12.w,
-            mainAxisSpacing: 12.h,
-            childAspectRatio: 2,
-          ),
+          gridDelegate: ResponsiveHelper.adaptiveGridDelegate(context),
           itemCount: filteredJuz.length,
-          itemBuilder: (context, index) =>
-              JuzListTile(
-                  item: filteredJuz[index],
-                  onOpenTap: () {
-                    final juzSurahs = quran_pkg.getSurahAndVersesFromJuz(
-                      filteredJuz[index].number,
-                    );
-                    final firstSurahNumber = juzSurahs.keys.first;
-                    final surah = state.surahByNumber(firstSurahNumber);
-                    if (surah == null) return;
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => BlocProvider.value(
-                          value: context.read<QuranCubit>(),
-                          child: SurahDetailsPage(surah: surah),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+          itemBuilder: (context, index) => JuzListTile(
+            item: filteredJuz[index],
+            onOpenTap: () => _openJuz(context, filteredJuz[index].number),
+          ),
         );
       },
     );
@@ -303,114 +237,37 @@ class _JuzList extends StatelessWidget {
 }
 
 class _BookmarksTab extends StatelessWidget {
-  const _BookmarksTab({required this.state});
+  const _BookmarksTab({required this.state, super.key});
 
   final QuranState state;
 
   @override
   Widget build(BuildContext context) {
     return ListView(
-      key: const ValueKey<String>('bookmarksTab'),
       children: [
         AppSurfaceCard(
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.bookmarks_rounded),
-            title: AppText(context.l10n.viewAllBookmarks),
-            subtitle: AppText(context.l10n.viewAllBookmarksSubtitle),
-            trailing: Icon(
-              Directionality.of(context) == TextDirection.rtl
-                  ? Icons.chevron_left_rounded
-                  : Icons.chevron_right_rounded,
-              size: 18,
-            ),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => BookmarksPage(state: state),
-                ),
-              );
-            },
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => BookmarksPage(state: state),
+              ),
+            );
+          },
+          child: Row(
+            children: [
+              const Icon(Icons.bookmarks_rounded),
+              SizedBox(width: AppSpacing.sm),
+              Expanded(child: AppText(context.l10n.viewAllBookmarks)),
+              AppText(
+                '${state.bookmarkedSurahIds.length}',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ],
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SegmentedTabs extends StatelessWidget {
-  const _SegmentedTabs({required this.selected, required this.onChanged});
-
-  final int selected;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final tabs = [
-      (0, Icons.menu_book_rounded, l10n.surahTab),
-      (1, Icons.grid_view_rounded, l10n.juzTab),
-      (2, Icons.bookmark_rounded, l10n.bookmarks),
-    ];
-
-    return Row(
-      children: tabs.map((tab) {
-        final isSelected = selected == tab.$1;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: tab.$1 == 0 ? 0 : 4.w,
-              right: tab.$1 == tabs.length - 1 ? 0 : 4.w,
-            ),
-            child: Material(
-              color: isSelected
-                  ? scheme.primaryContainer
-                  : scheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(14),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () => onChanged(tab.$1),
-                child: SizedBox(
-                  height: 72.h,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        tab.$2,
-                        size: 22.sp,
-                        color: isSelected
-                            ? scheme.onPrimaryContainer
-                            : scheme.onSurfaceVariant,
-                      ),
-                      SizedBox(height: 6.h),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4.w),
-                        child: Text(
-                          tab.$3,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: isSelected
-                                        ? scheme.onPrimaryContainer
-                                        : scheme.onSurfaceVariant,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                    height: 1.2,
-                                  ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 }

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:werdi/core/di/app_injector.dart';
+import 'package:werdi/core/responsive/responsive_helper.dart';
 import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_button.dart';
 import 'package:werdi/core/widgets/app_empty_state.dart';
 import 'package:werdi/core/widgets/app_loading_state.dart';
 import 'package:werdi/core/widgets/app_scaffold.dart';
+import 'package:werdi/core/widgets/app_scrollable_body.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 import 'package:werdi/features/tasmee3/domain/models/tasmee3_result.dart';
@@ -110,8 +111,33 @@ class _SetupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<Tasmee3Cubit>();
     final l10n = context.l10n;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return AppScrollableBody(
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(height: AppSpacing.sm),
+          AppSurfaceCard(
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 18),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: AppText(
+                    l10n.tasmee3Description,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: AppSpacing.md),
+          AppButton(
+            label: l10n.startTest,
+            onPressed: cubit.startTest,
+            icon: const Icon(Icons.play_arrow_rounded),
+          ),
+        ],
+      ),
       children: [
         AppSurfaceCard(
           child: Column(
@@ -219,27 +245,6 @@ class _SetupScreen extends StatelessWidget {
             ],
           ),
         ),
-        const Spacer(),
-        AppSurfaceCard(
-          child: Row(
-            children: [
-              const Icon(Icons.info_outline_rounded, size: 18),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: AppText(
-                  l10n.tasmee3Description,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: AppSpacing.md),
-        AppButton(
-          label: l10n.startTest,
-          onPressed: cubit.startTest,
-          icon: const Icon(Icons.play_arrow_rounded),
-        ),
       ],
     );
   }
@@ -299,8 +304,57 @@ class Tasmee3TestingScreen extends StatelessWidget {
     final cubit = context.read<Tasmee3Cubit>();
     final l10n = context.l10n;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final actions = <Widget>[
+      if (state.evaluationReady) ...[
+        AppButton(
+          label: l10n.testSummary,
+          onPressed: cubit.confirmAndNextAyah,
+          icon: const Icon(Icons.summarize_rounded),
+        ),
+        SizedBox(height: AppSpacing.sm),
+        OutlinedButton.icon(
+          onPressed: cubit.startListening,
+          icon: const Icon(Icons.replay_rounded),
+          label: Text(l10n.retryRecitation),
+        ),
+      ] else if (state.isListening)
+        AppButton(
+          label: l10n.finishRecitation,
+          onPressed: cubit.finishListeningAndEvaluate,
+          icon: const Icon(Icons.stop_circle_rounded),
+        )
+      else if (state.spokenText.trim().isNotEmpty && !state.evaluationReady)
+        AppButton(
+          label: l10n.finishRecitation,
+          onPressed: cubit.finishListeningAndEvaluate,
+          icon: const Icon(Icons.check_circle_outline_rounded),
+        )
+      else
+        AppButton(
+          label: l10n.startVoiceRecitation,
+          onPressed: state.speechAvailable ? cubit.startListening : null,
+          icon: const Icon(Icons.mic_rounded),
+        ),
+    ];
+
+    return AppScrollableBody(
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (state.speechError != null) ...[
+            SizedBox(height: AppSpacing.sm),
+            AppText(
+              _speechErrorMessage(context, state.speechError),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+          SizedBox(height: AppSpacing.md),
+          ...actions,
+        ],
+      ),
       children: [
         Row(
           children: [
@@ -309,53 +363,17 @@ class Tasmee3TestingScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const Spacer(),
-            AppText(
-              '${state.selectedSurah}  ${state.selectedRange.label}',
-              style: Theme.of(context).textTheme.bodySmall,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            Flexible(
+              child: AppText(
+                '${state.selectedSurah}  ${state.selectedRange.label}',
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.end,
+              ),
             ),
           ],
         ),
         SizedBox(height: AppSpacing.md),
-        Expanded(
-          child: _AyahCard(state: state),
-        ),
-        if (state.speechError != null) ...[
-          SizedBox(height: AppSpacing.sm),
-          AppText(
-            _speechErrorMessage(context, state.speechError),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.error,
-                ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-        SizedBox(height: AppSpacing.md),
-        if (state.evaluationReady) ...[
-          AppButton(
-            label: l10n.testSummary,
-            onPressed: cubit.confirmAndNextAyah,
-            icon: const Icon(Icons.summarize_rounded),
-          ),
-          SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(
-            onPressed: cubit.startListening,
-            icon: const Icon(Icons.replay_rounded),
-            label: Text(l10n.retryRecitation),
-          ),
-        ] else if (state.isListening)
-          AppButton(
-            label: l10n.finishRecitation,
-            onPressed: cubit.finishListeningAndEvaluate,
-            icon: const Icon(Icons.stop_circle_rounded),
-          )
-        else
-          AppButton(
-            label: l10n.startVoiceRecitation,
-            onPressed: state.speechAvailable ? cubit.startListening : null,
-            icon: const Icon(Icons.mic_rounded),
-          ),
+        _AyahCard(state: state),
       ],
     );
   }
@@ -381,59 +399,61 @@ class _AyahCard extends StatelessWidget {
     final l10n = context.l10n;
     return AppSurfaceCard(
       child: state.evaluationReady
-          ? SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AppText(
-                    l10n.ayahErrorsInText,
-                    style: Theme.of(context).textTheme.bodySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: AppSpacing.sm),
-                  AppText(
-                    l10n.voiceAccuracy(state.spokenAccuracy),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: AppSpacing.md),
-                  ...state.ayahEvaluations.values.map(
-                    (evaluation) => Padding(
-                      padding: EdgeInsets.only(bottom: AppSpacing.md),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          AppText(
-                            l10n.ayahNumbered(evaluation.ayahNumber),
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          SizedBox(height: AppSpacing.sm),
-                          AyahDiffText(
-                            words: evaluation.expectedWords,
-                            wordCorrect: evaluation.expectedWordCorrect,
-                            fontScale: 0.95,
-                          ),
-                        ],
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AppText(
+                  l10n.ayahErrorsInText,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: AppSpacing.sm),
+                AppText(
+                  l10n.voiceAccuracy(state.spokenAccuracy),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: AppSpacing.md),
+                ...state.ayahEvaluations.values.map(
+                  (evaluation) => Padding(
+                    padding: EdgeInsets.only(bottom: AppSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        AppText(
+                          l10n.ayahNumbered(evaluation.ayahNumber),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        SizedBox(height: AppSpacing.sm),
+                        AyahDiffText(
+                          words: evaluation.expectedWords,
+                          wordCorrect: evaluation.expectedWordCorrect,
+                          fontScale: 0.95,
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             )
-          : Center(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (state.isListening) ...[
-                      Container(
-                        width: 88.w,
-                        height: 88.w,
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (state.isListening) ...[
+                  Builder(
+                    builder: (context) {
+                      final size = ResponsiveHelper.adaptiveWidth(context, 88)
+                          .clamp(64.0, 96.0);
+                      final icon = ResponsiveHelper.adaptiveIcon(context, 40)
+                          .clamp(28.0, 44.0);
+                      return Container(
+                        width: size,
+                        height: size,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Theme.of(context)
@@ -443,7 +463,7 @@ class _AyahCard extends StatelessWidget {
                         ),
                         child: Icon(
                           Icons.mic_rounded,
-                          size: 40.sp,
+                          size: icon,
                           color: Theme.of(context).colorScheme.error,
                         ),
                       )
@@ -452,25 +472,33 @@ class _AyahCard extends StatelessWidget {
                             begin: const Offset(0.92, 0.92),
                             end: const Offset(1.08, 1.08),
                             duration: 900.ms,
-                          ),
-                      SizedBox(height: 16.h),
-                      AppText(
-                        l10n.autoGradingActive,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      if (state.spokenText.isNotEmpty) ...[
-                        SizedBox(height: AppSpacing.md),
-                        AppText(
-                          state.spokenText,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ] else ...[
-                      Container(
-                        width: 72.w,
-                        height: 72.w,
+                          );
+                    },
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  AppText(
+                    l10n.autoGradingActive,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  if (state.spokenText.isNotEmpty) ...[
+                    SizedBox(height: AppSpacing.md),
+                    AppText(
+                      state.spokenText,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ] else ...[
+                  Builder(
+                    builder: (context) {
+                      final size = ResponsiveHelper.adaptiveWidth(context, 72)
+                          .clamp(56.0, 88.0);
+                      final icon = ResponsiveHelper.adaptiveIcon(context, 32)
+                          .clamp(24.0, 36.0);
+                      return Container(
+                        width: size,
+                        height: size,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Theme.of(context)
@@ -480,34 +508,35 @@ class _AyahCard extends StatelessWidget {
                         ),
                         child: Icon(
                           Icons.visibility_off_rounded,
-                          size: 32.sp,
+                          size: icon,
                           color: Theme.of(context).colorScheme.primary,
                         ),
-                      ),
-                      SizedBox(height: 16.h),
-                      Text(
-                        '${state.selectedRange.label} • ${l10n.ayahCount(state.totalAyahs)}',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8.h),
-                      AppText(
-                        l10n.blockRecitePrompt,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: AppSpacing.md),
-                      Icon(
-                        Icons.mic_none_rounded,
-                        size: 48.sp,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  Text(
+                    '${state.selectedRange.label} • ${l10n.ayahCount(state.totalAyahs)}',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: AppSpacing.xs),
+                  AppText(
+                    l10n.blockRecitePrompt,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  Icon(
+                    Icons.mic_none_rounded,
+                    size: ResponsiveHelper.adaptiveIcon(context, 48)
+                        .clamp(36.0, 52.0),
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ],
+              ],
             ),
     );
   }
@@ -571,8 +600,8 @@ class Tasmee3SummaryScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Wrap(
-                      spacing: 8.w,
-                      runSpacing: 8.h,
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         AppText(
@@ -657,7 +686,7 @@ class _HistoryScreen extends StatelessWidget {
             children: filters
                 .map(
                   (f) => Padding(
-                    padding: EdgeInsets.only(left: 6.w),
+                    padding: const EdgeInsets.only(left: AppSpacing.xxs),
                     child: ChoiceChip(
                       label: Text(f),
                       selected: state.historyFilter == f,
@@ -678,7 +707,7 @@ class _HistoryScreen extends StatelessWidget {
                 )
               : ListView.separated(
                   itemCount: filteredHistory.length,
-                  separatorBuilder: (_, _) => SizedBox(height: 8.h),
+                  separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xs),
                   itemBuilder: (context, index) {
                     final session = filteredHistory[index];
                     return SessionHistoryCard(

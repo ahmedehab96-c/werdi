@@ -116,6 +116,10 @@ class QuranState extends Equatable {
     this.lastReadPlaceholder = '',
     this.currentSurahVerses = const [],
     this.isLoadingSurahVerses = false,
+    this.isDownloadingTafsirOffline = false,
+    this.tafsirDownloadCurrentAyah = 0,
+    this.tafsirDownloadTotalAyahs = 0,
+    this.offlineReadyTafsirKeys = const {},
   });
 
   final bool isLoading;
@@ -146,6 +150,18 @@ class QuranState extends Equatable {
   final String lastReadPlaceholder;
   final List<QuranVerse> currentSurahVerses;
   final bool isLoadingSurahVerses;
+  final bool isDownloadingTafsirOffline;
+  final int tafsirDownloadCurrentAyah;
+  final int tafsirDownloadTotalAyahs;
+  final Set<String> offlineReadyTafsirKeys;
+
+  bool isSurahTafsirOfflineReady({
+    required int surahNumber,
+    required String source,
+  }) {
+    if (source.isEmpty) return false;
+    return offlineReadyTafsirKeys.contains('$surahNumber|$source');
+  }
 
   List<SurahItem> get filteredSurahs {
     final trimmedQuery = query.trim();
@@ -240,6 +256,10 @@ class QuranState extends Equatable {
     String? lastReadPlaceholder,
     List<QuranVerse>? currentSurahVerses,
     bool? isLoadingSurahVerses,
+    bool? isDownloadingTafsirOffline,
+    int? tafsirDownloadCurrentAyah,
+    int? tafsirDownloadTotalAyahs,
+    Set<String>? offlineReadyTafsirKeys,
     bool clearTafsir = false,
     bool clearTranslations = false,
   }) {
@@ -278,6 +298,14 @@ class QuranState extends Equatable {
       lastReadPlaceholder: lastReadPlaceholder ?? this.lastReadPlaceholder,
       currentSurahVerses: currentSurahVerses ?? this.currentSurahVerses,
       isLoadingSurahVerses: isLoadingSurahVerses ?? this.isLoadingSurahVerses,
+      isDownloadingTafsirOffline:
+          isDownloadingTafsirOffline ?? this.isDownloadingTafsirOffline,
+      tafsirDownloadCurrentAyah:
+          tafsirDownloadCurrentAyah ?? this.tafsirDownloadCurrentAyah,
+      tafsirDownloadTotalAyahs:
+          tafsirDownloadTotalAyahs ?? this.tafsirDownloadTotalAyahs,
+      offlineReadyTafsirKeys:
+          offlineReadyTafsirKeys ?? this.offlineReadyTafsirKeys,
     );
   }
 
@@ -310,5 +338,9 @@ class QuranState extends Equatable {
     lastReadPlaceholder,
     currentSurahVerses,
     isLoadingSurahVerses,
+    isDownloadingTafsirOffline,
+    tafsirDownloadCurrentAyah,
+    tafsirDownloadTotalAyahs,
+    offlineReadyTafsirKeys,
   ];
 }

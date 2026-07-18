@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:werdi/core/constants/app_assets.dart';
-import 'package:werdi/core/constants/app_constants.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
 import 'package:werdi/core/theme/app_colors.dart';
 import 'package:werdi/core/theme/app_durations.dart';
@@ -122,7 +121,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 32),
               Text(
-                l10n.authWelcomeTitle,
+                l10n.welcomeTitle,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -131,14 +130,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                   .animate(delay: 280.ms)
                   .fadeIn(duration: 500.ms)
                   .slideY(begin: 0.25, end: 0),
-              const SizedBox(height: 8),
-              Text(
-                AppConstants.appName,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ).animate(delay: 400.ms).fadeIn(duration: 450.ms),
               const SizedBox(height: 40),
               const _LoadingDots(),
             ],

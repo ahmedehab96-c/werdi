@@ -14,6 +14,7 @@ class ReviewItem extends Equatable {
     this.ayahText = '',
     this.reviewed = false,
     this.difficult = false,
+    this.updatedAt,
   });
 
   final String id;
@@ -27,6 +28,7 @@ class ReviewItem extends Equatable {
   final String ayahText;
   final bool reviewed;
   final bool difficult;
+  final DateTime? updatedAt;
 
   ReviewItem copyWith({
     String? title,
@@ -35,6 +37,7 @@ class ReviewItem extends Equatable {
     String? ayahText,
     bool? reviewed,
     bool? difficult,
+    DateTime? updatedAt,
   }) {
     return ReviewItem(
       id: id,
@@ -47,6 +50,7 @@ class ReviewItem extends Equatable {
       ayahText: ayahText ?? this.ayahText,
       reviewed: reviewed ?? this.reviewed,
       difficult: difficult ?? this.difficult,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -92,5 +96,6 @@ class ReviewItem extends Equatable {
         ayahText,
         reviewed,
         difficult,
+        updatedAt,
       ];
 }

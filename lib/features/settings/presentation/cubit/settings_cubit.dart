@@ -24,12 +24,17 @@ class SettingsCubit extends Cubit<SettingsState> {
 
   Future<void> load() async {
     final enabled = await _preferences.getString(_enabledKey) == '1';
+    if (isClosed) return;
     final hour = int.tryParse(await _preferences.getString(_hourKey) ?? '') ?? 8;
+    if (isClosed) return;
     final minute =
         int.tryParse(await _preferences.getString(_minuteKey) ?? '') ?? 0;
+    if (isClosed) return;
     final focusMode = (await _preferences.getString(_searchFocusModeKey) ?? '1') == '1';
+    if (isClosed) return;
     final unifiedReading =
         (await _preferences.getString(_unifiedReadingPrefsKey) ?? '0') == '1';
+    if (isClosed) return;
     emit(
       state.copyWith(
         remindersEnabled: enabled,

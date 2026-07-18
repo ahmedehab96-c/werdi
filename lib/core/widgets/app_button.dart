@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:werdi/core/responsive/responsive_utils.dart';
 import 'package:werdi/core/theme/app_durations.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 
@@ -30,6 +30,10 @@ class _AppButtonState extends State<AppButton> {
 
   @override
   Widget build(BuildContext context) {
+    final minHeight = ResponsiveUtils.minTouchTargetSize(context);
+    final iconGap = ResponsiveUtils.responsiveSpacing(context, 8);
+    final loaderSize = ResponsiveUtils.responsiveIconSize(context, 20);
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapCancel: () => setState(() => _pressed = false),
@@ -38,33 +42,42 @@ class _AppButtonState extends State<AppButton> {
         duration: AppDurations.instant,
         curve: Curves.easeOutBack,
         scale: _pressed ? 0.96 : 1,
-        child: SizedBox(
-          width: double.infinity,
-          height: 52.h,
-          child: _buildButton(context),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: double.infinity,
+            minHeight: minHeight,
+          ),
+          child: _buildButton(context, iconGap, loaderSize),
         ),
       ),
     );
   }
 
-  Widget _buildButton(BuildContext context) {
+  Widget _buildButton(
+    BuildContext context,
+    double iconGap,
+    double loaderSize,
+  ) {
     final child = widget.isLoading
         ? SizedBox(
-            width: 20.w,
-            height: 20.w,
+            width: loaderSize,
+            height: loaderSize,
             child: const CircularProgressIndicator(strokeWidth: 2),
           )
         : Row(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.icon != null) ...[widget.icon!, SizedBox(width: 8.w)],
+              if (widget.icon != null) ...[
+                widget.icon!,
+                SizedBox(width: iconGap),
+              ],
               Flexible(
                 child: AppText(
                   widget.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
               ),

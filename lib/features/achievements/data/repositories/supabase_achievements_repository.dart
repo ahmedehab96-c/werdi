@@ -127,6 +127,7 @@ class SupabaseAchievementsRepository implements AchievementsRepository {
     final earnedKeys = earned.map((e) => e.key).toSet();
     final upcoming = _upcomingFromKeys(earnedKeys);
     await _cache(earned, upcoming);
+    await _awardFromMetrics(metrics);
     return (earned: earned, upcoming: upcoming);
   }
 
@@ -145,19 +146,33 @@ class SupabaseAchievementsRepository implements AchievementsRepository {
       'reviewed_items_count':
           (progress?['reviewed_items_count'] as num? ?? 0).toInt(),
       'streak_days': (progress?['streak_days'] as num? ?? 0).toInt(),
+      // Kept for remote-only refresh; live tasmee3 count is awarded via
+      // evaluateFromMetrics.
       'tasmee3_sessions': 0,
     };
+    await _awardFromMetrics(metrics, userId: userId);
+  }
+
+  Future<void> _awardFromMetrics(
+    Map<String, int> metrics, {
+    String? userId,
+  }) async {
+    if (!SupabaseService.isReady || !SupabaseService.hasSession) return;
+    final resolvedUserId = userId ?? SupabaseService.currentUserId;
+    if (resolvedUserId == null) return;
 
     for (final badge in _badges) {
       final metric = badge['metric'] as String;
       final threshold = (badge['threshold'] as num).toInt();
       final value = metrics[metric] ?? 0;
       if (value < threshold) continue;
-      await _client.from('achievements').upsert({
-        'user_id': userId,
-        'key': badge['key'],
-        'title': badge['title'],
-      });
+      try {
+        await _client.from('achievements').upsert({
+          'user_id': resolvedUserId,
+          'key': badge['key'],
+          'title': badge['title'],
+        });
+      } catch (_) {}
     }
   }
 

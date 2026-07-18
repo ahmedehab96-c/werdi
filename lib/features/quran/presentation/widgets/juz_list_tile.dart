@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
-import 'package:werdi/core/widgets/app_animated_progress.dart';
+import 'package:werdi/core/responsive/responsive_utils.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 import 'package:werdi/features/quran/domain/models/juz_item.dart';
 
+/// Compact juz row: number, title, range, open.
 class JuzListTile extends StatelessWidget {
   const JuzListTile({required this.item, required this.onOpenTap, super.key});
 
@@ -16,52 +15,59 @@ class JuzListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final size = ResponsiveUtils.responsiveWidth(context, 36).clamp(32.0, 42.0);
+
     return AppSurfaceCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      onTap: onOpenTap,
+      padding: EdgeInsetsDirectional.only(
+        start: ResponsiveUtils.responsiveSpacing(context, 12),
+        end: ResponsiveUtils.responsiveSpacing(context, 4),
+        top: ResponsiveUtils.responsiveSpacing(context, 8),
+        bottom: ResponsiveUtils.responsiveSpacing(context, 8),
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 38.w,
-                height: 38.w,
-                decoration: BoxDecoration(
-                  color: scheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                alignment: Alignment.center,
-                child: AppText(
-                  item.number.toString(),
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
+          Container(
+            width: size,
+            height: size,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: scheme.secondaryContainer.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(
+                ResponsiveUtils.responsiveRadius(context, 10),
               ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: AppText(
+            ),
+            child: AppText(
+              '${item.number}',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+          SizedBox(width: ResponsiveUtils.responsiveSpacing(context, 12)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(
                   context.l10n.juzNumber(item.number),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
-              ),
-              TextButton.icon(
-                onPressed: onOpenTap,
-                icon: const Icon(Icons.menu_book_rounded),
-                label: Text(context.l10n.open),
-              ),
-            ],
+                AppText(
+                  item.surahRangeText,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 8.h),
-          AppText(
-            item.surahRangeText,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-          SizedBox(height: 10.h),
-          AppAnimatedProgress(value: item.progress),
+          Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
+          SizedBox(width: ResponsiveUtils.responsiveSpacing(context, 4)),
         ],
       ),
-    ).animate().fadeIn(duration: 220.ms).slideY(begin: 0.05, end: 0);
+    );
   }
 }

@@ -2,16 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:quran/quran.dart' as quran_pkg;
 import 'package:werdi/core/audio/audio_playback.dart';
+import 'package:werdi/core/audio/quran_audio_session.dart';
 import 'package:werdi/core/di/app_injector.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
+import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_animated_progress.dart';
 import 'package:werdi/core/widgets/app_empty_state.dart';
 import 'package:werdi/core/widgets/app_scaffold.dart';
 import 'package:werdi/core/widgets/app_section_header.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
+import 'package:werdi/core/responsive/responsive_utils.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 import 'package:werdi/core/widgets/mushaf_continuous_text.dart';
 import 'package:werdi/features/memorization/presentation/pages/memorization_page.dart';
@@ -93,7 +95,7 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
         : Theme.of(context).scaffoldBackgroundColor;
     final bodyList = ListView(
       controller: _scrollController,
-      padding: EdgeInsets.all(16.w),
+      padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         if (!_focusMode) ...[
           // ── معلومات السورة
@@ -107,20 +109,20 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                SizedBox(height: 6.h),
+                const SizedBox(height: AppSpacing.xxs),
                 AppText(
                   '${widget.surah.nameEnglish} • ${l10n.ayahUnit(widget.surah.verseCount)} • ${widget.surah.revelationPlace}',
                 ),
-                SizedBox(height: 12.h),
+                const SizedBox(height: AppSpacing.sm),
                 AppAnimatedProgress(value: widget.surah.progress),
-                SizedBox(height: 8.h),
+                const SizedBox(height: AppSpacing.xs),
                 AppText(
                   l10n.progressPercent((widget.surah.progress * 100).round()),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 12.h),
+          const SizedBox(height: AppSpacing.sm),
 
           // ── أزرار الإجراءات
           AppSurfaceCard(
@@ -140,7 +142,7 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
                     ),
                   ),
                 ),
-                SizedBox(width: 10.w),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: _SurahActionButton(
                     icon: Icons.history_edu_rounded,
@@ -156,7 +158,7 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
               ],
             ),
           ),
-          SizedBox(height: 14.h),
+          const SizedBox(height: AppSpacing.sm),
         ],
 
         // ── آيات السورة
@@ -165,7 +167,7 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppSectionHeader(title: l10n.surahAyahs),
-              SizedBox(height: 8.h),
+              const SizedBox(height: AppSpacing.xs),
               if (quranState.isLoadingSurahVerses)
                 const Center(child: CircularProgressIndicator())
               else if (verses.isEmpty)
@@ -203,7 +205,7 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
             ],
           ),
         ),
-        SizedBox(height: 8.h),
+        const SizedBox(height: AppSpacing.xs),
 
         if (!_focusMode) ...[
           // ── مقاطع الحفظ
@@ -213,10 +215,10 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
               fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 8.h),
+          const SizedBox(height: AppSpacing.xs),
           ...ranges.map(
             (range) => Padding(
-              padding: EdgeInsets.only(bottom: 8.h),
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
               child: AppSurfaceCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,28 +227,28 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
                       '${range.label} • ${l10n.rangeAyahs(range.fromAyah, range.toAyah)}',
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
-                    SizedBox(height: 8.h),
+                    const SizedBox(height: AppSpacing.xs),
                     AppAnimatedProgress(value: range.progress),
                   ],
                 ),
               ),
             ),
           ),
-          SizedBox(height: 8.h),
+          const SizedBox(height: AppSpacing.xs),
 
           // ── بطاقة الأصوات
           SurahAudioCard(surah: widget.surah),
-          SizedBox(height: 8.h),
+          const SizedBox(height: AppSpacing.xs),
 
           // ── روابط التفسير
           SurahTafsirLinksCard(surah: widget.surah),
-          SizedBox(height: 8.h),
+          const SizedBox(height: AppSpacing.xs),
 
           // ── التفسير والترجمة
           SurahTafsirPreviewCard(surah: widget.surah),
-          SizedBox(height: 16.h),
+          const SizedBox(height: AppSpacing.md),
         ] else
-          SizedBox(height: 8.h),
+          const SizedBox(height: AppSpacing.xs),
       ],
     );
     return AppScaffold(
@@ -382,9 +384,30 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
         );
         return;
       }
+      final reciter = cubit.state.selectedAudioReciter;
       await playAudioUrlsWithFallback(
         AppInjector.audioRepository,
         urls: urls,
+        metadata: reciter == null
+            ? null
+            : AyahPlaybackMetadata(
+                surahNumber: widget.surah.number,
+                surahNameArabic: widget.surah.nameArabic,
+                ayahNumber: ayahNumber,
+                reciterName: reciter.name,
+              ),
+        onSkipNext: ayahNumber < widget.surah.verseCount
+            ? () {
+                if (!mounted) return;
+                _onAyahTapped(ayahNumber + 1);
+              }
+            : null,
+        onSkipPrevious: ayahNumber > 1
+            ? () {
+                if (!mounted) return;
+                _onAyahTapped(ayahNumber - 1);
+              }
+            : null,
       );
       if (!mounted) return;
       setState(() => _playingAyah = ayahNumber);
@@ -405,6 +428,9 @@ class _SurahDetailsPageState extends State<SurahDetailsPage> {
     _highlightTimer?.cancel();
     _focusPrefsDebounce?.cancel();
     _scrollController.dispose();
+    QuranAudioSession.clear();
+    unawaited(AppInjector.ayahPlaylistPlayer.stop());
+    unawaited(AppInjector.audioRepository.stop());
     super.dispose();
   }
 
@@ -540,17 +566,22 @@ class _FocusReadingToolbar extends StatelessWidget {
             ),
           ),
         ),
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
                 const Icon(Icons.format_size_rounded, size: 18),
-                SizedBox(width: 6.w),
-                Expanded(child: AppText(l10n.focusFontSize)),
-                SizedBox(
-                  width: 160.w,
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: AppText(l10n.focusFontSize, maxLines: 1),
+                ),
+                Flexible(
+                  flex: 2,
                   child: Slider(
                     value: fontScale,
                     min: 0.85,
@@ -564,10 +595,12 @@ class _FocusReadingToolbar extends StatelessWidget {
             Row(
               children: [
                 const Icon(Icons.format_line_spacing_rounded, size: 18),
-                SizedBox(width: 6.w),
-                Expanded(child: AppText(l10n.focusLineSpacing)),
-                SizedBox(
-                  width: 160.w,
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: AppText(l10n.focusLineSpacing, maxLines: 1),
+                ),
+                Flexible(
+                  flex: 2,
                   child: Slider(
                     value: lineHeight,
                     min: 1.5,
@@ -581,15 +614,16 @@ class _FocusReadingToolbar extends StatelessWidget {
             Row(
               children: [
                 const Icon(Icons.palette_outlined, size: 18),
-                SizedBox(width: 6.w),
-                Expanded(child: AppText(l10n.sepiaMode)),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(child: AppText(l10n.sepiaMode, maxLines: 1)),
                 Switch(value: sepiaEnabled, onChanged: onSepiaChanged),
               ],
             ),
             Align(
               alignment: Alignment.centerLeft,
               child: Wrap(
-                spacing: 8.w,
+                spacing: AppSpacing.xs,
+                runSpacing: AppSpacing.xs,
                 children: [
                   TextButton.icon(
                     onPressed: onReset,
@@ -627,53 +661,43 @@ class _SurahActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      height: 56.h,
+    final minHeight = ResponsiveUtils.minTouchTargetSize(context);
+    final horizontalPadding = ResponsiveUtils.responsivePadding(context, 10);
+    final iconSize = ResponsiveUtils.responsiveIconSize(context, 20);
+    final gap = ResponsiveUtils.responsiveSpacing(context, 6);
+
+    final child = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: iconSize),
+        SizedBox(width: gap),
+        Flexible(
+          child: AppText(
+            label,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+        ),
+      ],
+    );
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: minHeight),
       child: filled
           ? FilledButton(
               onPressed: onPressed,
               style: FilledButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 20.sp),
-                  SizedBox(width: 6.w),
-                  Flexible(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13.sp),
-                    ),
-                  ),
-                ],
-              ),
+              child: child,
             )
           : OutlinedButton(
               onPressed: onPressed,
               style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                 side: BorderSide(color: scheme.outline),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 20.sp),
-                  SizedBox(width: 6.w),
-                  Flexible(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13.sp),
-                    ),
-                  ),
-                ],
-              ),
+              child: child,
             ),
     );
   }

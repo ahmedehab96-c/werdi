@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:werdi/core/responsive/responsive_utils.dart';
 
 class AppText extends StatelessWidget {
   const AppText(
@@ -9,6 +9,7 @@ class AppText extends StatelessWidget {
     this.maxLines,
     this.overflow,
     this.textAlign = TextAlign.start,
+    this.softWrap,
   });
 
   final String data;
@@ -16,17 +17,24 @@ class AppText extends StatelessWidget {
   final int? maxLines;
   final TextOverflow? overflow;
   final TextAlign textAlign;
+  final bool? softWrap;
 
   @override
   Widget build(BuildContext context) {
     final fallback = Theme.of(context).textTheme.bodyLarge;
+    final baseSize = style?.fontSize ?? fallback?.fontSize ?? 16;
+    final resolvedMaxLines = maxLines;
+    final resolvedOverflow = overflow ??
+        (resolvedMaxLines != null ? TextOverflow.ellipsis : TextOverflow.visible);
+
     return Text(
       data,
       style: (style ?? fallback)?.copyWith(
-        fontSize: (style?.fontSize ?? 16).sp,
+        fontSize: ResponsiveUtils.font(context, baseSize),
       ),
-      maxLines: maxLines,
-      overflow: overflow,
+      maxLines: resolvedMaxLines,
+      overflow: resolvedOverflow,
+      softWrap: softWrap ?? resolvedMaxLines == null,
       textAlign: textAlign,
     );
   }

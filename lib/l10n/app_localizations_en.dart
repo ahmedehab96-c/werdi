@@ -42,8 +42,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authWelcomeTitle => 'Welcome to Werdi';
 
   @override
-  String get authWelcomeSubtitle =>
-      'Sign in or create an account to start your memorization journey';
+  String get welcomeTitle => 'Welcome to Werdi';
+
+  @override
+  String get authWelcomeSubtitle => 'Start memorizing simply — no complexity';
 
   @override
   String get loginTab => 'Login';
@@ -87,6 +89,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get registerError => 'Could not create account, please try again';
+
+  @override
+  String get passwordMismatch => 'Passwords do not match';
+
+  @override
+  String get passwordTooShort => 'Password must be at least 6 characters';
+
+  @override
+  String get invalidEmail => 'Enter a valid email address';
+
+  @override
+  String get authUnavailable => 'Cloud sync is not enabled in this build';
+
+  @override
+  String get profileSyncedSubtitle =>
+      'Your progress syncs with your account across devices';
 
   @override
   String homeGreeting(String name) {
@@ -602,7 +620,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noTafsir => 'No tafsir';
 
   @override
-  String get noTafsirSubtitle => 'Choose a range then tap refresh.';
+  String get noTafsirSubtitle =>
+      'Tafsir loads automatically — change the source or ayah range anytime.';
 
   @override
   String get noTranslation => 'No translation';
@@ -620,6 +639,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get refreshTafsir => 'Refresh tafsir';
+
+  @override
+  String get downloadTafsirOffline => 'Download tafsir offline';
+
+  @override
+  String get tafsirOfflineReady => 'Surah tafsir is saved for offline use';
+
+  @override
+  String get tafsirOfflineCachedBadge => 'Tafsir available offline';
+
+  @override
+  String get cancelTafsirDownload => 'Cancel download';
+
+  @override
+  String get tafsirDownloadCancelled => 'Tafsir download cancelled';
+
+  @override
+  String downloadingTafsirProgress(int current, int total) {
+    return 'Downloading tafsir: ayah $current of $total';
+  }
+
+  @override
+  String get tafsirOfflineFallback =>
+      'No internet — showing Quranic Arabic text instead of tafsir.';
 
   @override
   String get refreshTranslation => 'Refresh translation';
@@ -747,6 +790,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lowPriority => 'Low priority';
+
+  @override
+  String get smartReviewPlanTitle => 'Smart review plan';
+
+  @override
+  String smartReviewPlanSubtitle(int difficult, int pending) {
+    return '$difficult difficult · $pending pending review';
+  }
+
+  @override
+  String smartReviewDailyQuota(int count) {
+    return 'Today\'s target: $count items';
+  }
+
+  @override
+  String get startSmartReviewSession => 'Start review session';
+
+  @override
+  String smartReviewSessionProgress(int current, int total) {
+    return '$current of $total';
+  }
+
+  @override
+  String get endSmartReviewSession => 'End session';
+
+  @override
+  String get smartReviewSessionComplete =>
+      'You completed today\'s review session';
+
+  @override
+  String get nextReviewItem => 'Skip';
+
+  @override
+  String get markReviewedAndNext => 'Reviewed — next';
+
+  @override
+  String get smartReviewPlanBadge => 'In today\'s plan';
 
   @override
   String get tasmee3Title => 'Self-test';
@@ -961,7 +1041,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get profileTitle => 'Profile';
+  String get profileTitle => 'My profile';
 
   @override
   String get memorizedAyahsCount => 'ayahs memorized';
@@ -1096,7 +1176,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingSubtitle1 =>
-      'A flexible daily plan that fits your time and builds strong consistency.';
+      'Memorize, review, and recite easily — everything in one place.';
 
   @override
   String get onboardingTitle2 => 'Gradual review without pressure';
@@ -1123,8 +1203,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get guest => 'Guest';
 
   @override
-  String get profileLocalSubtitle =>
-      'Your progress is saved on this device — no account needed';
+  String get profileLocalSubtitle => 'Your progress is saved on this device';
 
   @override
   String get signInForFullFeatures => 'Sign in to unlock all features';
@@ -1166,4 +1245,128 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bubbleUnknown => 'Forgot';
+
+  @override
+  String get goalsTitle => 'My goals';
+
+  @override
+  String get addGoal => 'Add goal';
+
+  @override
+  String get saveGoal => 'Save goal';
+
+  @override
+  String get goalTitleLabel => 'Goal title';
+
+  @override
+  String get goalTargetLabel => 'Target count';
+
+  @override
+  String get customGoals => 'Your custom goals';
+
+  @override
+  String get dailyGoalHint => 'Set how many ayahs you want to memorize today';
+
+  @override
+  String get memorizationGoalHint =>
+      'Your total memorization target — updates as you progress';
+
+  @override
+  String get reviewGoalHint => 'Review sessions you are aiming for';
+
+  @override
+  String get customGoalProgressHint => 'Tracks your memorization progress';
+
+  @override
+  String get manageGoals => 'Manage';
+
+  @override
+  String get editName => 'Edit name';
+
+  @override
+  String get nameHint => 'Your name or nickname';
+
+  @override
+  String get navHome => 'Home';
+
+  @override
+  String get navQuran => 'Mushaf';
+
+  @override
+  String get navMemorization => 'Memorize';
+
+  @override
+  String get navGoals => 'Goals';
+
+  @override
+  String get navProfile => 'My profile';
+
+  @override
+  String get offlineRecitationsTitle => 'Offline recitations';
+
+  @override
+  String get offlineRecitationsSubtitle =>
+      'Download a full surah ayah-by-ayah for listening without internet.';
+
+  @override
+  String get offlineRecitationsHint =>
+      'During playback, the local file is used first when available, then the online source.';
+
+  @override
+  String get selectReciter => 'Select reciter';
+
+  @override
+  String get selectSurah => 'Select surah';
+
+  @override
+  String get downloadSurah => 'Download surah';
+
+  @override
+  String get deleteDownloadedSurah => 'Delete download';
+
+  @override
+  String get surahDownloadComplete => 'Saved on device';
+
+  @override
+  String get surahNotDownloaded => 'Not downloaded';
+
+  @override
+  String get surahDownloadFailed =>
+      'Download could not be completed. Check your connection and try again.';
+
+  @override
+  String downloadingAyah(int current, int total) {
+    return 'Downloading ayah $current of $total';
+  }
+
+  @override
+  String get playAyahRange => 'Play range';
+
+  @override
+  String get playFullSurah => 'Play full surah';
+
+  @override
+  String playlistActiveAyah(int ayah) {
+    return 'Playing: ayah $ayah';
+  }
+
+  @override
+  String get memorizationAnalyticsTitle => 'Your progress snapshot';
+
+  @override
+  String get todayMemorizedShort => 'Today';
+
+  @override
+  String get weekMemorizedShort => 'This week';
+
+  @override
+  String get difficultAyahsShort => 'Difficult ayahs';
+
+  @override
+  String get reviewsThisWeekShort => 'Reviews this week';
+
+  @override
+  String weeklyPaceHint(String average) {
+    return 'Daily average: $average ayahs';
+  }
 }

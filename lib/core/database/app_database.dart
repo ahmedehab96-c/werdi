@@ -4,12 +4,16 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:werdi/core/utils/arabic_text_normalizer.dart';
 
 class AppDatabase extends GeneratedDatabase {
   AppDatabase() : super(_openConnection());
+
+  @visibleForTesting
+  AppDatabase.inMemory() : super(_openMemoryConnection());
 
   bool _initialized = false;
   Completer<void>? _initCompleter;
@@ -229,19 +233,33 @@ class AppDatabase extends GeneratedDatabase {
     final rawQuery = query.trim();
     final normalizedQuery = ArabicTextNormalizer.normalize(query);
     if (rawQuery.isEmpty || normalizedQuery.isEmpty) return const [];
+
+    final tokens = normalizedQuery
+        .split(' ')
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (tokens.isEmpty) return const [];
+
+    final whereClauses = <String>[];
+    final variables = <Variable<Object>>[];
+    for (final token in tokens) {
+      whereClauses.add('(text_uthmani LIKE ? OR text_simple LIKE ?)');
+      variables
+        ..add(Variable<String>('%$token%'))
+        ..add(Variable<String>('%$token%'));
+    }
+    variables.add(Variable<int>(limit));
+
     return customSelect(
       '''
       SELECT surah_number, ayah_number, text_uthmani
       FROM quran_ayahs
-      WHERE text_uthmani LIKE ? OR text_simple LIKE ?
+      WHERE ${whereClauses.join(' AND ')}
       ORDER BY surah_number ASC, ayah_number ASC
       LIMIT ?
       ''',
-      variables: <Variable<Object>>[
-        Variable<String>('%$rawQuery%'),
-        Variable<String>('%$normalizedQuery%'),
-        Variable<int>(limit),
-      ],
+      variables: variables,
     ).get();
   }
 
@@ -502,6 +520,14 @@ class AppDatabase extends GeneratedDatabase {
     return rows.read<int>('count');
   }
 
+  Future<int> countDifficultReviewItems() async {
+    await ensureInitialized();
+    final rows = await customSelect(
+      'SELECT COUNT(*) AS count FROM review_items WHERE difficult = 1',
+    ).getSingle();
+    return rows.read<int>('count');
+  }
+
   /// Memorization events per calendar day for the last [days] days (oldest first).
   Future<List<int>> memorizationCountsByDay({
     required String userId,
@@ -571,4 +597,8 @@ LazyDatabase _openConnection() {
     final file = File(p.join(dir.path, 'werdi_app.sqlite'));
     return NativeDatabase.createInBackground(file);
   });
+}
+
+LazyDatabase _openMemoryConnection() {
+  return LazyDatabase(() async => NativeDatabase.memory());
 }

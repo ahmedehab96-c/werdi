@@ -10,8 +10,10 @@ final class AppRoutes {
   static const tasmee3 = 'tasmee3';
   static const achievements = 'achievements';
   static const profile = 'profile';
+  static const goals = 'goals';
   static const settings = 'settings';
   static const notifications = 'notifications';
+  static const offlineRecitations = 'offlineRecitations';
 
   static const splashPath = '/';
   static const onboardingPath = '/onboarding';
@@ -22,6 +24,8 @@ final class AppRoutes {
   static const tasmee3Path = '/tasmee3';
   static const achievementsPath = '/achievements';
   static const profilePath = '/profile';
+  static const goalsPath = '/goals';
   static const settingsPath = '/settings';
   static const notificationsPath = '/notifications';
+  static const offlineRecitationsPath = '/settings/offline-recitations';
 }

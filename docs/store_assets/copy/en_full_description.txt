@@ -1,0 +1,13 @@
+Werdi is an Arabic-first Quran companion for daily memorization, revision, and Mushaf reading — with full English support.
+
+Features:
+• Ayah-by-ayah memorization with repeat and playback speed
+• Smart review plans focused on difficult ayahs
+• Optional voice self-test (Tasmee3) with instant feedback
+• Browse by surah and juz, search, and bookmarks
+• Tafsir and translation, with offline tafsir download
+• Trusted reciters, background playback, and offline surah downloads
+• Daily goals, streaks, and achievements
+• Light/dark mode and optional daily reminders
+
+Start immediately without an account. Cloud sync is optional when enabled.

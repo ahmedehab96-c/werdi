@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
 import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_button.dart';
@@ -22,7 +21,7 @@ class Tasmee3SessionDetailsPage extends StatelessWidget {
     return AppScaffold(
       appBar: AppBar(title: Text(l10n.sessionDetails)),
       body: ListView(
-        padding: EdgeInsets.all(16.w),
+        padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           AppSurfaceCard(
             child: Column(
@@ -34,19 +33,19 @@ class Tasmee3SessionDetailsPage extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                 ),
-                SizedBox(height: 4.h),
+                const SizedBox(height: AppSpacing.xxs),
                 AppText(
                   '${session.ayahRange.label} • ${session.date.toLocal().toString().split(' ').first}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-                SizedBox(height: 10.h),
+                const SizedBox(height: AppSpacing.sm),
                 ResultStatusChip(status: result.status),
               ],
             ),
           ),
-          SizedBox(height: 10.h),
+          const SizedBox(height: AppSpacing.sm),
           ScoreSummaryCard(result: result),
-          SizedBox(height: 10.h),
+          const SizedBox(height: AppSpacing.sm),
           AppSurfaceCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,15 +57,15 @@ class Tasmee3SessionDetailsPage extends StatelessWidget {
                 SizedBox(height: AppSpacing.sm),
                 ...result.grades.entries.map(
                   (e) => Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4.h),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
                     child: Row(
                       children: [
                         Icon(
                           _gradeIcon(e.value),
-                          size: 18.sp,
+                          size: 18,
                           color: _gradeColor(e.value),
                         ),
-                        SizedBox(width: 8.w),
+                        const SizedBox(width: AppSpacing.xs),
                         AppText(l10n.ayahNumbered(e.key)),
                         const Spacer(),
                         AppText(
@@ -83,7 +82,7 @@ class Tasmee3SessionDetailsPage extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: 16.h),
+          const SizedBox(height: AppSpacing.md),
           AppButton(
             label: l10n.back,
             onPressed: () => Navigator.of(context).pop(),

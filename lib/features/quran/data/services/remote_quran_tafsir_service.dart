@@ -1,31 +1,27 @@
 import 'package:dio/dio.dart';
 import 'package:werdi/features/quran/data/services/offline_quran_tafsir_service.dart';
+import 'package:werdi/features/quran/domain/constants/tafsir_sources.dart';
 import 'package:werdi/features/quran/domain/models/tafsir_item.dart';
 import 'package:werdi/features/quran/domain/services/quran_tafsir_service.dart';
 
 /// Real tafsir provider backed by https://api.alquran.cloud.
 ///
-/// If the remote API is unavailable, it falls back to the offline provider
-/// so the UI keeps working.
+/// Fetches ayah-by-ayah to avoid downloading entire long surahs.
 class RemoteQuranTafsirService implements QuranTafsirService {
   RemoteQuranTafsirService({QuranTafsirService? fallback})
       : _fallback = fallback ?? const OfflineQuranTafsirService(),
         _dio = Dio(
           BaseOptions(
             baseUrl: 'https://api.alquran.cloud/v1',
-            connectTimeout: const Duration(seconds: 20),
-            receiveTimeout: const Duration(seconds: 20),
+            connectTimeout: const Duration(seconds: 15),
+            receiveTimeout: const Duration(seconds: 15),
           ),
         );
 
   final QuranTafsirService _fallback;
   final Dio _dio;
 
-  static const _preferredSourceOrder = <String>[
-    // Egyptian-oriented preference first, then common simple tafsir.
-    'ar.waseet',
-    'ar.muyassar',
-  ];
+  static const _maxAyahsPerRequest = 30;
 
   @override
   Future<List<String>> getAvailableSources() async {
@@ -39,6 +35,7 @@ class RemoteQuranTafsirService implements QuranTafsirService {
           .whereType<Map>()
           .map((e) => e['identifier'])
           .whereType<String>()
+          .where((id) => TafsirSources.labels.containsKey(id))
           .toSet()
           .toList();
 
@@ -47,8 +44,8 @@ class RemoteQuranTafsirService implements QuranTafsirService {
       }
 
       sources.sort((a, b) {
-        final ia = _preferredSourceOrder.indexOf(a);
-        final ib = _preferredSourceOrder.indexOf(b);
+        final ia = TafsirSources.preferredOrder.indexOf(a);
+        final ib = TafsirSources.preferredOrder.indexOf(b);
         if (ia != -1 || ib != -1) {
           if (ia == -1) return 1;
           if (ib == -1) return -1;
@@ -69,44 +66,50 @@ class RemoteQuranTafsirService implements QuranTafsirService {
     required int ayahEnd,
     required String source,
   }) async {
-    final sourceId = _normalizeSourceIdentifier(source);
-    try {
-      final response = await _dio.get<Map<String, dynamic>>(
-        '/surah/$surahNumber/$sourceId',
+    if (_isOfflineSource(source)) {
+      return _fallback.getTafsir(
+        surahNumber: surahNumber,
+        ayahStart: ayahStart,
+        ayahEnd: ayahEnd,
+        source: source,
       );
-      final data = response.data?['data'];
-      if (data is! Map) {
-        return _fallback.getTafsir(
-          surahNumber: surahNumber,
-          ayahStart: ayahStart,
-          ayahEnd: ayahEnd,
-          source: source,
-        );
-      }
+    }
 
-      final ayahsRaw = data['ayahs'];
-      final ayahs = ayahsRaw is List ? ayahsRaw.whereType<Map>().toList() : [];
-      if (ayahs.isEmpty) {
-        return _fallback.getTafsir(
-          surahNumber: surahNumber,
-          ayahStart: ayahStart,
-          ayahEnd: ayahEnd,
-          source: source,
-        );
-      }
+    final sourceId = _normalizeSourceIdentifier(source);
+    if (!sourceId.startsWith('ar.')) {
+      return _fallback.getTafsir(
+        surahNumber: surahNumber,
+        ayahStart: ayahStart,
+        ayahEnd: ayahEnd,
+        source: source,
+      );
+    }
 
+    final safeEnd = ayahEnd > ayahStart + _maxAyahsPerRequest - 1
+        ? ayahStart + _maxAyahsPerRequest - 1
+        : ayahEnd;
+
+    try {
       final buffer = StringBuffer();
-      for (final ayah in ayahs) {
-        final number = ayah['numberInSurah'];
-        final text = ayah['text'];
-        if (number is! int || text is! String) continue;
-        if (number < ayahStart || number > ayahEnd) continue;
-        buffer.writeln('($number) $text');
-        if (number < ayahEnd) buffer.writeln();
+      final ayahNumbers =
+          List<int>.generate(safeEnd - ayahStart + 1, (i) => ayahStart + i);
+
+      final results = await Future.wait(
+        ayahNumbers.map((ayah) => _fetchAyahTafsir(surahNumber, ayah, sourceId)),
+      );
+
+      var wroteAny = false;
+      for (var i = 0; i < ayahNumbers.length; i++) {
+        final text = results[i];
+        if (text == null || text.trim().isEmpty) continue;
+        final ayah = ayahNumbers[i];
+        buffer.writeln('($ayah) $text');
+        if (ayah < safeEnd) buffer.writeln();
+        wroteAny = true;
       }
 
       final tafsirText = buffer.toString().trim();
-      if (tafsirText.isEmpty) {
+      if (!wroteAny || tafsirText.isEmpty) {
         return _fallback.getTafsir(
           surahNumber: surahNumber,
           ayahStart: ayahStart,
@@ -118,8 +121,8 @@ class RemoteQuranTafsirService implements QuranTafsirService {
       return TafsirItem(
         surahNumber: surahNumber,
         ayahStart: ayahStart,
-        ayahEnd: ayahEnd,
-        source: _sourceDisplayLabel(sourceId),
+        ayahEnd: safeEnd,
+        source: TafsirSources.labelFor(sourceId),
         text: tafsirText,
       );
     } catch (_) {
@@ -132,9 +135,36 @@ class RemoteQuranTafsirService implements QuranTafsirService {
     }
   }
 
+  Future<String?> _fetchAyahTafsir(
+    int surahNumber,
+    int ayahNumber,
+    String sourceId,
+  ) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/ayah/$surahNumber:$ayahNumber/$sourceId',
+      );
+      final data = response.data?['data'];
+      if (data is! Map) return null;
+      final text = data['text'];
+      return text is String ? text.trim() : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _isOfflineSource(String raw) {
+    final source = raw.trim();
+    return source == TafsirSources.offlineSourceId ||
+        source.contains('احتياطي');
+  }
+
   String _normalizeSourceIdentifier(String raw) {
     final source = raw.trim();
-    for (final known in _preferredSourceOrder) {
+    if (source == TafsirSources.offlineSourceId) {
+      return TafsirSources.offlineSourceId;
+    }
+    for (final known in TafsirSources.preferredOrder) {
       if (source.contains(known)) return known;
     }
     if (source.contains('ar.')) {
@@ -145,17 +175,5 @@ class RemoteQuranTafsirService implements QuranTafsirService {
       return token;
     }
     return source;
-  }
-
-  String _sourceDisplayLabel(String sourceId) {
-    return switch (sourceId) {
-      'ar.waseet' => 'التفسير الوسيط (مصر)',
-      'ar.muyassar' => 'التفسير الميسر',
-      'ar.jalalayn' => 'تفسير الجلالين',
-      'ar.qurtubi' => 'تفسير القرطبي',
-      'ar.miqbas' => 'تنوير المقباس',
-      'ar.baghawi' => 'تفسير البغوي',
-      _ => sourceId,
-    };
   }
 }

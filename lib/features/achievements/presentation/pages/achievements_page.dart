@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:werdi/core/di/app_injector.dart';
 import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_animated_progress.dart';
@@ -127,7 +126,7 @@ class _UpcomingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
       child: AppSurfaceCard(
         child: Row(
           children: [

@@ -55,8 +55,13 @@ class Tasmee3Result extends Equatable {
   int get unknownCount =>
       grades.values.where((g) => g == AyahGrade.unknown).length;
   int get total => grades.length;
-  int get score =>
-      total == 0 ? 0 : ((knownCount / total) * 100).round();
+
+  /// Weighted session score: known=100%, hesitant=50%, unknown=0%.
+  int get score {
+    if (total == 0) return 0;
+    final points = knownCount * 100 + hesitantCount * 50;
+    return (points / total).round();
+  }
 
   Tasmee3StatusLabel get status {
     if (score >= 90) return Tasmee3StatusLabel.excellent;

@@ -10,6 +10,7 @@ class QuranAudioReciter extends Equatable {
     required this.serverBaseUrl,
     required this.supportedSurahNumbers,
     this.packageReciter,
+    this.everyAyahFolder,
   });
 
   final int mp3QuranId;
@@ -22,10 +23,14 @@ class QuranAudioReciter extends Equatable {
   /// عند التقارب مع أحد قرّاء الحزمة نُرجع روابط «آية بآية».
   final QuranReciter? packageReciter;
 
-  bool get hasVerseLevelUrls => packageReciter != null;
+  /// مجلد everyayah.com عند عدم وجود تطابق في حزمة [quran].
+  final String? everyAyahFolder;
+
+  bool get hasVerseLevelUrls =>
+      packageReciter != null || everyAyahFolder != null;
 
   /// True when memorization / tasmee3 can play this reciter ayah-by-ayah.
-  bool get supportsAyahPlayback => packageReciter != null;
+  bool get supportsAyahPlayback => hasVerseLevelUrls;
 
   /// مفتاح حفظ الاختيار في التفضيلات.
   String get persistenceKey => 'mp3quran_$mp3QuranId';
@@ -82,7 +87,17 @@ class QuranAudioReciter extends Equatable {
       serverBaseUrl: normalizedServer,
       supportedSurahNumbers: surahIds,
       packageReciter: packageReciter,
+      everyAyahFolder: _everyAyahFolderForMp3QuranId(id),
     );
+  }
+
+  static String? _everyAyahFolderForMp3QuranId(int mp3Id) {
+    switch (mp3Id) {
+      case 115:
+        return 'Muhammad_AbdulKareem_128kbps';
+      default:
+        return null;
+    }
   }
 
   static QuranReciter? _packageReciterForMp3QuranId(int mp3Id) {
@@ -104,7 +119,7 @@ class QuranAudioReciter extends Equatable {
       case 54:
         return QuranReciter.sudais;
       case 138:
-        return QuranReciter.nureenMohamedSiddiq;
+        return null;
       case 109:
         return QuranReciter.muhammadAyyoub;
       case 111:
@@ -126,6 +141,7 @@ class QuranAudioReciter extends Equatable {
     serverBaseUrl,
     supportedSurahNumbers,
     packageReciter,
+    everyAyahFolder,
   ];
 
   static Set<int> _allSurahs() => {for (var i = 1; i <= 114; i++) i};
@@ -171,6 +187,14 @@ class QuranAudioReciter extends Equatable {
       serverBaseUrl: 'https://server11.mp3quran.net/sds/',
       supportedSurahNumbers: _allSurahs(),
       packageReciter: QuranReciter.sudais,
+    ),
+    QuranAudioReciter(
+      mp3QuranId: 115,
+      name: 'محمد عبد الكريم · السودان',
+      letter: 'م',
+      serverBaseUrl: 'https://everyayah.com/data/Muhammad_AbdulKareem_128kbps/',
+      supportedSurahNumbers: _allSurahs(),
+      everyAyahFolder: 'Muhammad_AbdulKareem_128kbps',
     ),
   ];
 

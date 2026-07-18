@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
+import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_animated_progress.dart';
 import 'package:werdi/core/widgets/app_status_chip.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
@@ -46,35 +46,40 @@ class ScoreSummaryCard extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
           ),
-          SizedBox(height: 6.h),
+          SizedBox(height: AppSpacing.sm),
           ResultStatusChip(status: result.status),
-          SizedBox(height: 16.h),
+          SizedBox(height: AppSpacing.md),
           AppAnimatedProgress(
             value: result.total == 0 ? 0 : result.knownCount / result.total,
             minHeight: 8,
             borderRadius: 20,
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: AppSpacing.md),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _StatBubble(
-                icon: Icons.check_circle_rounded,
-                color: Colors.green,
-                label: context.l10n.bubbleKnown,
-                count: result.knownCount,
+              Expanded(
+                child: _StatBubble(
+                  icon: Icons.check_circle_rounded,
+                  color: Colors.green,
+                  label: context.l10n.bubbleKnown,
+                  count: result.knownCount,
+                ),
               ),
-              _StatBubble(
-                icon: Icons.warning_amber_rounded,
-                color: Colors.orange,
-                label: context.l10n.bubbleHesitant,
-                count: result.hesitantCount,
+              Expanded(
+                child: _StatBubble(
+                  icon: Icons.warning_amber_rounded,
+                  color: Colors.orange,
+                  label: context.l10n.bubbleHesitant,
+                  count: result.hesitantCount,
+                ),
               ),
-              _StatBubble(
-                icon: Icons.cancel_rounded,
-                color: Colors.redAccent,
-                label: context.l10n.bubbleUnknown,
-                count: result.unknownCount,
+              Expanded(
+                child: _StatBubble(
+                  icon: Icons.cancel_rounded,
+                  color: Colors.redAccent,
+                  label: context.l10n.bubbleUnknown,
+                  count: result.unknownCount,
+                ),
               ),
             ],
           ),
@@ -101,8 +106,8 @@ class _StatBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 22.sp),
-        SizedBox(height: 4.h),
+        Icon(icon, color: color, size: 22),
+        const SizedBox(height: AppSpacing.xxs),
         Text(
           '$count',
           style: Theme.of(context)
@@ -110,7 +115,12 @@ class _StatBubble extends StatelessWidget {
               .titleMedium
               ?.copyWith(fontWeight: FontWeight.w700, color: color),
         ),
-        AppText(label, style: Theme.of(context).textTheme.bodySmall),
+        AppText(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ],
     );
   }
@@ -136,8 +146,8 @@ class AyahRangeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8.w,
-      runSpacing: 8.h,
+      spacing: AppSpacing.xs,
+      runSpacing: AppSpacing.xs,
       children: _options
           .map(
             (range) => ChoiceChip(
@@ -172,37 +182,48 @@ class SessionHistoryCard extends StatelessWidget {
                 ? Colors.orange
                 : Colors.redAccent;
     return AppSurfaceCard(
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: Container(
-          width: 44.w,
-          height: 44.w,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: scoreColor.withValues(alpha: 0.12),
+      onTap: onOpen,
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: scoreColor.withValues(alpha: 0.12),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '$score%',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: scoreColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
           ),
-          alignment: Alignment.center,
-          child: Text(
-            '$score%',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: scoreColor,
-                  fontWeight: FontWeight.w700,
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(
+                  '${session.surahName} • ${session.ayahRange.label}',
+                  maxLines: 2,
                 ),
+                AppText(
+                  session.date.toLocal().toString().split(' ').first,
+                  maxLines: 1,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
           ),
-        ),
-        title: AppText('${session.surahName} • ${session.ayahRange.label}'),
-        subtitle: AppText(
-          session.date.toLocal().toString().split(' ').first,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        trailing: IconButton(
-          onPressed: onOpen,
-          icon: Icon(
+          Icon(
             Directionality.of(context) == TextDirection.rtl
                 ? Icons.chevron_left_rounded
                 : Icons.chevron_right_rounded,
           ),
-        ),
+        ],
       ),
     );
   }

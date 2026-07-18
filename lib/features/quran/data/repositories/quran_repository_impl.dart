@@ -1,4 +1,5 @@
 import 'package:werdi/core/database/app_database.dart';
+import 'package:werdi/features/quran/data/services/recitation_offline_storage.dart';
 import 'package:werdi/features/quran/data/services/quran_service.dart';
 import 'package:werdi/features/quran/data/services/local_quran_cache_service.dart';
 import 'package:werdi/features/quran/data/services/trusted_quran_remote_service.dart';
@@ -18,15 +19,18 @@ class QuranRepositoryImpl implements QuranRepository {
     LocalQuranCacheService? localCache,
     TrustedQuranRemoteService? remoteService,
     AppDatabase? database,
+    RecitationOfflineStorage? offlineStorage,
   })  : _service = service,
         _localCache = localCache,
         _remoteService = remoteService,
-        _database = database;
+        _database = database,
+        _offlineStorage = offlineStorage;
 
   final QuranService _service;
   final LocalQuranCacheService? _localCache;
   final TrustedQuranRemoteService? _remoteService;
   final AppDatabase? _database;
+  final RecitationOfflineStorage? _offlineStorage;
 
   @override
   Future<List<SurahItem>> getSurahs() async {
@@ -169,12 +173,22 @@ class QuranRepositoryImpl implements QuranRepository {
     required int ayahNumber,
     required QuranAudioReciter reciter,
   }) {
-    return _service.getAudioURLsForCatalogReciter(
+    final remote = _service.getAudioURLsForCatalogReciter(
       surahNumber,
       ayahNumber,
       reciter,
       ayahOnly: true,
     );
+    final storage = _offlineStorage;
+    if (storage == null) return remote;
+
+    final local = storage.existingAyahFilePathSync(
+      reciterKey: reciter.persistenceKey,
+      surahNumber: surahNumber,
+      ayahNumber: ayahNumber,
+    );
+    if (local == null) return remote;
+    return [local, ...remote];
   }
 
   @override

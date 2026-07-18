@@ -1,0 +1,13 @@
+App name: وردي
+Package: com.werdi.app
+Category: Education
+Default language: Arabic (ar)
+Secondary: English (en-US)
+
+Privacy policy:
+https://github.com/ahmedehab96-c/werdi/blob/main/PRIVACY.md
+
+Support:
+https://github.com/ahmedehab96-c/werdi/issues
+
+Tags: Quran, Memorization, Islam, Education

@@ -1,19 +1,48 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:werdi/features/goals/data/repositories/user_goals_repository.dart';
 import 'package:werdi/features/home/domain/services/home_dashboard_service.dart';
 import 'package:werdi/features/home/presentation/cubit/home_state.dart';
 
 class HomeCubit extends Cubit<HomeState> {
-  HomeCubit({required HomeDashboardService dashboardService})
-      : _dashboardService = dashboardService,
+  HomeCubit({
+    required HomeDashboardService dashboardService,
+    required UserGoalsRepository goalsRepository,
+  })  : _dashboardService = dashboardService,
+        _goalsRepository = goalsRepository,
         super(const HomeState());
 
   final HomeDashboardService _dashboardService;
+  final UserGoalsRepository _goalsRepository;
   bool _loading = false;
 
-  Future<void> initialize() => _load(silent: true);
+  Future<void> initialize() async {
+    final goals = await _goalsRepository.load();
+    if (isClosed) return;
+    emit(
+      state.copyWith(
+        dailyTargetAyahs: goals.dailyTargetAyahs,
+        memorizationGoalAyahs: goals.memorizationGoalAyahs,
+        reviewSessionsGoal: goals.reviewSessionsGoal,
+      ),
+    );
+    await _load(silent: true);
+  }
 
-  Future<void> refresh() => _load(silent: false);
+  Future<void> refresh() async {
+    final goals = await _goalsRepository.load();
+    if (isClosed) return;
+    emit(
+      state.copyWith(
+        dailyTargetAyahs: goals.dailyTargetAyahs,
+        memorizationGoalAyahs: goals.memorizationGoalAyahs,
+        reviewSessionsGoal: goals.reviewSessionsGoal,
+      ),
+    );
+    await _load(silent: false);
+  }
+
+  Future<void> refreshGoals() => refresh();
 
   Future<void> _load({required bool silent}) async {
     if (_loading) return;
@@ -25,7 +54,7 @@ class HomeCubit extends Cubit<HomeState> {
 
     try {
       final data = await _dashboardService
-          .load(dailyTargetAyahs: state.dailyTargetAyahs)
+          .load()
           .timeout(
             const Duration(seconds: 8),
             onTimeout: () {

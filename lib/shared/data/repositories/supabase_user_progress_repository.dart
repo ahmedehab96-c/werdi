@@ -3,6 +3,7 @@ import 'package:werdi/core/database/app_database.dart';
 import 'package:werdi/core/network/supabase_service.dart';
 import 'package:werdi/core/services/app_preferences.dart';
 import 'package:werdi/core/services/offline_sync_service.dart';
+import 'package:werdi/core/sync/sync_capabilities.dart';
 import 'package:werdi/shared/repositories/user_progress_repository.dart';
 
 class SupabaseUserProgressRepository implements UserProgressRepository {
@@ -25,7 +26,12 @@ class SupabaseUserProgressRepository implements UserProgressRepository {
 
   @override
   Future<UserProgressSnapshot> getProgress({required String userId}) async {
-    if (!_canSyncRemote(userId)) {
+    if (!canSyncWithSupabase) {
+      return _cachedSnapshot(userId: userId);
+    }
+
+    final remoteUserId = supabaseUserId;
+    if (remoteUserId == null) {
       return _cachedSnapshot(userId: userId);
     }
 
@@ -35,20 +41,49 @@ class SupabaseUserProgressRepository implements UserProgressRepository {
           .select(
             'memorized_ayah_count, reviewed_items_count, streak_days',
           )
-          .eq('user_id', userId)
+          .eq('user_id', remoteUserId)
           .maybeSingle();
+      final remoteMem =
+          (row?['memorized_ayah_count'] as num? ?? 0).toInt();
+      final remoteReview =
+          (row?['reviewed_items_count'] as num? ?? 0).toInt();
+      final remoteStreak = (row?['streak_days'] as num? ?? 0).toInt();
+
+      final lastRaw = await _getValue(_keyForUser(_lastActivityKey, userId));
+      final last = lastRaw != null ? DateTime.tryParse(lastRaw) : null;
+      final localFresh = last != null &&
+          _dateOnly(DateTime.now()).difference(_dateOnly(last)).inDays <= 1;
+
+      final int streakDays;
+      if (localFresh) {
+        // Prefer local streak when the user was active today/yesterday.
+        streakDays = await _effectiveStreak(userId);
+      } else {
+        await _setValue(
+          _keyForUser(_streakKey, userId),
+          remoteStreak.toString(),
+        );
+        streakDays =
+            await _effectiveStreak(userId, fallback: remoteStreak);
+      }
+
       final snapshot = UserProgressSnapshot(
-        memorizedAyahCount:
-            (row?['memorized_ayah_count'] as num? ?? 0).toInt(),
-        reviewedItemsCount:
-            (row?['reviewed_items_count'] as num? ?? 0).toInt(),
-        streakDays: (row?['streak_days'] as num? ?? 0).toInt(),
+        memorizedAyahCount: remoteMem,
+        reviewedItemsCount: remoteReview,
+        streakDays: streakDays,
       );
       await _cacheSnapshot(snapshot, userId: userId);
       return snapshot;
     } catch (_) {
       return _cachedSnapshot(userId: userId);
     }
+  }
+
+  Future<void> cacheRemoteSnapshot({
+    required String localUserId,
+    required UserProgressSnapshot snapshot,
+  }) async {
+    await _cacheSnapshot(snapshot, userId: localUserId);
   }
 
   @override
@@ -68,21 +103,25 @@ class SupabaseUserProgressRepository implements UserProgressRepository {
     final memorizedCount =
         await _database?.getMemorizedAyahCount(userId: userId) ??
             (local.memorizedAyahCount + 1);
+    final streak = await _recordActivity(userId);
     final updated = UserProgressSnapshot(
       memorizedAyahCount: memorizedCount,
       reviewedItemsCount: local.reviewedItemsCount,
-      streakDays: local.streakDays,
+      streakDays: streak,
     );
     await _cacheSnapshot(updated, userId: userId);
 
-    if (!_canSyncRemote(userId)) return;
+    if (!canSyncWithSupabase) return;
+
+    final remoteUserId = supabaseUserId;
+    if (remoteUserId == null) return;
 
     try {
       await _client.from('user_progress').upsert({
-        'user_id': userId,
+        'user_id': remoteUserId,
         'memorized_ayah_count': memorizedCount,
         'reviewed_items_count': local.reviewedItemsCount,
-        'streak_days': local.streakDays,
+        'streak_days': streak,
         'last_surah_number': surahNumber,
         'last_ayah_number': ayahNumber,
         'last_progress': progress,
@@ -92,7 +131,9 @@ class SupabaseUserProgressRepository implements UserProgressRepository {
       await _syncService?.enqueue(
         type: 'progress.memorization',
         payload: {
-          'user_id': userId,
+          'memorized_ayah_count': memorizedCount,
+          'reviewed_items_count': local.reviewedItemsCount,
+          'streak_days': streak,
           'surah_number': surahNumber,
           'ayah_number': ayahNumber,
           'progress': progress,
@@ -108,20 +149,24 @@ class SupabaseUserProgressRepository implements UserProgressRepository {
     required bool reviewed,
     required bool difficult,
   }) async {
+    if (!reviewed) return;
     final local = await _cachedSnapshot(userId: userId);
+    final streak = await _recordActivity(userId);
     final updated = UserProgressSnapshot(
       memorizedAyahCount: local.memorizedAyahCount,
-      reviewedItemsCount:
-          reviewed ? local.reviewedItemsCount + 1 : local.reviewedItemsCount,
-      streakDays: local.streakDays,
+      reviewedItemsCount: local.reviewedItemsCount + 1,
+      streakDays: streak,
     );
     await _cacheSnapshot(updated, userId: userId);
 
-    if (!_canSyncRemote(userId)) return;
+    if (!canSyncWithSupabase) return;
+
+    final remoteUserId = supabaseUserId;
+    if (remoteUserId == null) return;
 
     try {
       await _client.from('user_progress').upsert({
-        'user_id': userId,
+        'user_id': remoteUserId,
         'memorized_ayah_count': updated.memorizedAyahCount,
         'reviewed_items_count': updated.reviewedItemsCount,
         'streak_days': updated.streakDays,
@@ -131,7 +176,9 @@ class SupabaseUserProgressRepository implements UserProgressRepository {
       await _syncService?.enqueue(
         type: 'progress.review',
         payload: {
-          'user_id': userId,
+          'memorized_ayah_count': updated.memorizedAyahCount,
+          'reviewed_items_count': updated.reviewedItemsCount,
+          'streak_days': updated.streakDays,
           'review_id': reviewId,
           'reviewed': reviewed,
           'difficult': difficult,
@@ -152,16 +199,51 @@ class SupabaseUserProgressRepository implements UserProgressRepository {
       ),
       userId: userId,
     );
-    if (!_canSyncRemote(userId)) return;
+    if (!canSyncWithSupabase) return;
+
+    final remoteUserId = supabaseUserId;
+    if (remoteUserId == null) return;
+
     try {
       await _client.from('user_progress').upsert({
-        'user_id': userId,
+        'user_id': remoteUserId,
         'memorized_ayah_count': local.memorizedAyahCount,
         'reviewed_items_count': local.reviewedItemsCount,
         'streak_days': streak,
         'updated_at': DateTime.now().toIso8601String(),
       });
-    } catch (_) {}
+    } catch (_) {
+      await _syncService?.enqueue(
+        type: 'progress.activity',
+        payload: {
+          'memorized_ayah_count': local.memorizedAyahCount,
+          'reviewed_items_count': local.reviewedItemsCount,
+          'streak_days': streak,
+        },
+      );
+    }
+  }
+
+  Future<int> _effectiveStreak(
+    String userId, {
+    int? fallback,
+  }) async {
+    final stored = int.tryParse(
+          await _getValue(_keyForUser(_streakKey, userId)) ?? '',
+        ) ??
+        fallback ??
+        0;
+    if (stored == 0) return 0;
+    final lastRaw = await _getValue(_keyForUser(_lastActivityKey, userId));
+    final last = lastRaw != null ? DateTime.tryParse(lastRaw) : null;
+    if (last == null) {
+      // Remote seed without local activity day — keep stored value until
+      // the user is active, then expiry rules apply.
+      return stored;
+    }
+    final gap = _dateOnly(DateTime.now()).difference(_dateOnly(last)).inDays;
+    if (gap > 1) return 0;
+    return stored;
   }
 
   Future<int> _recordActivity(String userId) async {
@@ -193,14 +275,6 @@ class SupabaseUserProgressRepository implements UserProgressRepository {
 
   static const _lastActivityKey = 'progress_last_activity_date';
 
-  bool _canSyncRemote(String userId) {
-    return SupabaseService.isReady &&
-        SupabaseService.hasSession &&
-        userId.isNotEmpty &&
-        !userId.startsWith('guest') &&
-        !userId.startsWith('offline_');
-  }
-
   Future<void> _cacheSnapshot(
     UserProgressSnapshot snapshot, {
     required String userId,
@@ -227,9 +301,7 @@ class SupabaseUserProgressRepository implements UserProgressRepository {
     final review =
         int.tryParse(await _getValue(_keyForUser(_reviewKey, userId)) ?? '') ??
             0;
-    final streak =
-        int.tryParse(await _getValue(_keyForUser(_streakKey, userId)) ?? '') ??
-            0;
+    final streak = await _effectiveStreak(userId);
     return UserProgressSnapshot(
       memorizedAyahCount: mem,
       reviewedItemsCount: review,

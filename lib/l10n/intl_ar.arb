@@ -14,7 +14,8 @@
   "noData": "لا توجد بيانات",
 
   "authWelcomeTitle": "مرحبًا بك في وردي",
-  "authWelcomeSubtitle": "سجّل دخولك أو أنشئ حسابًا لبدء رحلة الحفظ",
+  "welcomeTitle": "مرحبًا بك في وردي",
+  "authWelcomeSubtitle": "ابدأ رحلة الحفظ بسهولة وبدون تعقيد",
   "loginTab": "تسجيل الدخول",
   "registerTab": "إنشاء حساب",
   "continueAsGuest": "المتابعة كضيف",
@@ -29,6 +30,11 @@
   "registerButton": "إنشاء حساب",
   "loginError": "البريد أو كلمة المرور غير صحيحة",
   "registerError": "تعذّر إنشاء الحساب، يرجى المحاولة مرة أخرى",
+  "passwordMismatch": "كلمتا المرور غير متطابقتين",
+  "passwordTooShort": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
+  "invalidEmail": "أدخل بريدًا إلكترونيًا صالحًا",
+  "authUnavailable": "المزامنة السحابية غير مفعّلة في هذا الإصدار",
+  "profileSyncedSubtitle": "تقدمك متزامن مع حسابك على جميع أجهزتك",
 
   "homeGreeting": "السلام عليكم، {name}",
   "@homeGreeting": {
@@ -273,7 +279,7 @@
   "rangeStart": "بداية",
   "rangeEnd": "نهاية",
   "noTafsir": "لا يوجد تفسير",
-  "noTafsirSubtitle": "اختر النطاق ثم اضغط تحديث.",
+  "noTafsirSubtitle": "يتم تحميل التفسير تلقائياً — يمكنك تغيير المصدر أو النطاق.",
   "noTranslation": "لا توجد ترجمة",
   "noTranslationSubtitle": "اضغط تحديث لجلب الترجمة.",
   "translationLine": "آية {number}: {text}",
@@ -285,6 +291,23 @@
   },
   "translationLanguage": "لغة الترجمة",
   "refreshTafsir": "تحديث التفسير",
+  "downloadTafsirOffline": "تنزيل التفسير دون اتصال",
+  "tafsirOfflineReady": "تم حفظ تفسير السورة للاستخدام دون إنترنت",
+  "tafsirOfflineCachedBadge": "التفسير متوفر دون اتصال",
+  "cancelTafsirDownload": "إلغاء التنزيل",
+  "tafsirDownloadCancelled": "تم إلغاء تنزيل التفسير",
+  "downloadingTafsirProgress": "جارٍ تنزيل التفسير: الآية {current} من {total}",
+  "@downloadingTafsirProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tafsirOfflineFallback": "لا يتوفر اتصال بالإنترنت — يُعرض النص القرآني بدلاً من التفسير.",
   "refreshTranslation": "تحديث الترجمة",
   "savedSurahs": "السور المحفوظة",
   "savedAyahs": "الآيات المحفوظة",
@@ -339,6 +362,33 @@
   "highPriority": "أولوية عالية",
   "mediumPriority": "أولوية متوسطة",
   "lowPriority": "أولوية منخفضة",
+  "smartReviewPlanTitle": "خطة مراجعة ذكية",
+  "smartReviewPlanSubtitle": "{difficult} صعبة · {pending} بانتظار المراجعة",
+  "@smartReviewPlanSubtitle": {
+    "placeholders": {
+      "difficult": { "type": "int" },
+      "pending": { "type": "int" }
+    }
+  },
+  "smartReviewDailyQuota": "هدف اليوم: {count} عناصر",
+  "@smartReviewDailyQuota": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "startSmartReviewSession": "ابدأ جلسة المراجعة",
+  "smartReviewSessionProgress": "{current} من {total}",
+  "@smartReviewSessionProgress": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "endSmartReviewSession": "إنهاء الجلسة",
+  "smartReviewSessionComplete": "أتممت جلسة المراجعة اليوم — بارك الله فيك",
+  "nextReviewItem": "تخطي",
+  "markReviewedAndNext": "تمت المراجعة — التالي",
+  "smartReviewPlanBadge": "في خطة اليوم",
 
   "tasmee3Title": "التسميع",
   "tasmee3Setup": "إعداد جلسة التسميع",
@@ -421,7 +471,7 @@
     "placeholders": { "count": { "type": "int" } }
   },
 
-  "profileTitle": "الملف الشخصي",
+  "profileTitle": "ملفي",
   "memorizedAyahsCount": "آية محفوظة",
   "reviewSessionsCount": "جلسة مراجعة",
   "streakLabel": "أيام متواصلة",
@@ -477,7 +527,7 @@
   "startNow": "ابدأ الآن",
   "next": "التالي",
   "onboardingTitle1": "رحلة حفظ ذكية ومنظمة",
-  "onboardingSubtitle1": "خطة يومية مرنة تناسب وقتك وتبني استمرارية قوية.",
+  "onboardingSubtitle1": "احفظ وراجع وسمّع بسهولة — كل شيء في مكان واحد.",
   "onboardingTitle2": "مراجعة متدرجة بدون ضغط",
   "onboardingSubtitle2": "نظام مراجعة يساعدك على تثبيت الحفظ على المدى الطويل.",
   "onboardingTitle3": "جلسات تسميع محفزة",
@@ -486,7 +536,7 @@
   "onboardingSubtitle4": "لوحة تقدم راقية تعكس رحلتك خطوة بخطوة.",
 
   "guest": "زائر",
-  "profileLocalSubtitle": "تقدمك محفوظ على هذا الجهاز — بدون حساب",
+  "profileLocalSubtitle": "تقدمك محفوظ على هذا الجهاز",
   "signInForFullFeatures": "تسجيل الدخول للحصول على كامل الميزات",
   "currentGoals": "الأهداف الحالية",
   "goalDone": "تم! 🎉",
@@ -513,5 +563,60 @@
   "ayahBreakdown": "تفصيل الآيات",
   "bubbleKnown": "أحفظها",
   "bubbleHesitant": "تعثرت",
-  "bubbleUnknown": "نسيتها"
+  "bubbleUnknown": "نسيتها",
+
+  "goalsTitle": "أهدافي",
+  "addGoal": "إضافة هدف",
+  "saveGoal": "حفظ الهدف",
+  "goalTitleLabel": "عنوان الهدف",
+  "goalTargetLabel": "العدد المستهدف",
+  "customGoals": "أهدافك الخاصة",
+  "dailyGoalHint": "اضبط عدد الآيات التي تريد حفظها اليوم",
+  "memorizationGoalHint": "هدفك الكلي للحفظ — يتحرك مع تقدمك",
+  "reviewGoalHint": "عدد جلسات المراجعة التي تستهدفها",
+  "customGoalProgressHint": "يتتبع تقدمك في الحفظ",
+  "manageGoals": "إدارة",
+  "editName": "تعديل الاسم",
+  "nameHint": "اسمك أو لقبك",
+
+  "navHome": "الرئيسية",
+  "navQuran": "المصحف",
+  "navMemorization": "الحفظ",
+  "navGoals": "أهدافي",
+  "navProfile": "ملفي",
+
+  "offlineRecitationsTitle": "التلاوات دون اتصال",
+  "offlineRecitationsSubtitle": "حمّل تلاوة سورة كاملة آية بآية للاستماع بدون إنترنت.",
+  "offlineRecitationsHint": "عند التشغيل، يُستخدم الملف المحلي أولاً إن وُجد ثم المصدر عبر الإنترنت.",
+  "selectReciter": "اختر القارئ",
+  "selectSurah": "اختر السورة",
+  "downloadSurah": "تحميل السورة",
+  "deleteDownloadedSurah": "حذف التحميل",
+  "surahDownloadComplete": "محمّلة على الجهاز",
+  "surahNotDownloaded": "غير محمّلة",
+  "surahDownloadFailed": "تعذّر إكمال التحميل. تحقق من الاتصال وحاول مجدداً.",
+  "downloadingAyah": "جاري تحميل الآية {current} من {total}",
+  "@downloadingAyah": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+
+  "playAyahRange": "تشغيل النطاق",
+  "playFullSurah": "تشغيل السورة كاملة",
+  "playlistActiveAyah": "قيد التشغيل: آية {ayah}",
+  "@playlistActiveAyah": {
+    "placeholders": { "ayah": { "type": "int" } }
+  },
+
+  "memorizationAnalyticsTitle": "لمحة عن تقدمك",
+  "todayMemorizedShort": "حُفظ اليوم",
+  "weekMemorizedShort": "هذا الأسبوع",
+  "difficultAyahsShort": "آيات صعبة",
+  "reviewsThisWeekShort": "مراجعات الأسبوع",
+  "weeklyPaceHint": "متوسط يومي: {average} آية",
+  "@weeklyPaceHint": {
+    "placeholders": { "average": { "type": "String" } }
+  }
 }

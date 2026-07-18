@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:werdi/core/utils/arabic_text_normalizer.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
 import 'package:werdi/core/widgets/app_empty_state.dart';
 import 'package:werdi/core/widgets/app_section_header.dart';
 import 'package:werdi/core/widgets/app_scaffold.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
 import 'package:werdi/core/widgets/app_text.dart';
+import 'package:werdi/core/widgets/arabic_search_highlight_text.dart';
 import 'package:werdi/features/quran/presentation/cubit/quran_cubit.dart';
 import 'package:werdi/features/quran/presentation/cubit/quran_state.dart';
 import 'package:werdi/features/quran/presentation/pages/surah_details_page.dart';
@@ -18,13 +18,14 @@ class QuranSearchPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
     return AppScaffold(
       appBar: AppBar(title: Text(l10n.searchQuranTitle)),
       body: BlocBuilder<QuranCubit, QuranState>(
         builder: (context, state) {
           final cubit = context.read<QuranCubit>();
           return ListView(
-            padding: EdgeInsets.all(16.w),
+            padding: const EdgeInsets.all(AppSpacing.md),
             children: [
               TextField(
                 autofocus: true,
@@ -41,10 +42,10 @@ class QuranSearchPage extends StatelessWidget {
                       : null,
                 ),
               ),
-              SizedBox(height: 16.h),
+              const SizedBox(height: AppSpacing.md),
               if (state.searchQuery.trim().isEmpty) ...[
                 AppSectionHeader(title: l10n.recentSearches),
-                SizedBox(height: 8.h),
+                const SizedBox(height: AppSpacing.xs),
                 if (state.recentSearches.isEmpty)
                   AppEmptyState(
                     title: l10n.noSearchHistory,
@@ -53,8 +54,8 @@ class QuranSearchPage extends StatelessWidget {
                   )
                 else
                   Wrap(
-                    spacing: 8.w,
-                    runSpacing: 8.h,
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
                     children: state.recentSearches
                         .map(
                           (item) => ActionChip(
@@ -69,7 +70,7 @@ class QuranSearchPage extends StatelessWidget {
                   ),
               ] else ...[
                 AppSectionHeader(title: l10n.ayahResults),
-                SizedBox(height: 8.h),
+                const SizedBox(height: AppSpacing.xs),
                 if (state.ayahSearchHits.isEmpty)
                   AppEmptyState(
                     title: l10n.noAyahResults,
@@ -78,18 +79,12 @@ class QuranSearchPage extends StatelessWidget {
                   )
                 else
                   ...state.ayahSearchHits.take(20).map(
-                        (hit) => AppSurfaceCard(
-                          child: ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: AppText(
-                              '${hit.surahNameArabic} • ${l10n.ayahNumbered(hit.ayahNumber)}',
-                            ),
-                            subtitle: _HighlightedAyahText(
-                              text: hit.text,
-                              query: state.searchQuery,
-                            ),
+                        (hit) => Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                          child: AppSurfaceCard(
                             onTap: () {
-                              final surah = state.surahByNumber(hit.surahNumber);
+                              final surah =
+                                  state.surahByNumber(hit.surahNumber);
                               if (surah == null) return;
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
@@ -107,12 +102,25 @@ class QuranSearchPage extends StatelessWidget {
                                 ),
                               );
                             },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AppText(
+                                  '${hit.surahNameArabic} • ${l10n.ayahNumbered(hit.ayahNumber)}',
+                                ),
+                                const SizedBox(height: AppSpacing.xxs),
+                                ArabicSearchHighlightText(
+                                  text: hit.text,
+                                  query: state.searchQuery,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                SizedBox(height: 14.h),
+                const SizedBox(height: AppSpacing.sm),
                 AppSectionHeader(title: l10n.surahResults),
-                SizedBox(height: 8.h),
+                const SizedBox(height: AppSpacing.xs),
                 if (state.searchSurahResults.isEmpty)
                   AppEmptyState(
                     title: l10n.noMatchingResults,
@@ -120,28 +128,43 @@ class QuranSearchPage extends StatelessWidget {
                     icon: Icons.filter_alt_off_rounded,
                   )
                 else
-                  ...state.searchSurahResults
-                      .take(12)
-                      .map(
-                        (surah) => AppSurfaceCard(
-                          child: ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: AppText(surah.nameArabic),
-                            subtitle: AppText(
-                              '${surah.nameEnglish} • ${l10n.ayahUnit(surah.verseCount)}',
-                            ),
-                            trailing: Icon(
-                              Directionality.of(context) == TextDirection.rtl
-                                  ? Icons.chevron_left_rounded
-                                  : Icons.chevron_right_rounded,
-                              size: 18,
+                  ...state.searchSurahResults.take(12).map(
+                        (surah) => Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                          child: AppSurfaceCard(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      AppText(surah.nameArabic),
+                                      AppText(
+                                        '${surah.nameEnglish} • ${l10n.ayahUnit(surah.verseCount)}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Directionality.of(context) ==
+                                          TextDirection.rtl
+                                      ? Icons.chevron_left_rounded
+                                      : Icons.chevron_right_rounded,
+                                  size: 18,
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                SizedBox(height: 14.h),
+                const SizedBox(height: AppSpacing.sm),
                 AppSectionHeader(title: l10n.juzResults),
-                SizedBox(height: 8.h),
+                const SizedBox(height: AppSpacing.xs),
                 if (state.searchJuzResults.isEmpty)
                   AppEmptyState(
                     title: l10n.noJuzResults,
@@ -149,24 +172,42 @@ class QuranSearchPage extends StatelessWidget {
                     icon: Icons.filter_alt_off_rounded,
                   )
                 else
-                  ...state.searchJuzResults
-                      .take(8)
-                      .map(
-                        (juz) => AppSurfaceCard(
-                          child: ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: AppText(l10n.juzNumber(juz.number)),
-                            subtitle: AppText(juz.surahRangeText),
+                  ...state.searchJuzResults.take(8).map(
+                        (juz) => Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                          child: AppSurfaceCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AppText(l10n.juzNumber(juz.number)),
+                                AppText(
+                                  juz.surahRangeText,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                SizedBox(height: 12.h),
+                const SizedBox(height: AppSpacing.sm),
                 AppSurfaceCard(
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.api_rounded),
-                    title: AppText(l10n.searchApiReady),
-                    subtitle: AppText(l10n.searchApiReadySubtitle),
+                  child: Row(
+                    children: [
+                      Icon(Icons.api_rounded, color: scheme.primary),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppText(l10n.searchApiReady),
+                            AppText(
+                              l10n.searchApiReadySubtitle,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -174,52 +215,6 @@ class QuranSearchPage extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-}
-
-class _HighlightedAyahText extends StatelessWidget {
-  const _HighlightedAyahText({
-    required this.text,
-    required this.query,
-  });
-
-  final String text;
-  final String query;
-
-  @override
-  Widget build(BuildContext context) {
-    final trimmedQuery = query.trim();
-    if (trimmedQuery.isEmpty) {
-      return AppText(text);
-    }
-
-    final normalizedQuery = ArabicTextNormalizer.normalize(trimmedQuery);
-    if (normalizedQuery.isEmpty) {
-      return AppText(text);
-    }
-
-    final style = Theme.of(context).textTheme.bodyMedium;
-    final highlightStyle = style?.copyWith(
-      color: Theme.of(context).colorScheme.primary,
-      fontWeight: FontWeight.w700,
-    );
-
-    final words = text.split(RegExp(r'\s+'));
-    final spans = <InlineSpan>[];
-    for (var i = 0; i < words.length; i++) {
-      final token = words[i];
-      final normalizedToken = ArabicTextNormalizer.normalize(token);
-      final isMatch = normalizedToken.contains(normalizedQuery);
-      spans.add(TextSpan(text: token, style: isMatch ? highlightStyle : style));
-      if (i != words.length - 1) {
-        spans.add(TextSpan(text: ' ', style: style));
-      }
-    }
-
-    return Text.rich(
-      TextSpan(children: spans),
-      textDirection: TextDirection.rtl,
     );
   }
 }

@@ -33,57 +33,64 @@ class OnboardingPage extends StatelessWidget {
         (MediaQuery.sizeOf(context).width * 0.38).clamp(120.0, 180.0);
 
     return AppScaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            children: [
-              const Spacer(),
-              Container(
-                width: logoSize + 40,
-                height: logoSize + 40,
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  borderRadius: AppRadius.card,
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primaryContainer,
-                      theme.colorScheme.surfaceContainerHighest,
-                    ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final topGap = (constraints.maxHeight * 0.12).clamp(24.0, 80.0);
+          final midGap = (constraints.maxHeight * 0.14).clamp(32.0, 120.0);
+          return SingleChildScrollView(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+                children: [
+                  SizedBox(height: topGap),
+                  Container(
+                    width: logoSize + 40,
+                    height: logoSize + 40,
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      borderRadius: AppRadius.card,
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.colorScheme.primaryContainer,
+                          theme.colorScheme.surfaceContainerHighest,
+                        ],
+                      ),
+                    ),
+                    child: Image.asset(AppAssets.logo),
+                  ).popIn().floatLoop(),
+                  SizedBox(height: AppSpacing.xl),
+                  AppText(
+                    l10n.appName,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ).slideUpEntrance(),
+                  SizedBox(height: AppSpacing.sm),
+                  AppText(
+                    l10n.onboardingSubtitle1,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge,
+                  ).slideUpEntrance(
+                    delay: const Duration(milliseconds: 120),
                   ),
-                ),
-                child: Image.asset(AppAssets.logo),
-              ).popIn().floatLoop(),
-              SizedBox(height: AppSpacing.xl),
-              AppText(
-                l10n.authWelcomeTitle,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ).slideUpEntrance(),
-              SizedBox(height: AppSpacing.sm),
-              AppText(
-                l10n.onboardingSubtitle1,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge,
-              ).slideUpEntrance(
-                delay: const Duration(milliseconds: 120),
+                  SizedBox(height: midGap),
+                  AppButton(
+                    label: l10n.startNow,
+                    onPressed: () async {
+                      await markCompleted();
+                      if (context.mounted) context.goNamed(AppRoutes.home);
+                    },
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                  ).slideUpEntrance(
+                    delay: const Duration(milliseconds: 200),
+                  ),
+                ],
               ),
-              const Spacer(flex: 2),
-              AppButton(
-                label: l10n.startNow,
-                onPressed: () async {
-                  await markCompleted();
-                  if (context.mounted) context.goNamed(AppRoutes.home);
-                },
-                icon: const Icon(Icons.arrow_back_rounded),
-              ).slideUpEntrance(
-                delay: const Duration(milliseconds: 200),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

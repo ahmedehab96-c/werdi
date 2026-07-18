@@ -67,8 +67,8 @@ abstract class AppLocalizations {
 
   final String localeName;
 
-  static AppLocalizations? of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
@@ -164,10 +164,16 @@ abstract class AppLocalizations {
   /// **'Welcome to Werdi'**
   String get authWelcomeTitle;
 
+  /// No description provided for @welcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Werdi'**
+  String get welcomeTitle;
+
   /// No description provided for @authWelcomeSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Sign in or create an account to start your memorization journey'**
+  /// **'Start memorizing simply — no complexity'**
   String get authWelcomeSubtitle;
 
   /// No description provided for @loginTab.
@@ -253,6 +259,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not create account, please try again'**
   String get registerError;
+
+  /// No description provided for @passwordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordMismatch;
+
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get passwordTooShort;
+
+  /// No description provided for @invalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address'**
+  String get invalidEmail;
+
+  /// No description provided for @authUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud sync is not enabled in this build'**
+  String get authUnavailable;
+
+  /// No description provided for @profileSyncedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your progress syncs with your account across devices'**
+  String get profileSyncedSubtitle;
 
   /// No description provided for @homeGreeting.
   ///
@@ -1151,7 +1187,7 @@ abstract class AppLocalizations {
   /// No description provided for @noTafsirSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Choose a range then tap refresh.'**
+  /// **'Tafsir loads automatically — change the source or ayah range anytime.'**
   String get noTafsirSubtitle;
 
   /// No description provided for @noTranslation.
@@ -1183,6 +1219,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh tafsir'**
   String get refreshTafsir;
+
+  /// No description provided for @downloadTafsirOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Download tafsir offline'**
+  String get downloadTafsirOffline;
+
+  /// No description provided for @tafsirOfflineReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Surah tafsir is saved for offline use'**
+  String get tafsirOfflineReady;
+
+  /// No description provided for @tafsirOfflineCachedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Tafsir available offline'**
+  String get tafsirOfflineCachedBadge;
+
+  /// No description provided for @cancelTafsirDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel download'**
+  String get cancelTafsirDownload;
+
+  /// No description provided for @tafsirDownloadCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Tafsir download cancelled'**
+  String get tafsirDownloadCancelled;
+
+  /// No description provided for @downloadingTafsirProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading tafsir: ayah {current} of {total}'**
+  String downloadingTafsirProgress(int current, int total);
+
+  /// No description provided for @tafsirOfflineFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet — showing Quranic Arabic text instead of tafsir.'**
+  String get tafsirOfflineFallback;
 
   /// No description provided for @refreshTranslation.
   ///
@@ -1423,6 +1501,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Low priority'**
   String get lowPriority;
+
+  /// No description provided for @smartReviewPlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart review plan'**
+  String get smartReviewPlanTitle;
+
+  /// No description provided for @smartReviewPlanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{difficult} difficult · {pending} pending review'**
+  String smartReviewPlanSubtitle(int difficult, int pending);
+
+  /// No description provided for @smartReviewDailyQuota.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s target: {count} items'**
+  String smartReviewDailyQuota(int count);
+
+  /// No description provided for @startSmartReviewSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Start review session'**
+  String get startSmartReviewSession;
+
+  /// No description provided for @smartReviewSessionProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String smartReviewSessionProgress(int current, int total);
+
+  /// No description provided for @endSmartReviewSession.
+  ///
+  /// In en, this message translates to:
+  /// **'End session'**
+  String get endSmartReviewSession;
+
+  /// No description provided for @smartReviewSessionComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'You completed today\'s review session'**
+  String get smartReviewSessionComplete;
+
+  /// No description provided for @nextReviewItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get nextReviewItem;
+
+  /// No description provided for @markReviewedAndNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed — next'**
+  String get markReviewedAndNext;
+
+  /// No description provided for @smartReviewPlanBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'In today\'s plan'**
+  String get smartReviewPlanBadge;
 
   /// No description provided for @tasmee3Title.
   ///
@@ -1811,7 +1949,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileTitle.
   ///
   /// In en, this message translates to:
-  /// **'Profile'**
+  /// **'My profile'**
   String get profileTitle;
 
   /// No description provided for @memorizedAyahsCount.
@@ -2063,7 +2201,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSubtitle1.
   ///
   /// In en, this message translates to:
-  /// **'A flexible daily plan that fits your time and builds strong consistency.'**
+  /// **'Memorize, review, and recite easily — everything in one place.'**
   String get onboardingSubtitle1;
 
   /// No description provided for @onboardingTitle2.
@@ -2111,7 +2249,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileLocalSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Your progress is saved on this device — no account needed'**
+  /// **'Your progress is saved on this device'**
   String get profileLocalSubtitle;
 
   /// No description provided for @signInForFullFeatures.
@@ -2179,6 +2317,234 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Forgot'**
   String get bubbleUnknown;
+
+  /// No description provided for @goalsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My goals'**
+  String get goalsTitle;
+
+  /// No description provided for @addGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Add goal'**
+  String get addGoal;
+
+  /// No description provided for @saveGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Save goal'**
+  String get saveGoal;
+
+  /// No description provided for @goalTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal title'**
+  String get goalTitleLabel;
+
+  /// No description provided for @goalTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Target count'**
+  String get goalTargetLabel;
+
+  /// No description provided for @customGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Your custom goals'**
+  String get customGoals;
+
+  /// No description provided for @dailyGoalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Set how many ayahs you want to memorize today'**
+  String get dailyGoalHint;
+
+  /// No description provided for @memorizationGoalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your total memorization target — updates as you progress'**
+  String get memorizationGoalHint;
+
+  /// No description provided for @reviewGoalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Review sessions you are aiming for'**
+  String get reviewGoalHint;
+
+  /// No description provided for @customGoalProgressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracks your memorization progress'**
+  String get customGoalProgressHint;
+
+  /// No description provided for @manageGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get manageGoals;
+
+  /// No description provided for @editName.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit name'**
+  String get editName;
+
+  /// No description provided for @nameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name or nickname'**
+  String get nameHint;
+
+  /// No description provided for @navHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHome;
+
+  /// No description provided for @navQuran.
+  ///
+  /// In en, this message translates to:
+  /// **'Mushaf'**
+  String get navQuran;
+
+  /// No description provided for @navMemorization.
+  ///
+  /// In en, this message translates to:
+  /// **'Memorize'**
+  String get navMemorization;
+
+  /// No description provided for @navGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals'**
+  String get navGoals;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'My profile'**
+  String get navProfile;
+
+  /// No description provided for @offlineRecitationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline recitations'**
+  String get offlineRecitationsTitle;
+
+  /// No description provided for @offlineRecitationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Download a full surah ayah-by-ayah for listening without internet.'**
+  String get offlineRecitationsSubtitle;
+
+  /// No description provided for @offlineRecitationsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'During playback, the local file is used first when available, then the online source.'**
+  String get offlineRecitationsHint;
+
+  /// No description provided for @selectReciter.
+  ///
+  /// In en, this message translates to:
+  /// **'Select reciter'**
+  String get selectReciter;
+
+  /// No description provided for @selectSurah.
+  ///
+  /// In en, this message translates to:
+  /// **'Select surah'**
+  String get selectSurah;
+
+  /// No description provided for @downloadSurah.
+  ///
+  /// In en, this message translates to:
+  /// **'Download surah'**
+  String get downloadSurah;
+
+  /// No description provided for @deleteDownloadedSurah.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete download'**
+  String get deleteDownloadedSurah;
+
+  /// No description provided for @surahDownloadComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device'**
+  String get surahDownloadComplete;
+
+  /// No description provided for @surahNotDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Not downloaded'**
+  String get surahNotDownloaded;
+
+  /// No description provided for @surahDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Download could not be completed. Check your connection and try again.'**
+  String get surahDownloadFailed;
+
+  /// No description provided for @downloadingAyah.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading ayah {current} of {total}'**
+  String downloadingAyah(int current, int total);
+
+  /// No description provided for @playAyahRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Play range'**
+  String get playAyahRange;
+
+  /// No description provided for @playFullSurah.
+  ///
+  /// In en, this message translates to:
+  /// **'Play full surah'**
+  String get playFullSurah;
+
+  /// No description provided for @playlistActiveAyah.
+  ///
+  /// In en, this message translates to:
+  /// **'Playing: ayah {ayah}'**
+  String playlistActiveAyah(int ayah);
+
+  /// No description provided for @memorizationAnalyticsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your progress snapshot'**
+  String get memorizationAnalyticsTitle;
+
+  /// No description provided for @todayMemorizedShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get todayMemorizedShort;
+
+  /// No description provided for @weekMemorizedShort.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get weekMemorizedShort;
+
+  /// No description provided for @difficultAyahsShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Difficult ayahs'**
+  String get difficultAyahsShort;
+
+  /// No description provided for @reviewsThisWeekShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews this week'**
+  String get reviewsThisWeekShort;
+
+  /// No description provided for @weeklyPaceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily average: {average} ayahs'**
+  String weeklyPaceHint(String average);
 }
 
 class _AppLocalizationsDelegate

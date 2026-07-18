@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:werdi/core/database/app_database.dart';
 import 'package:werdi/core/network/supabase_service.dart';
 import 'package:werdi/core/services/app_preferences.dart';
+import 'package:werdi/core/sync/sync_capabilities.dart';
 
 /// Queues write operations while offline, then replays them when possible.
 class OfflineSyncService {
@@ -41,7 +42,7 @@ class OfflineSyncService {
   }
 
   Future<void> flushPending() async {
-    if (!SupabaseService.isReady || !SupabaseService.hasSession) return;
+    if (!canSyncWithSupabase) return;
 
     final queue = await _readQueue();
     if (queue.isEmpty) return;
@@ -85,7 +86,7 @@ class OfflineSyncService {
     required Map<String, dynamic> payload,
   }) async {
     final client = _client;
-    final userId = SupabaseService.currentUserId;
+    final userId = supabaseUserId;
     if (client == null || userId == null) return;
 
     switch (type) {
@@ -142,54 +143,56 @@ class OfflineSyncService {
               .eq('ayah_number', ayahNumber);
         }
       case 'progress.memorization':
-        final targetUserId = payload['user_id'] as String? ?? userId;
-        final progressRow = await client
-            .from('user_progress')
-            .select(
-              'memorized_ayah_count, reviewed_items_count, streak_days',
-            )
-            .eq('user_id', targetUserId)
-            .maybeSingle();
-        final currentMemorized =
-            (progressRow?['memorized_ayah_count'] as num? ?? 0).toInt();
-        final reviewed =
-            (progressRow?['reviewed_items_count'] as num? ?? 0).toInt();
-        final streak = (progressRow?['streak_days'] as num? ?? 0).toInt();
-        final progress = (payload['progress'] as num).toDouble();
-        final memorizedCount = currentMemorized + 1;
         await client.from('user_progress').upsert({
-          'user_id': targetUserId,
-          'memorized_ayah_count': memorizedCount,
-          'reviewed_items_count': reviewed,
-          'streak_days': streak,
-          'last_surah_number': (payload['surah_number'] as num).toInt(),
-          'last_ayah_number': (payload['ayah_number'] as num).toInt(),
-          'last_progress': progress,
+          'user_id': userId,
+          'memorized_ayah_count':
+              (payload['memorized_ayah_count'] as num?)?.toInt() ?? 0,
+          'reviewed_items_count':
+              (payload['reviewed_items_count'] as num?)?.toInt() ?? 0,
+          'streak_days': (payload['streak_days'] as num?)?.toInt() ?? 0,
+          'last_surah_number': (payload['surah_number'] as num?)?.toInt(),
+          'last_ayah_number': (payload['ayah_number'] as num?)?.toInt(),
+          'last_progress': (payload['progress'] as num?)?.toDouble() ?? 0,
           'updated_at': DateTime.now().toIso8601String(),
         });
       case 'progress.review':
-        final targetUserId = payload['user_id'] as String? ?? userId;
-        final reviewedFlag = payload['reviewed'] as bool? ?? false;
-        final progressRow = await client
-            .from('user_progress')
-            .select(
-              'memorized_ayah_count, reviewed_items_count, streak_days',
-            )
-            .eq('user_id', targetUserId)
-            .maybeSingle();
-        final memorized =
-            (progressRow?['memorized_ayah_count'] as num? ?? 0).toInt();
-        final reviewedCount =
-            (progressRow?['reviewed_items_count'] as num? ?? 0).toInt();
-        final streak = (progressRow?['streak_days'] as num? ?? 0).toInt();
         await client.from('user_progress').upsert({
-          'user_id': targetUserId,
-          'memorized_ayah_count': memorized,
+          'user_id': userId,
+          'memorized_ayah_count':
+              (payload['memorized_ayah_count'] as num?)?.toInt() ?? 0,
           'reviewed_items_count':
-              reviewedFlag ? reviewedCount + 1 : reviewedCount,
-          'streak_days': streak,
+              (payload['reviewed_items_count'] as num?)?.toInt() ?? 0,
+          'streak_days': (payload['streak_days'] as num?)?.toInt() ?? 0,
           'updated_at': DateTime.now().toIso8601String(),
         });
+      case 'progress.activity':
+        await client.from('user_progress').upsert({
+          'user_id': userId,
+          'memorized_ayah_count':
+              (payload['memorized_ayah_count'] as num?)?.toInt() ?? 0,
+          'reviewed_items_count':
+              (payload['reviewed_items_count'] as num?)?.toInt() ?? 0,
+          'streak_days': (payload['streak_days'] as num?)?.toInt() ?? 0,
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      case 'review.upsert':
+        await client.from('review_items').upsert(
+          {
+            'user_id': userId,
+            'id': payload['id'],
+            'title': payload['title'],
+            'subtitle': payload['subtitle'],
+            'priority': payload['priority'],
+            'surah_number': payload['surah_number'],
+            'ayah_start': payload['ayah_start'],
+            'ayah_end': payload['ayah_end'],
+            'reviewed': payload['reviewed'] ?? false,
+            'difficult': payload['difficult'] ?? false,
+            'updated_at': payload['updated_at'] ??
+                DateTime.now().toIso8601String(),
+          },
+          onConflict: 'user_id,id',
+        );
       default:
         return;
     }

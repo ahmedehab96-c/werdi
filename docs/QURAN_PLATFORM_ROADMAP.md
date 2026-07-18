@@ -26,14 +26,19 @@ Not used: Riverpod, Provider, GetX, MobX.
 
 ## Phase 3
 
-- Add `audio_service` with lock-screen controls and background playback
-- Add offline download manager for recitations
+- [x] Offline download manager for recitations (settings → offline recitations)
+- [x] `audio_service` foundation with lock-screen metadata and background session
+- [x] Skip previous/next ayah from notification + reciter name on lock screen
+- [x] Ayah range playlist (surah audio card + auto-advance)
 
 ## Phase 4
 
-- Production search (ayah text + word search + highlighting)
-- Advanced memorization/revision analytics and smart plans
+- [x] Multi-word ayah search (AND) with shared Arabic highlight widget
+- [x] Memorization analytics snapshot on setup screen
+- [x] Smart review plans based on weak ayahs
 
 ## Phase 5
 
-- Full sync hardening and QA coverage
+- [x] Sync hardening: remote user ID fix, review items sync, pull on login/reconnect
+- [x] Offline queue tests + review merge tests
+- [x] HomeCubit / GoalsCubit / AuthCubit / offline recitation tests

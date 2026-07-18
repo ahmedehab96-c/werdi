@@ -14,7 +14,8 @@
   "noData": "No data available",
 
   "authWelcomeTitle": "Welcome to Werdi",
-  "authWelcomeSubtitle": "Sign in or create an account to start your memorization journey",
+  "welcomeTitle": "Welcome to Werdi",
+  "authWelcomeSubtitle": "Start memorizing simply — no complexity",
   "loginTab": "Login",
   "registerTab": "Register",
   "continueAsGuest": "Continue as guest",
@@ -29,6 +30,11 @@
   "registerButton": "Register",
   "loginError": "Incorrect email or password",
   "registerError": "Could not create account, please try again",
+  "passwordMismatch": "Passwords do not match",
+  "passwordTooShort": "Password must be at least 6 characters",
+  "invalidEmail": "Enter a valid email address",
+  "authUnavailable": "Cloud sync is not enabled in this build",
+  "profileSyncedSubtitle": "Your progress syncs with your account across devices",
 
   "homeGreeting": "Assalamu Alaikum, {name}",
   "@homeGreeting": {
@@ -273,7 +279,7 @@
   "rangeStart": "Start",
   "rangeEnd": "End",
   "noTafsir": "No tafsir",
-  "noTafsirSubtitle": "Choose a range then tap refresh.",
+  "noTafsirSubtitle": "Tafsir loads automatically — change the source or ayah range anytime.",
   "noTranslation": "No translation",
   "noTranslationSubtitle": "Tap refresh to fetch the translation.",
   "translationLine": "Ayah {number}: {text}",
@@ -285,6 +291,23 @@
   },
   "translationLanguage": "Translation language",
   "refreshTafsir": "Refresh tafsir",
+  "downloadTafsirOffline": "Download tafsir offline",
+  "tafsirOfflineReady": "Surah tafsir is saved for offline use",
+  "tafsirOfflineCachedBadge": "Tafsir available offline",
+  "cancelTafsirDownload": "Cancel download",
+  "tafsirDownloadCancelled": "Tafsir download cancelled",
+  "downloadingTafsirProgress": "Downloading tafsir: ayah {current} of {total}",
+  "@downloadingTafsirProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tafsirOfflineFallback": "No internet — showing Quranic Arabic text instead of tafsir.",
   "refreshTranslation": "Refresh translation",
   "savedSurahs": "Saved surahs",
   "savedAyahs": "Saved ayahs",
@@ -339,6 +362,33 @@
   "highPriority": "High priority",
   "mediumPriority": "Medium priority",
   "lowPriority": "Low priority",
+  "smartReviewPlanTitle": "Smart review plan",
+  "smartReviewPlanSubtitle": "{difficult} difficult · {pending} pending review",
+  "@smartReviewPlanSubtitle": {
+    "placeholders": {
+      "difficult": { "type": "int" },
+      "pending": { "type": "int" }
+    }
+  },
+  "smartReviewDailyQuota": "Today's target: {count} items",
+  "@smartReviewDailyQuota": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "startSmartReviewSession": "Start review session",
+  "smartReviewSessionProgress": "{current} of {total}",
+  "@smartReviewSessionProgress": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "endSmartReviewSession": "End session",
+  "smartReviewSessionComplete": "You completed today's review session",
+  "nextReviewItem": "Skip",
+  "markReviewedAndNext": "Reviewed — next",
+  "smartReviewPlanBadge": "In today's plan",
 
   "tasmee3Title": "Self-test",
   "tasmee3Setup": "Test session setup",
@@ -421,7 +471,7 @@
     "placeholders": { "count": { "type": "int" } }
   },
 
-  "profileTitle": "Profile",
+  "profileTitle": "My profile",
   "memorizedAyahsCount": "ayahs memorized",
   "reviewSessionsCount": "review sessions",
   "streakLabel": "day streak",
@@ -477,7 +527,7 @@
   "startNow": "Start now",
   "next": "Next",
   "onboardingTitle1": "A smart, organized memorization journey",
-  "onboardingSubtitle1": "A flexible daily plan that fits your time and builds strong consistency.",
+  "onboardingSubtitle1": "Memorize, review, and recite easily — everything in one place.",
   "onboardingTitle2": "Gradual review without pressure",
   "onboardingSubtitle2": "A review system that helps you retain memorization for the long term.",
   "onboardingTitle3": "Motivating recitation sessions",
@@ -486,7 +536,7 @@
   "onboardingSubtitle4": "An elegant progress dashboard that reflects your journey step by step.",
 
   "guest": "Guest",
-  "profileLocalSubtitle": "Your progress is saved on this device — no account needed",
+  "profileLocalSubtitle": "Your progress is saved on this device",
   "signInForFullFeatures": "Sign in to unlock all features",
   "currentGoals": "Current goals",
   "goalDone": "Done! 🎉",
@@ -513,5 +563,60 @@
   "ayahBreakdown": "Ayah breakdown",
   "bubbleKnown": "Memorized",
   "bubbleHesitant": "Stumbled",
-  "bubbleUnknown": "Forgot"
+  "bubbleUnknown": "Forgot",
+
+  "goalsTitle": "My goals",
+  "addGoal": "Add goal",
+  "saveGoal": "Save goal",
+  "goalTitleLabel": "Goal title",
+  "goalTargetLabel": "Target count",
+  "customGoals": "Your custom goals",
+  "dailyGoalHint": "Set how many ayahs you want to memorize today",
+  "memorizationGoalHint": "Your total memorization target — updates as you progress",
+  "reviewGoalHint": "Review sessions you are aiming for",
+  "customGoalProgressHint": "Tracks your memorization progress",
+  "manageGoals": "Manage",
+  "editName": "Edit name",
+  "nameHint": "Your name or nickname",
+
+  "navHome": "Home",
+  "navQuran": "Mushaf",
+  "navMemorization": "Memorize",
+  "navGoals": "Goals",
+  "navProfile": "My profile",
+
+  "offlineRecitationsTitle": "Offline recitations",
+  "offlineRecitationsSubtitle": "Download a full surah ayah-by-ayah for listening without internet.",
+  "offlineRecitationsHint": "During playback, the local file is used first when available, then the online source.",
+  "selectReciter": "Select reciter",
+  "selectSurah": "Select surah",
+  "downloadSurah": "Download surah",
+  "deleteDownloadedSurah": "Delete download",
+  "surahDownloadComplete": "Saved on device",
+  "surahNotDownloaded": "Not downloaded",
+  "surahDownloadFailed": "Download could not be completed. Check your connection and try again.",
+  "downloadingAyah": "Downloading ayah {current} of {total}",
+  "@downloadingAyah": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+
+  "playAyahRange": "Play range",
+  "playFullSurah": "Play full surah",
+  "playlistActiveAyah": "Playing: ayah {ayah}",
+  "@playlistActiveAyah": {
+    "placeholders": { "ayah": { "type": "int" } }
+  },
+
+  "memorizationAnalyticsTitle": "Your progress snapshot",
+  "todayMemorizedShort": "Today",
+  "weekMemorizedShort": "This week",
+  "difficultAyahsShort": "Difficult ayahs",
+  "reviewsThisWeekShort": "Reviews this week",
+  "weeklyPaceHint": "Daily average: {average} ayahs",
+  "@weeklyPaceHint": {
+    "placeholders": { "average": { "type": "String" } }
+  }
 }

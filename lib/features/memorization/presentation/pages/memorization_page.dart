@@ -7,6 +7,7 @@ import 'package:werdi/core/theme/app_spacing.dart';
 import 'package:werdi/core/widgets/app_button.dart';
 import 'package:werdi/core/widgets/app_loading_state.dart';
 import 'package:werdi/core/widgets/app_scaffold.dart';
+import 'package:werdi/core/widgets/app_scrollable_body.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
 import 'package:werdi/core/widgets/quran_ayah_text.dart';
 import 'package:werdi/core/widgets/app_text.dart';
@@ -86,8 +87,6 @@ class _MemorizationView extends StatelessWidget {
   }
 }
 
-// ─── شاشة الإعداد ──────────────────────────────────────────────────────────
-
 class _SetupScreen extends StatelessWidget {
   const _SetupScreen({required this.state});
   final MemorizationState state;
@@ -98,91 +97,83 @@ class _SetupScreen extends StatelessWidget {
     final l10n = context.l10n;
     final surahs = state.availableSurahs;
 
-    return Padding(
-      padding: EdgeInsets.all(AppSpacing.md),
-      child: Column(
+    return AppScrollableBody(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+      footer: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(l10n.chooseSurah,
-                    style: Theme.of(context).textTheme.titleSmall),
-                SizedBox(height: AppSpacing.sm),
-                DropdownButtonFormField<int>(
-                  initialValue: state.selectedSurahNumber,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                      labelText: l10n.surah, border: const OutlineInputBorder()),
-                  items: surahs
-                      .map((s) => DropdownMenuItem(
-                            value: s.number,
-                            child: Text('${s.number}. ${s.nameArabic}'),
-                          ))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) cubit.selectSurah(v);
-                  },
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: AppSpacing.md),
-          AppSurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(l10n.ayahRange,
-                    style: Theme.of(context).textTheme.titleSmall),
-                SizedBox(height: AppSpacing.sm),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _RangeDropdown(
-                        label: l10n.fromAyah,
-                        value: state.ayahStart,
-                        max: state.selectedVerseCount,
-                        onChanged: (v) =>
-                            cubit.setAyahRange(v, state.ayahEnd),
-                      ),
-                    ),
-                    SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: _RangeDropdown(
-                        label: l10n.toAyah,
-                        value: state.ayahEnd,
-                        max: state.selectedVerseCount,
-                        min: state.ayahStart,
-                        onChanged: (v) =>
-                            cubit.setAyahRange(state.ayahStart, v),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.xs),
-                AppText(
-                  l10n.ayahCount(state.ayahEnd - state.ayahStart + 1),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          const Spacer(),
+          SizedBox(height: AppSpacing.sm),
           AppButton(
             label: l10n.startSession,
             onPressed: cubit.startSession,
             icon: const Icon(Icons.menu_book_rounded),
           ),
-          SizedBox(height: AppSpacing.sm),
-          AppButton(
-            label: l10n.startVoiceRecitation,
+          TextButton(
             onPressed: cubit.startTestSession,
-            icon: const Icon(Icons.mic_rounded),
-            variant: AppButtonVariant.outlined,
+            child: Text(l10n.startVoiceRecitation),
           ),
         ],
       ),
+      children: [
+        AppSurfaceCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DropdownButtonFormField<int>(
+                initialValue: surahs.any((s) => s.number == state.selectedSurahNumber)
+                    ? state.selectedSurahNumber
+                    : (surahs.isNotEmpty ? surahs.first.number : null),
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: l10n.surah,
+                  border: const OutlineInputBorder(),
+                ),
+                items: surahs
+                    .map((s) => DropdownMenuItem(
+                          value: s.number,
+                          child: Text('${s.number}. ${s.nameArabic}'),
+                        ))
+                    .toList(),
+                onChanged: surahs.isEmpty
+                    ? null
+                    : (v) {
+                        if (v != null) cubit.selectSurah(v);
+                      },
+              ),
+              SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  Expanded(
+                    child: _RangeDropdown(
+                      label: l10n.fromAyah,
+                      value: state.ayahStart,
+                      max: state.selectedVerseCount,
+                      onChanged: (v) => cubit.setAyahRange(v, state.ayahEnd),
+                    ),
+                  ),
+                  SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: _RangeDropdown(
+                      label: l10n.toAyah,
+                      value: state.ayahEnd,
+                      max: state.selectedVerseCount,
+                      min: state.ayahStart,
+                      onChanged: (v) => cubit.setAyahRange(state.ayahStart, v),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: AppSpacing.xs),
+              AppText(
+                l10n.ayahCount(state.ayahEnd - state.ayahStart + 1),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -204,11 +195,23 @@ class _RangeDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (max < min) {
+      return DropdownButtonFormField<int>(
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        items: const [],
+        onChanged: null,
+      );
+    }
     final clamped = value.clamp(min, max);
     return DropdownButtonFormField<int>(
       initialValue: clamped,
       decoration: InputDecoration(
-          labelText: label, border: const OutlineInputBorder()),
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
       items: List.generate(
         max - min + 1,
         (i) {
@@ -222,8 +225,6 @@ class _RangeDropdown extends StatelessWidget {
     );
   }
 }
-
-// ─── شاشة الجلسة ───────────────────────────────────────────────────────────
 
 class _SessionScreen extends StatelessWidget {
   const _SessionScreen({required this.state});
@@ -240,202 +241,192 @@ class _SessionScreen extends StatelessWidget {
 
     final isMemorized = state.memorizedAyahNumbers.contains(ayah.number);
     final isDifficult = state.difficultAyahNumbers.contains(ayah.number);
+    final scheme = Theme.of(context).colorScheme;
 
-    return Padding(
-      padding: EdgeInsets.all(AppSpacing.md),
-      child: Column(
+    return AppScrollableBody(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+      footer: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSurfaceCard(
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AppText(
-                      '${state.selectedSurahName} • ${l10n.ayah} ${ayah.number} / ${state.ayahEnd}',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.sm),
-                LinearProgressIndicator(
-                  value: state.ayahs.isEmpty
-                      ? 0
-                      : (state.currentIndex + 1) / state.ayahs.length,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                SizedBox(height: AppSpacing.md),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: state.showAyahText
-                      ? QuranAyahText(
-                          key: const ValueKey('visible'),
-                          text: ayah.text,
-                          fontScale: 1.15,
-                        )
-                      : GestureDetector(
-                          key: const ValueKey('hidden'),
-                          onTap: () =>
-                              context.read<MemorizationCubit>().toggleShowText(),
-                          child: Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.symmetric(
-                                vertical: AppSpacing.lg),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest
-                                  .withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.visibility_rounded,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                                SizedBox(height: AppSpacing.xs),
-                                AppText(
-                                  l10n.tapToReveal,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                ),
-              ],
+          SizedBox(height: AppSpacing.sm),
+          AppButton(
+            label: isMemorized ? l10n.memorizedDone : l10n.markMemorized,
+            onPressed: cubit.toggleMemorized,
+            icon: Icon(isMemorized
+                ? Icons.check_circle_rounded
+                : Icons.check_circle_outline),
+          ),
+          TextButton.icon(
+            onPressed: cubit.toggleDifficult,
+            icon: Icon(
+              isDifficult ? Icons.flag_rounded : Icons.outlined_flag_rounded,
+            ),
+            label: Text(
+              isDifficult ? l10n.markedDifficult : l10n.markDifficult,
             ),
           ),
-          SizedBox(height: AppSpacing.md),
-          AppSurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(l10n.audioControls,
-                    style: Theme.of(context).textTheme.titleSmall),
-                if (state.selectedReciterName != null) ...[
-                  SizedBox(height: AppSpacing.xxs),
-                  AppText(
-                    state.selectedReciterName!,
-                    style: Theme.of(context).textTheme.bodySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-                SizedBox(height: AppSpacing.sm),
-                LayoutBuilder(builder: (context, constraints) {
-                  final compact = Responsive.isCompact(context);
-                  final controls = [
-                    IconButton(
-                      onPressed:
-                          state.isFirstAyah ? null : cubit.previousAyah,
-                      icon: const Icon(Icons.skip_previous_rounded),
-                    ),
-                    IconButton(
-                      onPressed: cubit.togglePlay,
-                      icon: Icon(
-                        state.isPlaying
-                            ? Icons.pause_circle_filled_rounded
-                            : Icons.play_circle_fill_rounded,
-                        size: 36,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: state.isLastAyah ? null : cubit.nextAyah,
-                      icon: const Icon(Icons.skip_next_rounded),
-                    ),
-                  ];
-                  final speed = DropdownButton<double>(
-                    value: state.playbackSpeed,
-                    items: const [
-                      DropdownMenuItem(value: 0.75, child: Text('0.75x')),
-                      DropdownMenuItem(value: 1.0, child: Text('1x')),
-                      DropdownMenuItem(value: 1.25, child: Text('1.25x')),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) cubit.setPlaybackSpeed(v);
-                    },
-                  );
-                  if (compact) {
-                    return Column(
-                      children: [
-                        Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: controls),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [AppText(l10n.playbackSpeed), speed],
-                        ),
-                      ],
-                    );
-                  }
-                  return Row(
-                      children: [...controls, const Spacer(), speed]);
-                }),
-                SizedBox(height: AppSpacing.xs),
-                Row(
-                  children: [
-                    AppText(l10n.repeatAyah,
-                        style: Theme.of(context).textTheme.bodyMedium),
-                    const Spacer(),
-                    SegmentedButton<int>(
-                      segments: const [
-                        ButtonSegment(value: 1, label: Text('1')),
-                        ButtonSegment(value: 3, label: Text('3')),
-                        ButtonSegment(value: 5, label: Text('5')),
-                      ],
-                      selected: {state.repeatCount},
-                      onSelectionChanged: (v) =>
-                          cubit.setRepeatCount(v.first),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: AppSpacing.md),
-          LayoutBuilder(builder: (context, constraints) {
-            final compact = Responsive.isCompact(context);
-            final memorizeBtn = AppButton(
-              label: isMemorized ? l10n.memorizedDone : l10n.markMemorized,
-              onPressed: cubit.toggleMemorized,
-              icon: Icon(isMemorized
-                  ? Icons.check_circle_rounded
-                  : Icons.check_circle_outline),
-            );
-            final difficultBtn = AppButton(
-              label: isDifficult ? l10n.markedDifficult : l10n.markDifficult,
-              onPressed: cubit.toggleDifficult,
-              icon: Icon(isDifficult
-                  ? Icons.flag_rounded
-                  : Icons.outlined_flag_rounded),
-              variant: AppButtonVariant.outlined,
-            );
-            if (compact) {
-              return Column(children: [
-                memorizeBtn,
-                SizedBox(height: AppSpacing.sm),
-                difficultBtn,
-              ]);
-            }
-            return Row(children: [
-              Expanded(child: memorizeBtn),
-              SizedBox(width: AppSpacing.sm),
-              Expanded(child: difficultBtn),
-            ]);
-          }),
         ],
       ),
+      children: [
+        AppSurfaceCard(
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: AppText(
+                      '${l10n.ayah} ${ayah.number}/${state.ayahEnd}',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ),
+                  AppText(
+                    '${state.currentIndex + 1}/${state.ayahs.length}',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: scheme.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
+              ),
+              SizedBox(height: AppSpacing.sm),
+              LinearProgressIndicator(
+                value: state.ayahs.isEmpty
+                    ? 0
+                    : (state.currentIndex + 1) / state.ayahs.length,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              SizedBox(height: AppSpacing.md),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: state.showAyahText
+                    ? QuranAyahText(
+                        key: const ValueKey('visible'),
+                        text: ayah.text,
+                        fontScale: 1.1 * Responsive.ayahFontScale(context),
+                      )
+                    : GestureDetector(
+                        key: const ValueKey('hidden'),
+                        onTap: () =>
+                            context.read<MemorizationCubit>().toggleShowText(),
+                        child: Container(
+                          width: double.infinity,
+                          padding:
+                              EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHighest
+                                .withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.visibility_rounded,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              SizedBox(height: AppSpacing.xs),
+                              AppText(
+                                l10n.tapToReveal,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: AppSpacing.sm),
+        AppSurfaceCard(
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: state.isFirstAyah ? null : cubit.previousAyah,
+                    icon: const Icon(Icons.skip_previous_rounded),
+                  ),
+                  IconButton(
+                    onPressed: cubit.togglePlay,
+                    icon: Icon(
+                      state.isPlaying
+                          ? Icons.pause_circle_filled_rounded
+                          : Icons.play_circle_fill_rounded,
+                      size: 40,
+                      color: scheme.primary,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: state.isLastAyah ? null : cubit.nextAyah,
+                    icon: const Icon(Icons.skip_next_rounded),
+                  ),
+                ],
+              ),
+              SizedBox(height: AppSpacing.xs),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<double>(
+                      initialValue: state.playbackSpeed,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: l10n.playbackSpeed,
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 0.75, child: Text('0.75x')),
+                        DropdownMenuItem(value: 1.0, child: Text('1x')),
+                        DropdownMenuItem(value: 1.25, child: Text('1.25x')),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) cubit.setPlaybackSpeed(v);
+                      },
+                    ),
+                  ),
+                  SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: l10n.repeatAyah,
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                      ),
+                      child: SegmentedButton<int>(
+                        segments: const [
+                          ButtonSegment(value: 1, label: Text('1')),
+                          ButtonSegment(value: 3, label: Text('3')),
+                          ButtonSegment(value: 5, label: Text('5')),
+                        ],
+                        selected: {state.repeatCount},
+                        onSelectionChanged: (v) =>
+                            cubit.setRepeatCount(v.first),
+                        showSelectedIcon: false,
+                        style: const ButtonStyle(
+                          visualDensity: VisualDensity.compact,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:werdi/core/responsive/responsive_utils.dart';
 import 'package:werdi/core/theme/app_durations.dart';
-import 'package:werdi/core/theme/app_elevation.dart';
-import 'package:werdi/core/theme/app_spacing.dart';
 
 class AppSurfaceCard extends StatelessWidget {
   const AppSurfaceCard({
@@ -22,26 +21,37 @@ class AppSurfaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final card = Container(
-      padding: padding ?? EdgeInsets.all(AppSpacing.md),
-      decoration: AppElevation.card(context, color: color),
+    final theme = Theme.of(context);
+    final radius = ResponsiveUtils.responsiveRadius(context, 16);
+    final borderRadius = BorderRadius.circular(radius);
+    final surfaceColor = color ?? theme.colorScheme.surface;
+    final content = Padding(
+      padding: padding ?? ResponsiveUtils.cardPadding(context),
       child: child,
     );
 
-    final interactive = onTap == null
-        ? card
-        : Material(
-            color: Colors.transparent,
-            child: InkWell(
+    // Material is the painted surface (no DecoratedBox fill) so nested
+    // ListTiles can draw ink splash on the correct ancestor.
+    final card = Material(
+      color: surfaceColor,
+      elevation: theme.brightness == Brightness.dark ? 2.5 : 1.25,
+      shadowColor: theme.brightness == Brightness.dark
+          ? const Color(0x4D000000)
+          : const Color(0x14081510),
+      borderRadius: borderRadius,
+      clipBehavior: Clip.antiAlias,
+      child: onTap == null
+          ? content
+          : InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(16),
-              child: card,
+              borderRadius: borderRadius,
+              child: content,
             ),
-          );
+    );
 
-    if (!enableEntrance) return interactive;
+    if (!enableEntrance) return card;
 
-    return interactive
+    return card
         .animate()
         .fadeIn(duration: AppDurations.fast, curve: Curves.easeOut)
         .scale(

@@ -9,4 +9,17 @@ abstract interface class QuranTafsirRepository {
     required int ayahEnd,
     required String source,
   });
+
+  Future<Set<String>> getOfflineReadyTafsirKeys();
+
+  Future<bool> isSurahTafsirOfflineReady({
+    required int surahNumber,
+    required int verseCount,
+    required String source,
+  });
+
+  Future<void> markSurahTafsirOfflineReady({
+    required int surahNumber,
+    required String source,
+  });
 }

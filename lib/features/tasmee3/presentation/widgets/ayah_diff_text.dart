@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:werdi/core/responsive/responsive_helper.dart';
+import 'package:werdi/core/theme/app_spacing.dart';
 
 /// Mushaf-style ayah with per-word coloring; words are tappable when [onWordTap] is set.
 class AyahDiffText extends StatelessWidget {
@@ -20,8 +21,10 @@ class AyahDiffText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final fontSize =
+        ResponsiveHelper.adaptiveFont(context, 22 * fontScale).clamp(16.0, 32.0);
     final baseStyle = GoogleFonts.amiri(
-      fontSize: (22 * fontScale).sp,
+      fontSize: fontSize,
       height: 2.0,
       fontWeight: FontWeight.w600,
     );
@@ -30,8 +33,8 @@ class AyahDiffText extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Wrap(
         alignment: WrapAlignment.center,
-        runSpacing: 10.h,
-        spacing: 8.w,
+        runSpacing: AppSpacing.sm,
+        spacing: AppSpacing.xs,
         children: List.generate(words.length, (index) {
           final correct =
               index < wordCorrect.length ? wordCorrect[index] : true;
@@ -49,7 +52,10 @@ class AyahDiffText extends StatelessWidget {
             onTap: () => onWordTap!(index),
             borderRadius: BorderRadius.circular(8),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xxs,
+                vertical: AppSpacing.xxs,
+              ),
               child: child,
             ),
           );

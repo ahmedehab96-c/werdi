@@ -1,15 +1,15 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+/// Logical corner radii (density-independent).
 final class AppRadius {
   const AppRadius._();
 
-  static double get xs => 8.r;
-  static double get sm => 12.r;
-  static double get md => 16.r;
-  static double get lg => 20.r;
-  static double get xl => 24.r;
-  static double get full => 999.r;
+  static const double xs = 8;
+  static const double sm = 12;
+  static const double md = 16;
+  static const double lg = 20;
+  static const double xl = 24;
+  static const double full = 999;
 
   static BorderRadius get card => BorderRadius.circular(md);
   static BorderRadius get button => BorderRadius.circular(md);

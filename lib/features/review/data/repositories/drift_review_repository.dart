@@ -86,6 +86,7 @@ class DriftReviewRepository implements ReviewRepository {
       ayahEnd: row.read<int>('ayah_end'),
       reviewed: row.read<int>('reviewed') == 1,
       difficult: row.read<int>('difficult') == 1,
+      updatedAt: DateTime.tryParse(row.read<String>('updated_at')),
     );
   }
 

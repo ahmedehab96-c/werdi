@@ -2,6 +2,7 @@ import 'package:werdi/core/constants/app_constants.dart';
 import 'package:werdi/core/database/app_database.dart';
 import 'package:werdi/core/services/app_preferences.dart';
 import 'package:werdi/features/achievements/domain/repositories/achievements_repository.dart';
+import 'package:werdi/features/goals/data/repositories/user_goals_repository.dart';
 import 'package:werdi/features/home/presentation/cubit/home_state.dart';
 import 'package:werdi/features/review/domain/models/review_item.dart';
 import 'package:werdi/features/review/domain/repositories/review_repository.dart';
@@ -17,12 +18,14 @@ class HomeDashboardService {
     required Tasmee3Repository tasmee3Repository,
     required AppDatabase database,
     required AppPreferences preferences,
+    required UserGoalsRepository goalsRepository,
   })  : _progressRepository = progressRepository,
         _reviewRepository = reviewRepository,
         _achievementsRepository = achievementsRepository,
         _tasmee3Repository = tasmee3Repository,
         _database = database,
-        _preferences = preferences;
+        _preferences = preferences,
+        _goalsRepository = goalsRepository;
 
   final UserProgressRepository _progressRepository;
   final ReviewRepository _reviewRepository;
@@ -30,10 +33,10 @@ class HomeDashboardService {
   final Tasmee3Repository _tasmee3Repository;
   final AppDatabase _database;
   final AppPreferences _preferences;
+  final UserGoalsRepository _goalsRepository;
 
   static const _lastReadKey = 'quran_last_read_surah';
   static const _userNameKey = 'profile_display_name';
-  static const _milestones = [100, 300, 500, 1000, 2000];
 
   static const dailyQuotes = [
     'وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا',
@@ -45,7 +48,9 @@ class HomeDashboardService {
     'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً',
   ];
 
-  Future<HomeDashboardSnapshot> load({required int dailyTargetAyahs}) async {
+  Future<HomeDashboardSnapshot> load() async {
+    final goals = await _goalsRepository.load();
+    final dailyTargetAyahs = goals.dailyTargetAyahs;
     final reviewItemsFuture = _reviewRepository.getReviewItems();
     final lastReadFuture = _preferences.getString(_lastReadKey);
     final userNameFuture = _preferences.getString(_userNameKey);
@@ -124,7 +129,10 @@ class HomeDashboardService {
           ? 0.0
           : (todayAyahs / dailyTargetAyahs).clamp(0.0, 1.0),
       currentMilestoneAyahs: snapshot.memorizedAyahCount,
-      nextMilestoneAyahs: _nextMilestone(snapshot.memorizedAyahCount),
+      nextMilestoneAyahs: _nextMilestone(
+        snapshot.memorizedAyahCount,
+        goals.memorizationGoalAyahs,
+      ),
       streakDays: snapshot.streakDays,
       weeklyMemorizedAyahs: weeklyMemorized,
       weeklyReviewedAyahs: weeklyReviewed,
@@ -146,10 +154,18 @@ class HomeDashboardService {
     return null;
   }
 
-  int _nextMilestone(int current) {
-    for (final milestone in _milestones) {
-      if (current < milestone) return milestone;
-    }
+  int _nextMilestone(int current, int userGoal) {
+    final steps = <int>{
+      50,
+      100,
+      200,
+      userGoal,
+      500,
+      1000,
+      2000,
+    }..removeWhere((n) => n <= current);
+    final sorted = steps.toList()..sort();
+    if (sorted.isNotEmpty) return sorted.first;
     return ((current ~/ 500) + 1) * 500;
   }
 

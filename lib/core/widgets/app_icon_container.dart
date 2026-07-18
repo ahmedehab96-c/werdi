@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:werdi/core/responsive/responsive_utils.dart';
 import 'package:werdi/core/theme/app_radius.dart';
 
 class AppIconContainer extends StatelessWidget {
@@ -19,15 +19,22 @@ class AppIconContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final resolvedSize =
+        size ?? ResponsiveUtils.responsiveWidth(context, 40);
+    final iconSize = ResponsiveUtils.responsiveIconSize(context, 20);
     return Container(
-      width: size ?? 40.w,
-      height: size ?? 40.w,
+      width: resolvedSize,
+      height: resolvedSize,
       decoration: BoxDecoration(
         color: background ?? scheme.primaryContainer,
         borderRadius: AppRadius.iconContainer,
       ),
       alignment: Alignment.center,
-      child: Icon(icon, size: 20.sp, color: foreground ?? scheme.primary),
+      child: Icon(
+        icon,
+        size: iconSize,
+        color: foreground ?? scheme.primary,
+      ),
     );
   }
 }

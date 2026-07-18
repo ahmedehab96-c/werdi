@@ -6,7 +6,7 @@ final class AppConstants {
   const AppConstants._();
 
   static const String appName = 'وردي';
-  /// Single local identity — no login required.
+  /// Default on-device identity. Optional Supabase auth may sync under a remote user id.
   static const String localUserId = 'local';
   static const String appEnv = String.fromEnvironment(
     'APP_ENV',

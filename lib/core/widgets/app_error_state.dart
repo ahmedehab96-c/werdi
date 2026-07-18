@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:werdi/core/extensions/context_extensions.dart';
+import 'package:werdi/core/responsive/responsive_utils.dart';
 import 'package:werdi/core/widgets/app_surface_card.dart';
 import 'package:werdi/core/widgets/app_text.dart';
 
 /// Consistent error placeholder with an optional retry action.
-///
-/// Mirrors [AppSurfaceCard]-based states (empty/loading) so all non-content
-/// states share the same visual language across the app.
 class AppErrorState extends StatelessWidget {
   const AppErrorState({
     required this.message,
@@ -27,21 +24,23 @@ class AppErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: SizedBox(
-        width: 360.w,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: ResponsiveUtils.contentMaxWidth(context).clamp(0, 420),
+        ),
         child: AppSurfaceCard(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 icon,
-                size: 40.sp,
+                size: ResponsiveUtils.responsiveIconSize(context, 40),
                 color: Theme.of(context).colorScheme.error,
               ),
-              SizedBox(height: 10.h),
+              SizedBox(height: ResponsiveUtils.responsiveSpacing(context, 10)),
               if (title != null) ...[
                 AppText(title!, style: Theme.of(context).textTheme.titleSmall),
-                SizedBox(height: 4.h),
+                SizedBox(height: ResponsiveUtils.responsiveSpacing(context, 4)),
               ],
               AppText(
                 message,
@@ -49,11 +48,19 @@ class AppErrorState extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               if (onRetry != null) ...[
-                SizedBox(height: 12.h),
-                FilledButton.icon(
-                  onPressed: onRetry,
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: Text(retryLabel ?? context.l10n.retry),
+                SizedBox(height: ResponsiveUtils.responsiveSpacing(context, 12)),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: ResponsiveUtils.minTouchTargetSize(context),
+                  ),
+                  child: FilledButton.icon(
+                    onPressed: onRetry,
+                    icon: Icon(
+                      Icons.refresh_rounded,
+                      size: ResponsiveUtils.responsiveIconSize(context, 18),
+                    ),
+                    label: Text(retryLabel ?? context.l10n.retry),
+                  ),
                 ),
               ],
             ],
