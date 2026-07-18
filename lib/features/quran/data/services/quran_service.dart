@@ -120,15 +120,10 @@ class QuranPackageService implements QuranService {
     int verseNumber,
     QuranReciter reciter,
   ) {
-    final urls = <String>[
-      for (final folder in _everyAyahFoldersFor(reciter))
-        _everyAyahUrl(
-          surahNumber: surahNumber,
-          verseNumber: verseNumber,
-          readerFolder: folder,
-        ),
-    ];
+    final urls = <String>[];
 
+    // Prefer islamic.network (quran package CDN) — more reliable than everyayah
+    // streaming on Android emulators.
     final packageReciter = _mapReciter(reciter);
     if (packageReciter != null) {
       final packageUrl = quran.getAudioURLByVerse(
@@ -136,10 +131,18 @@ class QuranPackageService implements QuranService {
         verseNumber,
         reciter: packageReciter,
       );
-      if (packageUrl.isNotEmpty && !urls.contains(packageUrl)) {
-        urls.add(packageUrl);
-      }
+      if (packageUrl.isNotEmpty) urls.add(packageUrl);
     }
+
+    for (final folder in _everyAyahFoldersFor(reciter)) {
+      final everyAyah = _everyAyahUrl(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
+        readerFolder: folder,
+      );
+      if (!urls.contains(everyAyah)) urls.add(everyAyah);
+    }
+
     return urls;
   }
 

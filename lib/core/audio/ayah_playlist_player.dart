@@ -1,5 +1,4 @@
-import 'dart:async';
-
+import 'package:flutter/foundation.dart';
 import 'package:werdi/core/audio/audio_playback.dart';
 import 'package:werdi/core/audio/quran_audio_session.dart';
 import 'package:werdi/features/quran/domain/models/quran_audio_reciter.dart';
@@ -12,9 +11,8 @@ class AyahPlaylistPlayer {
   AyahPlaylistPlayer(this._audio);
 
   final AudioRepository _audio;
-  StreamSubscription<void>? _completionSub;
   bool _active = false;
-  bool _advancing = false;
+  bool _skipRequested = false;
   int _startAyah = 1;
   int _currentAyah = 1;
   int _endAyah = 1;
@@ -44,7 +42,7 @@ class AyahPlaylistPlayer {
 
     await stop();
     _active = true;
-    _advancing = false;
+    _skipRequested = false;
     _surahNumber = surahNumber;
     _surahNameArabic = surahNameArabic;
     _startAyah = start;
@@ -55,70 +53,62 @@ class AyahPlaylistPlayer {
     _onAyahChanged = onAyahChanged;
     _onCompleted = onCompleted;
 
-    _completionSub = _audio.onPlaybackCompleted.listen((_) {
-      unawaited(_handleAyahCompleted());
-    });
+    if (kDebugMode) {
+      debugPrint('Playlist start surah=$surahNumber ayahs=$start-$end');
+    }
 
-    await _playCurrentAyah();
-  }
-
-  Future<void> stop() async {
-    _active = false;
-    _advancing = false;
-    await _completionSub?.cancel();
-    _completionSub = null;
-    _urlResolver = null;
-    _onAyahChanged = null;
-    _onCompleted = null;
-    await _audio.stop();
-  }
-
-  Future<void> _finish({required bool notifyCompleted}) async {
-    final done = _onCompleted;
-    _onCompleted = null;
-    _active = false;
-    _advancing = false;
-    await _completionSub?.cancel();
-    _completionSub = null;
-    _urlResolver = null;
-    _onAyahChanged = null;
-    await _audio.stop();
-    if (notifyCompleted) done?.call();
-  }
-
-  Future<void> _handleAyahCompleted() async {
-    if (!_active || _advancing) return;
-    _advancing = true;
     try {
-      if (_currentAyah >= _endAyah) {
-        await _finish(notifyCompleted: true);
-        return;
+      for (var ayah = start; ayah <= end; ayah++) {
+        if (!_active) return;
+        _currentAyah = ayah;
+        _skipRequested = false;
+        _onAyahChanged?.call(ayah);
+
+        final played = await _playAyah(ayah);
+        if (!_active) return;
+        if (!played) {
+          if (kDebugMode) {
+            debugPrint('Playlist skip failed ayah $ayah — continuing');
+          }
+          continue;
+        }
+
+        await _audio.waitForCurrentTrackEnd(
+          shouldCancel: () => !_active || _skipRequested,
+        );
+        if (!_active) return;
+
+        if (_skipRequested) {
+          try {
+            await _audio.softReset();
+          } catch (_) {}
+        }
+
+        if (kDebugMode) {
+          debugPrint('Playlist finished ayah $ayah — next');
+        }
       }
-      _currentAyah++;
-      await _playCurrentAyah();
     } finally {
-      _advancing = false;
+      final done = _onCompleted;
+      _active = false;
+      _urlResolver = null;
+      _onAyahChanged = null;
+      _onCompleted = null;
+      done?.call();
+      if (kDebugMode) {
+        debugPrint('Playlist ended surah=$surahNumber');
+      }
     }
   }
 
-  Future<void> _playCurrentAyah() async {
-    if (!_active) return;
+  Future<bool> _playAyah(int ayah) async {
     final resolver = _urlResolver;
     final reciter = _reciter;
-    if (resolver == null || reciter == null) {
-      await _finish(notifyCompleted: true);
-      return;
-    }
+    if (resolver == null || reciter == null) return false;
 
-    final urls = resolver(_currentAyah);
-    if (urls.isEmpty) {
-      await _finish(notifyCompleted: true);
-      return;
-    }
+    final urls = resolver(ayah);
+    if (urls.isEmpty) return false;
 
-    _onAyahChanged?.call(_currentAyah);
-
-    final ayah = _currentAyah;
     try {
       await playAudioUrlsWithFallback(
         _audio,
@@ -129,37 +119,30 @@ class AyahPlaylistPlayer {
           ayahNumber: ayah,
           reciterName: reciter.name,
         ),
-        onSkipNext: ayah < _endAyah
-            ? () {
-                if (!_active || _advancing) return;
-                _advancing = true;
-                _currentAyah = ayah + 1;
-                unawaited(() async {
-                  try {
-                    await _playCurrentAyah();
-                  } finally {
-                    _advancing = false;
-                  }
-                }());
-              }
-            : null,
-        onSkipPrevious: ayah > _startAyah
-            ? () {
-                if (!_active || _advancing) return;
-                _advancing = true;
-                _currentAyah = ayah - 1;
-                unawaited(() async {
-                  try {
-                    await _playCurrentAyah();
-                  } finally {
-                    _advancing = false;
-                  }
-                }());
-              }
-            : null,
+        onSkipNext: ayah < _endAyah ? _requestSkip : null,
+        onSkipPrevious: ayah > _startAyah ? _requestSkip : null,
       );
-    } catch (_) {
-      await _finish(notifyCompleted: true);
+      return true;
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('Playlist ayah $ayah failed: $error');
+      }
+      return false;
     }
+  }
+
+  void _requestSkip() {
+    _skipRequested = true;
+  }
+
+  Future<void> stop() async {
+    _active = false;
+    _skipRequested = true;
+    _urlResolver = null;
+    _onAyahChanged = null;
+    _onCompleted = null;
+    try {
+      await _audio.stop();
+    } catch (_) {}
   }
 }

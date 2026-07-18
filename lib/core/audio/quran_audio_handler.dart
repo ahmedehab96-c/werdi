@@ -55,18 +55,27 @@ class QuranAudioHandler extends BaseAudioHandler with SeekHandler {
     String? title,
     String? artist,
   }) async {
+    try {
+      await _player.stop();
+    } catch (_) {}
+
     if (source.startsWith('http://') || source.startsWith('https://')) {
       await _player.setUrl(source);
     } else {
       await _player.setFilePath(source);
     }
+    try {
+      await _player.seek(Duration.zero);
+    } catch (_) {}
 
     final metadata = QuranAudioSession.metadata;
+    final duration = _player.duration;
     mediaItem.add(
       MediaItem(
         id: source,
         title: title ?? metadata?.notificationTitle ?? 'تلاوة القرآن',
         artist: artist ?? metadata?.reciterName ?? 'وردي',
+        duration: duration,
         playable: true,
         extras: {
           if (metadata != null) 'surah_number': metadata.surahNumber,

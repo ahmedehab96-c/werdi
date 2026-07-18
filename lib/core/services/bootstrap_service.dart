@@ -19,8 +19,13 @@ final class BootstrapService {
     await AppInjector.recitationOfflineStorage.ensureReady();
     try {
       await AudioServiceController.ensureInitialized();
-    } catch (_) {
-      // Foreground-only playback remains available.
+    } catch (error, stack) {
+      // Foreground-only playback remains available via JustAudio.
+      assert(() {
+        // ignore: avoid_print
+        print('AudioService init failed: $error\n$stack');
+        return true;
+      }());
     }
     AppInjector.configureAudio();
     await SupabaseService.initialize();

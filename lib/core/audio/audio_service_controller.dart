@@ -14,7 +14,21 @@ final class AudioServiceController {
     if (_handler != null) return;
 
     final session = await AudioSession.instance;
-    await session.configure(const AudioSessionConfiguration.music());
+    await session.configure(
+      const AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.playback,
+        avAudioSessionCategoryOptions:
+            AVAudioSessionCategoryOptions.duckOthers,
+        avAudioSessionMode: AVAudioSessionMode.defaultMode,
+        androidAudioAttributes: AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.music,
+          usage: AndroidAudioUsage.media,
+        ),
+        androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+        androidWillPauseWhenDucked: true,
+      ),
+    );
+    await session.setActive(true);
 
     _handler = await AudioService.init(
       builder: QuranAudioHandler.new,

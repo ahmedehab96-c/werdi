@@ -6,15 +6,16 @@ import 'package:werdi/features/quran/domain/models/quran_audio_reciter.dart';
 import 'package:werdi/shared/repositories/audio_repository.dart';
 
 class _FakeAudioRepository implements AudioRepository {
-  final _completionController = StreamController<void>.broadcast();
   final List<String> loadedSources = [];
+  Completer<void>? _trackEnd;
 
   @override
-  Stream<void> get onPlaybackCompleted => _completionController.stream;
+  Stream<void> get onPlaybackCompleted => const Stream.empty();
 
   @override
   Future<void> loadSource({required String source}) async {
     loadedSources.add(source);
+    _trackEnd = Completer<void>();
   }
 
   @override
@@ -24,20 +25,46 @@ class _FakeAudioRepository implements AudioRepository {
   Future<void> play() async {}
 
   @override
+  Future<void> ensurePlaybackStarted({
+    Duration timeout = const Duration(seconds: 10),
+  }) async {}
+
+  @override
+  Future<void> waitForCurrentTrackEnd({
+    Duration timeout = const Duration(minutes: 3),
+    bool Function()? shouldCancel,
+  }) async {
+    final pending = _trackEnd;
+    if (pending == null) return;
+    while (!pending.isCompleted) {
+      if (shouldCancel?.call() ?? false) return;
+      await Future.any([
+        pending.future,
+        Future<void>.delayed(const Duration(milliseconds: 10)),
+      ]);
+    }
+  }
+
+  @override
+  Future<void> softReset() async {}
+
+  @override
   Future<void> seek(Duration position) async {}
 
   @override
   Future<void> setSpeed(double speed) async {}
 
   @override
-  Future<void> stop() async {}
-
-  void completeCurrent() {
-    _completionController.add(null);
+  Future<void> stop() async {
+    _trackEnd?.complete();
+    _trackEnd = null;
   }
 
-  void dispose() {
-    _completionController.close();
+  void completeCurrent() {
+    final pending = _trackEnd;
+    if (pending != null && !pending.isCompleted) {
+      pending.complete();
+    }
   }
 }
 
@@ -51,15 +78,11 @@ void main() {
       player = AyahPlaylistPlayer(audio);
     });
 
-    tearDown(() {
-      audio.dispose();
-    });
-
     test('plays ayahs sequentially until range ends', () async {
       final played = <int>[];
       var completed = false;
 
-      await player.playRange(
+      final run = player.playRange(
         surahNumber: 1,
         surahNameArabic: 'الفاتحة',
         startAyah: 1,
@@ -70,38 +93,49 @@ void main() {
         onCompleted: () => completed = true,
       );
 
+      await Future<void>.delayed(Duration.zero);
       expect(played, [1]);
       expect(audio.loadedSources, ['file:///ayah1.mp3']);
 
       audio.completeCurrent();
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
       expect(played, [1, 2]);
 
       audio.completeCurrent();
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
       expect(played, [1, 2, 3]);
 
       audio.completeCurrent();
-      await Future<void>.delayed(Duration.zero);
+      await run;
       expect(player.isActive, isFalse);
       expect(completed, isTrue);
     });
 
-    test('notifies completion when urls are empty', () async {
-      var completed = false;
+    test('skips failed ayah and continues the range', () async {
+      final played = <int>[];
 
-      await player.playRange(
+      final run = player.playRange(
         surahNumber: 1,
         surahNameArabic: 'الفاتحة',
         startAyah: 1,
         endAyah: 3,
         reciter: QuranAudioReciter.ayahCapable().first,
-        urlResolver: (_) => const [],
-        onCompleted: () => completed = true,
+        urlResolver: (ayah) {
+          if (ayah == 2) return const [];
+          return ['file:///ayah$ayah.mp3'];
+        },
+        onAyahChanged: played.add,
       );
 
+      await Future<void>.delayed(Duration.zero);
+      expect(played, [1]);
+      audio.completeCurrent();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      // ayah 2 fails (empty urls), continues to 3
+      expect(played, [1, 2, 3]);
+      audio.completeCurrent();
+      await run;
       expect(player.isActive, isFalse);
-      expect(completed, isTrue);
     });
   });
 }

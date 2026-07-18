@@ -293,34 +293,50 @@ class _SurahAudioCardState extends State<SurahAudioCard> {
       return;
     }
     final reciter = cubit.state.selectedAudioReciter;
-    await playAudioUrlsWithFallback(
-      AppInjector.audioRepository,
-      urls: urls,
-      metadata: reciter == null
-          ? null
-          : AyahPlaybackMetadata(
-              surahNumber: widget.surah.number,
-              surahNameArabic: widget.surah.nameArabic,
-              ayahNumber: _selectedAyah,
-              reciterName: reciter.name,
-            ),
-      onSkipNext: _selectedAyah < widget.surah.verseCount
-          ? () async {
-              if (!mounted) return;
-              setState(() => _selectedAyah++);
-              await _playSelectedAyah(cubit);
-            }
-          : null,
-      onSkipPrevious: _selectedAyah > 1
-          ? () async {
-              if (!mounted) return;
-              setState(() => _selectedAyah--);
-              await _playSelectedAyah(cubit);
-            }
-          : null,
-    );
-    if (!mounted) return;
-    setState(() => _isPlaying = true);
+    setState(() {
+      _isPlaying = false;
+      _isPlaylistActive = false;
+    });
+    try {
+      await playAudioUrlsWithFallback(
+        AppInjector.audioRepository,
+        urls: urls,
+        metadata: reciter == null
+            ? null
+            : AyahPlaybackMetadata(
+                surahNumber: widget.surah.number,
+                surahNameArabic: widget.surah.nameArabic,
+                ayahNumber: _selectedAyah,
+                reciterName: reciter.name,
+              ),
+        onSkipNext: _selectedAyah < widget.surah.verseCount
+            ? () async {
+                if (!mounted) return;
+                setState(() => _selectedAyah++);
+                await _playSelectedAyah(cubit);
+              }
+            : null,
+        onSkipPrevious: _selectedAyah > 1
+            ? () async {
+                if (!mounted) return;
+                setState(() => _selectedAyah--);
+                await _playSelectedAyah(cubit);
+              }
+            : null,
+      );
+      if (!mounted) return;
+      setState(() => _isPlaying = true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = false;
+        _isPlaylistActive = false;
+        _isReciterAvailable = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.cannotPlayAudio)),
+      );
+    }
   }
 
   Future<void> _stopPlayback() async {
@@ -342,76 +358,8 @@ class _SurahAudioCardState extends State<SurahAudioCard> {
       await _stopPlayback();
       return;
     }
-    final l10n = context.l10n;
-    final reciter = cubit.state.selectedAudioReciter;
-    if (reciter == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.waitOrChooseReciter)),
-      );
-      return;
-    }
-    if (!reciter.supportsAyahPlayback) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.cannotPlayAudio)),
-      );
-      return;
-    }
-    final startUrls = cubit.getAudioAyahUrls(
-      surahNumber: widget.surah.number,
-      ayahNumber: _selectedAyah,
-    );
-    if (startUrls.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.cannotPlayAudio)),
-      );
-      return;
-    }
-
     final end = _rangeEndAyah.clamp(_selectedAyah, widget.surah.verseCount);
-    setState(() {
-      _isPlaylistActive = true;
-      _isPlaying = true;
-      _playlistAyah = _selectedAyah;
-    });
-    try {
-      await AppInjector.ayahPlaylistPlayer.playRange(
-        surahNumber: widget.surah.number,
-        surahNameArabic: widget.surah.nameArabic,
-        startAyah: _selectedAyah,
-        endAyah: end,
-        reciter: reciter,
-        urlResolver: (ayah) => cubit.getAudioAyahUrls(
-          surahNumber: widget.surah.number,
-          ayahNumber: ayah,
-        ),
-        onAyahChanged: (ayah) {
-          if (!mounted) return;
-          setState(() {
-            _playlistAyah = ayah;
-            _selectedAyah = ayah;
-          });
-        },
-        onCompleted: () {
-          if (!mounted) return;
-          setState(() {
-            _isPlaylistActive = false;
-            _isPlaying = false;
-            _playlistAyah = null;
-          });
-        },
-      );
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _isPlaylistActive = false;
-        _isPlaying = false;
-        _playlistAyah = null;
-        _isReciterAvailable = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.cannotPlayAudio)),
-      );
-    }
+    await _startRangePlayback(cubit, start: _selectedAyah, end: end);
   }
 
   Future<void> _playFullSurah(QuranCubit cubit) async {
@@ -461,7 +409,90 @@ class _SurahAudioCardState extends State<SurahAudioCard> {
       _selectedAyah = 1;
       _rangeEndAyah = widget.surah.verseCount;
     });
-    await _toggleRangePlayback(cubit);
+    // Always start a fresh playlist for full-surah (don't toggle-stop).
+    if (_isPlaylistActive || _isPlaying) {
+      await _stopPlayback();
+    }
+    await _startRangePlayback(cubit, start: 1, end: widget.surah.verseCount);
+  }
+
+  Future<void> _startRangePlayback(
+    QuranCubit cubit, {
+    required int start,
+    required int end,
+  }) async {
+    final l10n = context.l10n;
+    final reciter = cubit.state.selectedAudioReciter;
+    if (reciter == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.waitOrChooseReciter)),
+      );
+      return;
+    }
+    if (!reciter.supportsAyahPlayback) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.cannotPlayAudio)),
+      );
+      return;
+    }
+    final startUrls = cubit.getAudioAyahUrls(
+      surahNumber: widget.surah.number,
+      ayahNumber: start,
+    );
+    if (startUrls.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.cannotPlayAudio)),
+      );
+      return;
+    }
+
+    setState(() {
+      _selectedAyah = start;
+      _rangeEndAyah = end;
+      _isPlaylistActive = true;
+      _isPlaying = true;
+      _playlistAyah = start;
+    });
+
+    try {
+      await AppInjector.ayahPlaylistPlayer.playRange(
+        surahNumber: widget.surah.number,
+        surahNameArabic: widget.surah.nameArabic,
+        startAyah: start,
+        endAyah: end,
+        reciter: reciter,
+        urlResolver: (ayah) => cubit.getAudioAyahUrls(
+          surahNumber: widget.surah.number,
+          ayahNumber: ayah,
+        ),
+        onAyahChanged: (ayah) {
+          if (!mounted) return;
+          setState(() {
+            _playlistAyah = ayah;
+            _selectedAyah = ayah;
+          });
+        },
+        onCompleted: () {
+          if (!mounted) return;
+          setState(() {
+            _isPlaylistActive = false;
+            _isPlaying = false;
+            _playlistAyah = null;
+          });
+        },
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaylistActive = false;
+        _isPlaying = false;
+        _playlistAyah = null;
+        _isReciterAvailable = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.cannotPlayAudio)),
+      );
+    }
   }
 
   Future<void> _checkAvailability(QuranCubit cubit) async {
